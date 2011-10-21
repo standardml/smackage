@@ -101,6 +101,7 @@ struct
 
     fun main _ = case CommandLine.arguments () of
           ("--help"::_) => (printUsage(); OS.Process.success)
+        | ("-h"::_) => (printUsage(); OS.Process.success)
         | ("help"::_) => (printUsage(); OS.Process.success)
         | ["info",pkg,ver] => (info pkg ver; OS.Process.success)
         | ["info",pkg] => (info pkg ""; OS.Process.success)

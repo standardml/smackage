@@ -41,7 +41,6 @@ sig
     val <= : semver * semver -> bool
     val >= : semver * semver -> bool
     val > : semver * semver -> bool
-    val equal : semver * semver -> bool
 end
 
 structure SemVer : SEMVER =
@@ -99,7 +98,6 @@ struct
     fun a <= b = compare (a,b) <> GREATER
     fun a >= b = compare (a,b) <> LESS
     fun a > b = compare (a,b) = GREATER
-    fun equal (a,b) = compare (a,b) = EQUAL
 
     (** Accepts a version and a version spec of the form:
       X.Y.Z   (exactly this version)
@@ -117,12 +115,12 @@ struct
                     (List.nth (f,0), fromString (List.nth (f,1)))
     in
         case cmd of
-            "=" => equal (v,v')
+            "=" => v = v'
           | "<" => v < v'
           | ">" => v > v'
           | "<=" => v <= v'
           | ">=" => v >= v'
-          | "<>" => not (equal (v,v'))
+          | "<>" => v <> v'
           | _ => raise InvalidVersion
     end
 
