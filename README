@@ -1,0 +1,4 @@
+This is the start of a package manager for Standard ML libraries.
+
+The implementation mostly just contains stubs, but the semantic versioning
+library should be helpful along the way.
