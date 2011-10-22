@@ -6,3 +6,4 @@ Group is
    src/conductor.sml
    src/get-git.sml
    src/get-http.sml
+   src/smackage-path.sml
