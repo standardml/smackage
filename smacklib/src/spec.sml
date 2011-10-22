@@ -20,7 +20,9 @@
         provides: PACKAGE_NAME SEMANTIC_VERSION     (exactly once)
         description: ANY_STRING                     (at most once)
         requires: PACKAGE_NAME VERSION_CONSTRAINTS  (zero or more)
-        comment: ANY_STRING                         (zero or more, thrown away while parsing)
+
+    Please note that the parser is rather lax at the moment; it will accept url values that aren't really URLs etc.
+    This will likely change in the future, so please be careful to get it right when pasting or typing in the values.
 *)
 
 signature SPEC =
