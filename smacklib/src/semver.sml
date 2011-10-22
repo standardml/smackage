@@ -1,32 +1,3 @@
-(******************************************************************************
- Smackage SML Package System
- 
- Copyright (c) 2011, Gian Perrone <gdpe at itu dot dk>
- All rights reserved.
-
- Redistribution and use in source and binary forms, with or without 
- modification, are permitted provided that the following conditions are met:
-
- Redistributions of source code must retain the above copyright notice, this 
- list of conditions and the following disclaimer.
-
- Redistributions in binary form must reproduce the above copyright notice, 
- this list of conditions and the following disclaimer in the documentation 
- and/or other materials provided with the distribution.
-
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
- SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
- INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
- CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
- ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- POSSIBILITY OF SUCH DAMAGE.
-******************************************************************************)
-
 signature SEMVER =
 sig
     eqtype semver
@@ -42,6 +13,7 @@ sig
     val <= : semver * semver -> bool
     val >= : semver * semver -> bool
     val > : semver * semver -> bool
+    val allPaths : semver -> string list
 end
 
 structure SemVer : SEMVER =
@@ -53,7 +25,11 @@ struct
 
     fun fromString s =
     let
-        val f = String.fields (fn #"." => true | _ => false) s
+        val s' = if String.sub (s,0) = #"v" 
+                    then String.extract (s, 1, NONE)
+                    else s
+        val f = String.fields (fn #"." => true | _ => false) s'
+
         val _ = if length f <> 3 then raise InvalidVersion else ()
 
         fun vtoi i = 
@@ -125,5 +101,13 @@ struct
           | "<>" => v <> v'
           | _ => raise InvalidVersion
     end
+
+    (** Enumerate the various paths that this version could give rise to.
+        e.g., for version 1.6.2beta1, we could potentially have these paths:
+        v1, v1.6, v1.6.2beta1 *)
+    fun allPaths (v as (ma,mi,pa,ps)) =
+        ["v" ^ Int.toString ma,
+         "v" ^ Int.toString ma ^ "." ^ Int.toString mi,
+         "v" ^ toString v]
 
 end
