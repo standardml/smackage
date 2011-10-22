@@ -1,4 +1,5 @@
 Group is
 	$/basis.cm
+	$/ml-yacc-lib.cm
 	src/main.sml
-
+	src/configure.sml

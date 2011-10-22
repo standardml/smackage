@@ -1,2 +1,4 @@
 $(SML_LIB)/basis/basis.mlb
+$(MLTON_ROOT)/mlyacc-lib/mlyacc-lib.mlb
+src/configure.sml
 src/main.sml
