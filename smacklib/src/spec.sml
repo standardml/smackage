@@ -79,6 +79,10 @@ sig
            Error in 'foobar.smackspec': Some error on line 2
     *)
     val withErrorPrinter : (string -> spec) -> string -> string -> spec
+
+    val toString : spec -> string
+
+    val toVersionSpec : spec -> string * SemVer.semver * Protocol.protocol
 end
 
 
@@ -301,6 +305,21 @@ struct
             TextIO.output (TextIO.stdErr, "Error in '" ^ name ^ "': " ^ s ^ "\n"); 
             raise e
         )
+
+    fun toString (spec : spec) = 
+    let
+        val provides = (#provides spec)
+    in
+        "provides: " ^ 
+            #1 provides ^ " " ^ SemVer.toString (#2 provides)
+    end
+
+    fun toVersionSpec (spec : spec) =
+    let
+        val provides = (#provides spec)
+    in
+        (#1 provides, #2 provides, #remote spec)
+    end
 
 end
 
