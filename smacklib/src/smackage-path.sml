@@ -5,11 +5,6 @@ deeper thought.
 *)
 structure SmackagePath =
 struct
-    (** Return the full filesystem path to a package.
-        XXX: Hard coded for local testing.  FIXME HAX HAX HAX.
-    *)
-    fun getPackageDir pkg = "/Users/gdpe/.smackage/" ^ pkg
-
     (** Retrieve a list of currently installed versions of pkg.
         We do this by listing the directory, and ignoring everything
         that's not a valid semantic version.  This ignores the symlinks
@@ -17,9 +12,9 @@ struct
 
         The result *MUST* be sorted in descending order.
     *)
-    fun installedVersions pkg =
+    fun installedVersions smackage_root pkg =
     let
-        val pkgDir = getPackageDir pkg
+        val pkgDir = smackage_root ^ "/" ^ pkg
         val dh = OS.FileSys.openDir pkgDir
         fun untilNone () = 
         let
@@ -48,15 +43,16 @@ struct
         This will leave the current working directory as the newly created
         directory for this package.
     *)
-    fun createPackagePaths (pkg,ver) =
+    fun createPackagePaths smackage_root (pkg,ver) =
     let
+        val pkgDir = smackage_root ^ "/" ^ pkg
         (* Create the top-level package directory if it doesn't exist *)
-        val _ = OS.FileSys.isDir (getPackageDir pkg) handle _ =>
-                    (OS.FileSys.mkDir (getPackageDir pkg); true)
-        val _ = OS.FileSys.chDir (getPackageDir pkg)
+        val _ = OS.FileSys.isDir pkgDir handle _ =>
+                    (OS.FileSys.mkDir pkgDir; true)
+        val _ = OS.FileSys.chDir pkgDir
 
         val newPaths = map (fn x => pkg ^ "/" ^ x) (SemVer.allPaths ver)
-        val existing = installedVersions pkg
+        val existing = installedVersions smackage_root pkg
 
         val majorPrefix = Int.toString (#1 ver)
         val majors = 
@@ -74,7 +70,7 @@ struct
                 then ["v" ^ minorPrefix] else [])
 
         val versionDir = "v" ^ SemVer.toString ver
-        val _ = OS.FileSys.mkDir (getPackageDir pkg ^ "/" ^ versionDir) handle _ => ()
+        val _ = OS.FileSys.mkDir (pkgDir ^ "/" ^ versionDir) handle _ => ()
 
         fun replaceOrCreateSymlink dst link =
         let
