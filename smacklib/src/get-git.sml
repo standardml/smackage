@@ -4,7 +4,7 @@
 
 structure GetGit = struct
 
-(*[ val poll: string -> (string * (int * int * int * string)) list ]*)
+(*[ val poll: string -> (string * SemVer.semver) list ]*)
 (* List of X.Y.Z versions provided by a repository *)
 fun poll (gitAddr: string) = 
    let
@@ -57,3 +57,4 @@ fun poll (gitAddr: string) =
    end handle _ => raise Fail "I/O error trying to access temporary file"
 
 end
+
