@@ -18,7 +18,6 @@ fun poll (gitAddr: string) =
             (TextIO.inputAll tmp before TextIO.closeIn tmp)
          handle exn => (TextIO.closeIn tmp handle _ => (); raise exn)
        
-      exception NotSemVar
       fun process str =
          let val (hash, remote) = 
                 case String.tokens Char.isSpace str of 
@@ -33,10 +32,11 @@ fun poll (gitAddr: string) =
                   [ "refs", "tags", tag ] => 
                   if String.sub (tag, 0) = #"v" 
                   then String.extract (tag, 1, NONE)
-                  else raise NotSemVar (* Not a version tag *)
-                | _ => raise NotSemVar (* Not a tag at all *)
+                  else raise SemVer.InvalidVersion (* Not a version tag *)
+                | _ => raise SemVer.InvalidVersion (* Not a tag at all *)
 
-            fun numAndMore str = 
+            (* Modified to use SemVer module *)
+            (*fun numAndMore str = 
                case Int.fromString str of 
                   NONE => NONE
                 | SOME i => 
@@ -46,12 +46,12 @@ fun poll (gitAddr: string) =
                case map numAndMore (String.tokens (eq #".") tag) of
                   [ SOME (major, ""), SOME (minor, ""), SOME (patch, ps) ] =>
                   (major, minor, patch, ps)
-                | _ => raise NotSemVar
+                | _ => raise NotSemVar*)
 
             (* XXX check that ps is [A-Za-z][0-9A-Za-z-]* *)
          in 
-            SOME (hash, (major, minor, patch, ps))
-         end handle NotSemVar => NONE
+            SOME (hash, SemVer.fromString tag)
+         end handle _ => NONE
    in
       List.mapPartial process input
    end handle _ => raise Fail "I/O error trying to access temporary file"

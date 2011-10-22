@@ -30,13 +30,14 @@
 signature SEMVER =
 sig
     eqtype semver
+    type constraint
 
     exception InvalidVersion
 
     val fromString : string -> semver
     val toString : semver -> string
     val compare : semver * semver -> order
-    val satisfies : semver * string -> bool
+    val satisfies : semver * constraint -> bool
     val < : semver * semver -> bool
     val <= : semver * semver -> bool
     val >= : semver * semver -> bool
@@ -46,6 +47,7 @@ end
 structure SemVer : SEMVER =
 struct
     type semver = int * int * int * string option
+    type constraint = string
 
     exception InvalidVersion
 
@@ -99,7 +101,7 @@ struct
     fun a >= b = compare (a,b) <> LESS
     fun a > b = compare (a,b) = GREATER
 
-    (** Accepts a version and a version spec of the form:
+    (** Accepts a version and a version constraint of the form:
       X.Y.Z   (exactly this version)
       < X.Y.Z
       > X.Y.Z
