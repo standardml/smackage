@@ -80,7 +80,8 @@ fun get basePath projName gitAddr semver =
       val () = chdirSuccess repoPath
       val () = systemSuccess ("git fetch --tags")
       val () = systemSuccess ("git pull origin master")
- 
+      val () = print "Repository is updated\n" 
+
       (* Output *)
       val ver = "v" ^ SemVer.toString semver
       val () = systemSuccess ( "git archive " ^ ver ^ " --format tar > ../"
