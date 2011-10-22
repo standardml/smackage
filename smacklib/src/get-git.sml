@@ -57,3 +57,4 @@ fun poll (gitAddr: string) =
    end handle _ => raise Fail "I/O error trying to access temporary file"
 
 end
+
