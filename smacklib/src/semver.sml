@@ -42,6 +42,7 @@ sig
     val <= : semver * semver -> bool
     val >= : semver * semver -> bool
     val > : semver * semver -> bool
+    val allPaths : semver -> string list
 end
 
 structure SemVer : SEMVER =
@@ -53,7 +54,11 @@ struct
 
     fun fromString s =
     let
-        val f = String.fields (fn #"." => true | _ => false) s
+        val s' = if String.sub (s,0) = #"v" 
+                    then String.extract (s, 1, NONE)
+                    else s
+        val f = String.fields (fn #"." => true | _ => false) s'
+
         val _ = if length f <> 3 then raise InvalidVersion else ()
 
         fun vtoi i = 
@@ -125,5 +130,13 @@ struct
           | "<>" => v <> v'
           | _ => raise InvalidVersion
     end
+
+    (** Enumerate the various paths that this version could give rise to.
+        e.g., for version 1.6.2beta1, we could potentially have these paths:
+        v1, v1.6, v1.6.2beta1 *)
+    fun allPaths (v as (ma,mi,pa,ps)) =
+        ["v" ^ Int.toString ma,
+         "v" ^ Int.toString ma ^ "." ^ Int.toString mi,
+         "v" ^ toString v]
 
 end
