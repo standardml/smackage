@@ -40,9 +40,13 @@ struct
         if no such package or version is found. *)
     fun install name version =
     let
-        val workingDir = smackHome ^ "/tmp"
+        val _ = if version = "" then 
+                    raise Fail "Install needs an explicit version for now."
+                else ()
+        val ver = SemVer.fromString version
+        val _ = SmackLib.install smackHome (name,ver)
     in
-        raise SmackExn "Not implemented"
+        ()
     end
 
     (** Uninstall a package with a given name and version.

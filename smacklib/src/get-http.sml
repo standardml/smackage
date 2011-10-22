@@ -7,10 +7,11 @@ struct
     let
         val tmpName = OS.FileSys.tmpName ()
     in
-        if OS.Process.system ("curl " ^ url ^ " > " ^ tmpName) <> 0
+        (*if OS.Process.system ("curl " ^ url ^ " > " ^ tmpName) 
             then raise HttpException
             else OS.FileSys.rename {old=tmpName, new=outputFile}
-                handle _ => raise HttpException
+                handle _ => raise HttpException*)
+        ()
     end
 end
 
