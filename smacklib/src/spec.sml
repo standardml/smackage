@@ -62,13 +62,13 @@ sig
     
     type description
     
-    type smackspec
+    type spec
 
     (* Parses a smackspec file. *)
-    val fromFile : string -> smackspec
+    val fromFile : string -> spec
 
     (* Parses a smackspec string. *)
-    val fromString : string -> smackspec
+    val fromString : string -> spec
     
     (* Wraps error reporting around fromFile or fromString. Example:
            withErrorPrinter fromString "provides: foo-bar 1.2.3" "foobar.smackspec"
@@ -76,7 +76,7 @@ sig
        In case of a parse error, this would print a message ala:
            Error in 'foobar.smackspec': Some error on line 2
     *)
-    val withErrorPrinter : (string -> smackspec) -> string -> string -> smackspec
+    val withErrorPrinter : (string -> spec) -> string -> string -> spec
 end
 
 
@@ -97,7 +97,7 @@ struct
     
     type unparsed = string * position
     
-    type smackspec = {
+    type spec = {
         provides : package,
         description : description option,
         requires : requirement list,
