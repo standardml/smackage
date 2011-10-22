@@ -55,7 +55,9 @@ struct
                 else (stanza := (!stanza) ^ (valOf line); readStanzas ())
         end
 
-        val stanzas = readStanzas ()
+        val stanzas = readStanzas () handle _ => (TextIO.closeIn fp; [])
+
+        val _ = TextIO.closeIn fp
     in
         map (Spec.toVersionSpec o Spec.fromString) stanzas
     end
