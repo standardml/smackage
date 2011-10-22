@@ -27,7 +27,7 @@
  POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************)
 
-structure Smackage =
+structure Smack =
 struct
     exception SmackExn of string
 
@@ -126,5 +126,5 @@ struct
         (TextIO.output (TextIO.stdErr, s ^ "\n"); OS.Process.failure)
 end
 
-val _ = OS.Process.exit(Smackage.main())
+val _ = OS.Process.exit(Smack.main())
 
