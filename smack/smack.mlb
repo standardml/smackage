@@ -1,3 +1,2 @@
 $(SML_LIB)/basis/basis.mlb
-semver.sml
-main.sml
+src/main.sml

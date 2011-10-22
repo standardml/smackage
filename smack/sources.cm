@@ -1,5 +1,4 @@
 Group is
 	$/basis.cm
-	main.sml
-	semver.sml
+	src/main.sml
 
