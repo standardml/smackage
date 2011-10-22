@@ -20,6 +20,32 @@
         provides: PACKAGE_NAME SEMANTIC_VERSION     (exactly once)
         description: ANY_STRING                     (at most once)
         requires: PACKAGE_NAME VERSION_CONSTRAINTS  (zero or more)
+        comment: ANY_STRING                         (zero or more)
+    
+    Apart from that, the following keys are supported, but their values are not checked for syntax errors at the moment:
+    
+        maintainer: FULL_NAME <EMAIL>               
+        keywords: KEYWORD_1 KEYWORD_2 KEYWORD_3
+        upstream-version: VERSION
+        upstream-url: URL
+        git: URL
+        svn: URL
+        hg: URL
+        cvs: URL
+        documentation-url: URL
+        bug-url: URL
+        license: CANONICAL_LICENSE_NAME
+        platform: SML_PLATFORM
+        build: COMMAND
+        test: COMMAND
+        install: COMMAND
+        uninstall: COMMAND
+        documentation: COMMAND
+        
+    All of these keys can appear at most once.
+
+    Please note that the parser is rather lax at the moment; it will accept url values that aren't really URLs etc.
+    This will likely change in the future, so please be careful to get it right when pasting or typing in the values.
 *)
 
 signature SPEC =
@@ -43,6 +69,7 @@ sig
 
     val fromString : string -> smackspec
     
+    val withErrorPrinter : (string -> smackspec) -> string -> string -> smackspec
 end
 
 
@@ -61,17 +88,37 @@ struct
     
     type description = string * position
     
+    type unparsed = string * position
+    
     type smackspec = {
         provides : package,
         description : description option,
-        requires : requirement list
+        requires : requirement list,
+        maintainer : unparsed option,
+        upstreamVersion : unparsed option,
+        upstreamUrl : unparsed option,
+        git : unparsed option,
+        svn : unparsed option,
+        hg : unparsed option,
+        cvs : unparsed option,
+        documentationUrl : unparsed option,
+        bugUrl : unparsed option,
+        license : unparsed option,
+        platform : unparsed option,
+        build : unparsed option,
+        test : unparsed option,
+        install : unparsed option,
+        uninstall : unparsed option,
+        documentation : unparsed option
         }
+
          
     datatype directive
         = Comment
         | Provides of package
         | Description of description
         | Requires of requirement
+        | Unparsed of string * string * position
 
         
     fun dropWhile' predicate ([], count) = ([], count)
@@ -88,19 +135,32 @@ struct
         
             fun parse (key, value, position) = case key of
                   "comment" => Comment
-                | "provides" => 
-                    let
-                        val [packageName, version] = String.tokens Char.isSpace value
-                    in
-                        Provides (packageName, SemVer.fromString version, position)
-                    end
                 | "description" => Description (value, position)
+                | "maintainer" => Unparsed (key, value, position)
+                | "keywords" => Unparsed (key, value, position)
+                | "upstream-version" => Unparsed (key, value, position)
+                | "upstream-url" => Unparsed (key, value, position)
+                | "git" => Unparsed (key, value, position)
+                | "svn" => Unparsed (key, value, position)
+                | "hg" => Unparsed (key, value, position)
+                | "cvs" => Unparsed (key, value, position)
+                | "documentation-url" => Unparsed (key, value, position)
+                | "bug-url" => Unparsed (key, value, position)
+                | "license" => Unparsed (key, value, position)
+                | "platform" => Unparsed (key, value, position)
+                | "build" => Unparsed (key, value, position)
+                | "test" => Unparsed (key, value, position)
+                | "install" => Unparsed (key, value, position)
+                | "uninstall" => Unparsed (key, value, position)
+                | "documentation" => Unparsed (key, value, position)
+                | "provides" => 
+                    (case String.tokens Char.isSpace value of
+                          [packageName, version] => Provides (packageName, SemVer.fromString version, position)
+                        | _ => raise Error ("The syntax for the 'provides' field should resemble 'provides: my-package 1.2.3' on line " ^ Int.toString position))
                 | "requires" => 
-                    let
-                        val (packageName :: constraint) = String.tokens Char.isSpace value
-                    in
-                        Requires (packageName, String.concatWith " " constraint, position)
-                    end
+                    (case String.tokens Char.isSpace value of
+                          (packageName :: constraint) => Requires (packageName, String.concatWith " " constraint, position)
+                        | _ => raise Error ("The syntax for the 'requires' field should resemble 'requires: some-package >= 1.2.3' on line " ^ Int.toString position))
                 | keyword => raise Error ("Unknown directive '" ^ keyword ^ "' on line " ^ Int.toString position)
             
             val directives = map parse keyValues
@@ -109,20 +169,55 @@ struct
             val provides = case providesDirectives of
                   [] => raise Error ("A 'provides' directive is required, eg: provides: mypackage 0.2.5")
                 | [directive] => directive
-                | (_ :: (_, _, position) :: _) => raise Error ("Only one 'provides' directive is allowed, but a second one is specified on line " ^ Int.toString position)
+                | (_ :: (_, _, position) :: _) => 
+                    raise Error ("Only one 'provides' directive is allowed, but a second one is specified on line " ^ Int.toString position)
             
             val descriptionDirectives = List.mapPartial (fn (Description directive) => SOME directive | _ => NONE) directives
             val description = case descriptionDirectives of
                   [] => NONE
                 | [directive] => SOME directive
-                | (_ :: (_, position) :: _) => raise Error ("At most one 'description' directive is allowed, but a second one is specified on line " ^ Int.toString position)
+                | (_ :: (_, position) :: _) => 
+                    raise Error ("At most one 'description' directive is allowed, but a second one is specified on line " ^ Int.toString position)
 
             val requires = List.mapPartial (fn (Requires directive) => SOME directive | _ => NONE) directives
+            
+            fun unparsed key = 
+                let
+                    val directives' = List.mapPartial 
+                        (fn (Unparsed (key', value, position)) => 
+                            if key' = key 
+                                then SOME (value, position) 
+                                else NONE | _ => NONE) 
+                        directives
+                in
+                    case directives' of
+                          [] => NONE
+                        | [directive] => SOME directive
+                        | (_ :: (_, position) :: _) => 
+                            raise Error ("At most one '" ^ key ^ "' directive is allowed, but a second one is specified on line " ^ Int.toString position)
+                end
+                
         in
             {
                 provides = provides,
                 description = description,
-                requires = requires
+                requires = requires,
+                maintainer = unparsed "maintainer",
+                upstreamVersion = unparsed "upstream-version",
+                upstreamUrl = unparsed "upstream-url",
+                git = unparsed "git",
+                svn = unparsed "svn",
+                hg = unparsed "hg",
+                cvs = unparsed "cvs",
+                documentationUrl = unparsed "documentation-url",
+                bugUrl = unparsed "bug-url",
+                license = unparsed "license",
+                platform = unparsed "platform",
+                build = unparsed "build",
+                test = unparsed "test",
+                install = unparsed "install",
+                uninstall = unparsed "uninstall",
+                documentation = unparsed "documentation"
             }
         end
     
@@ -130,11 +225,13 @@ struct
     fun parseKeyValues lines =
         let
 
-            fun parseKeyLine line = 
+            fun parseKeyLine (line, position) = 
                 let
                     val (key :: valueParts) = String.fields (fn c => c = #":") line
                 in
-                    (key, String.concatWith ":" valueParts)
+                    if CharVector.all (fn c => Char.isAlphaNum c orelse c = #"-") key
+                        then (key, String.concatWith ":" valueParts)
+                        else raise Error ("The key '" ^ key ^ "' contains non-alphanumeric, non-dash characters on line " ^ Int.toString position)
                 end
             
             fun parseValueLines (lines : (string * position) list) = 
@@ -154,7 +251,7 @@ struct
             fun parse ([], keyValues) = rev keyValues
               | parse ((line, position) :: lines, keyValues) = 
                     let
-                        val (key, valueHead) = parseKeyLine line
+                        val (key, valueHead) = parseKeyLine (line, position)
                         val (valueTail, lines') = parseValueLines lines
                         val keyValue = (key, concat (valueHead :: map #1 valueTail), position)
                     in
@@ -191,6 +288,12 @@ struct
         end
 
     fun fromString string = parseStream (TextIO.openString string)
+
+    fun withErrorPrinter parser input name = parser input
+        handle (e as Error s) => (
+            TextIO.output (TextIO.stdErr, "Error in '" ^ name ^ "': " ^ s ^ "\n"); 
+            raise e
+        )
 
 end
 
