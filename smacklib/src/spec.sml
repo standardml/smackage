@@ -44,6 +44,7 @@ sig
 
     val fromString : string -> smackspec
     
+    val withErrorPrinter : (string -> smackspec) -> string -> string -> smackspec
 end
 
 
@@ -128,17 +129,13 @@ struct
                 | "uninstall" => Unparsed (key, value, position)
                 | "documentation" => Unparsed (key, value, position)
                 | "provides" => 
-                    let
-                        val [packageName, version] = String.tokens Char.isSpace value
-                    in
-                        Provides (packageName, SemVer.fromString version, position)
-                    end
+                    (case String.tokens Char.isSpace value of
+                          [packageName, version] => Provides (packageName, SemVer.fromString version, position)
+                        | _ => raise Error ("The syntax for the 'provides' field should resemble 'provides: my-package 1.2.3' on line " ^ Int.toString position))
                 | "requires" => 
-                    let
-                        val (packageName :: constraint) = String.tokens Char.isSpace value
-                    in
-                        Requires (packageName, String.concatWith " " constraint, position)
-                    end
+                    (case String.tokens Char.isSpace value of
+                          (packageName :: constraint) => Requires (packageName, String.concatWith " " constraint, position)
+                        | _ => raise Error ("The syntax for the 'requires' field should resemble 'requires: some-package >= 1.2.3' on line " ^ Int.toString position))
                 | keyword => raise Error ("Unknown directive '" ^ keyword ^ "' on line " ^ Int.toString position)
             
             val directives = map parse keyValues
@@ -147,24 +144,32 @@ struct
             val provides = case providesDirectives of
                   [] => raise Error ("A 'provides' directive is required, eg: provides: mypackage 0.2.5")
                 | [directive] => directive
-                | (_ :: (_, _, position) :: _) => raise Error ("Only one 'provides' directive is allowed, but a second one is specified on line " ^ Int.toString position)
+                | (_ :: (_, _, position) :: _) => 
+                    raise Error ("Only one 'provides' directive is allowed, but a second one is specified on line " ^ Int.toString position)
             
             val descriptionDirectives = List.mapPartial (fn (Description directive) => SOME directive | _ => NONE) directives
             val description = case descriptionDirectives of
                   [] => NONE
                 | [directive] => SOME directive
-                | (_ :: (_, position) :: _) => raise Error ("At most one 'description' directive is allowed, but a second one is specified on line " ^ Int.toString position)
+                | (_ :: (_, position) :: _) => 
+                    raise Error ("At most one 'description' directive is allowed, but a second one is specified on line " ^ Int.toString position)
 
             val requires = List.mapPartial (fn (Requires directive) => SOME directive | _ => NONE) directives
             
             fun unparsed key = 
                 let
-                    val directives' = List.mapPartial (fn (Unparsed (key', value, position)) => if key' = key then SOME (value, position) else NONE | _ => NONE) directives
+                    val directives' = List.mapPartial 
+                        (fn (Unparsed (key', value, position)) => 
+                            if key' = key 
+                                then SOME (value, position) 
+                                else NONE | _ => NONE) 
+                        directives
                 in
                     case directives' of
                           [] => NONE
                         | [directive] => SOME directive
-                        | (_ :: (_, position) :: _) => raise Error ("At most one '" ^ key ^ "' directive is allowed, but a second one is specified on line " ^ Int.toString position)
+                        | (_ :: (_, position) :: _) => 
+                            raise Error ("At most one '" ^ key ^ "' directive is allowed, but a second one is specified on line " ^ Int.toString position)
                 end
                 
         in
@@ -195,11 +200,13 @@ struct
     fun parseKeyValues lines =
         let
 
-            fun parseKeyLine line = 
+            fun parseKeyLine (line, position) = 
                 let
                     val (key :: valueParts) = String.fields (fn c => c = #":") line
                 in
-                    (key, String.concatWith ":" valueParts)
+                    if CharVector.all (fn c => Char.isAlphaNum c orelse c = #"-") key
+                        then (key, String.concatWith ":" valueParts)
+                        else raise Error ("The key '" ^ key ^ "' contains non-alphanumeric, non-dash characters on line " ^ Int.toString position)
                 end
             
             fun parseValueLines (lines : (string * position) list) = 
@@ -219,7 +226,7 @@ struct
             fun parse ([], keyValues) = rev keyValues
               | parse ((line, position) :: lines, keyValues) = 
                     let
-                        val (key, valueHead) = parseKeyLine line
+                        val (key, valueHead) = parseKeyLine (line, position)
                         val (valueTail, lines') = parseValueLines lines
                         val keyValue = (key, concat (valueHead :: map #1 valueTail), position)
                     in
@@ -256,6 +263,12 @@ struct
         end
 
     fun fromString string = parseStream (TextIO.openString string)
+
+    fun withErrorPrinter parser input name = parser input
+        handle (e as Error s) => (
+            TextIO.output (TextIO.stdErr, "Error in '" ^ name ^ "': " ^ s ^ "\n"); 
+            raise e
+        )
 
 end
 
