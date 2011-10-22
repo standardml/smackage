@@ -31,6 +31,14 @@ structure Smackage =
 struct
     exception SmackExn of string
 
+    (* gian - I think it might be worth distinguishing where a .smackage 
+     * configuration
+     * file lives (maybe have a stateful Configure struct with defaults, in
+     * case there's no such file) from the place where smackage code goes.
+     * Course, if we can figure out where the directory is, we can just have
+     * such a hypothetical config file go in $(SMACKAGE_HOME)/config, so 
+     * that would work too... -rjs 2:30am est, SML hack day *)
+
     (** Attempt to ascertain the smackage home directory.
         Resolved in this order:
 
