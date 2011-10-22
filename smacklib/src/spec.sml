@@ -5,7 +5,7 @@
         provides: test 1.2.3beta
         description:
             This is a sample smackspec file.
-
+        remote: git git://example.org/test.git
         requires: smacklib >= 1.2.3
         requires: ioextras 0.0.45
 
