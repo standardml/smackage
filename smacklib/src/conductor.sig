@@ -3,8 +3,6 @@
 
 signature CONDUCTOR =
 sig
-   type semver = int * int * int * string
-
    (* package smackage_root_dir some_package
     * 
     * Given a package, either returns NONE ("I don't know where or how to get 
@@ -22,7 +20,7 @@ sig
     *    the package directory smackage_root_dir/some_package/vX.Y.Zps,
     *    which it assumes has already been created for it. *)
    val package: string -> string -> 
-                   { poll: unit -> (string * semver) list 
-                   , get: semver -> unit }
+                   { poll: unit -> (string * SemVer.semver) list 
+                   , get: SemVer.semver -> unit }
 end
 

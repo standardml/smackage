@@ -1,0 +1,8 @@
+Group is
+   $/basis.cm
+   src/semver.sml
+
+   src/conductor.sig
+   src/conductor.sml
+   src/get-git.sml
+   src/get-http.sml
