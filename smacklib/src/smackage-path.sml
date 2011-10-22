@@ -87,6 +87,8 @@ struct
         end
 
         val _ = List.app (replaceOrCreateSymlink versionDir) symlinks'
+
+        val _ = OS.FileSys.chDir versionDir
     in
         ["v" ^ SemVer.toString ver] @ symlinks @ symlinks'
     end
