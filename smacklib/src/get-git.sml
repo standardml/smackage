@@ -48,7 +48,7 @@ fun chdirSuccess s =
 
 fun systemSuccess s = 
    let val () = print ("Running: `" ^ s ^ "`\n") in
-      if OS.Process.system s = OS.Process.success then ()
+      if OS.Process.isSuccess (OS.Process.system s) then ()
       else raise Fail ("System call `" ^ s ^ "` returned failure")
    end
 
