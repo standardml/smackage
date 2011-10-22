@@ -20,6 +20,7 @@
         provides: PACKAGE_NAME SEMANTIC_VERSION     (exactly once)
         description: ANY_STRING                     (at most once)
         requires: PACKAGE_NAME VERSION_CONSTRAINTS  (zero or more)
+        comment: ANY_STRING                         (zero or more, thrown away while parsing)
 *)
 
 signature SPEC =
@@ -61,17 +62,37 @@ struct
     
     type description = string * position
     
+    type unparsed = string * position
+    
     type smackspec = {
         provides : package,
         description : description option,
-        requires : requirement list
+        requires : requirement list,
+        maintainer : unparsed option,
+        upstreamVersion : unparsed option,
+        upstreamUrl : unparsed option,
+        git : unparsed option,
+        svn : unparsed option,
+        hg : unparsed option,
+        cvs : unparsed option,
+        documentationUrl : unparsed option,
+        bugUrl : unparsed option,
+        license : unparsed option,
+        platform : unparsed option,
+        build : unparsed option,
+        test : unparsed option,
+        install : unparsed option,
+        uninstall : unparsed option,
+        documentation : unparsed option
         }
+
          
     datatype directive
         = Comment
         | Provides of package
         | Description of description
         | Requires of requirement
+        | Unparsed of string * string * position
 
         
     fun dropWhile' predicate ([], count) = ([], count)
@@ -88,13 +109,30 @@ struct
         
             fun parse (key, value, position) = case key of
                   "comment" => Comment
+                | "description" => Description (value, position)
+                | "maintainer" => Unparsed (key, value, position)
+                | "keywords" => Unparsed (key, value, position)
+                | "upstream-version" => Unparsed (key, value, position)
+                | "upstream-url" => Unparsed (key, value, position)
+                | "git" => Unparsed (key, value, position)
+                | "svn" => Unparsed (key, value, position)
+                | "hg" => Unparsed (key, value, position)
+                | "cvs" => Unparsed (key, value, position)
+                | "documentation-url" => Unparsed (key, value, position)
+                | "bug-url" => Unparsed (key, value, position)
+                | "license" => Unparsed (key, value, position)
+                | "platform" => Unparsed (key, value, position)
+                | "build" => Unparsed (key, value, position)
+                | "test" => Unparsed (key, value, position)
+                | "install" => Unparsed (key, value, position)
+                | "uninstall" => Unparsed (key, value, position)
+                | "documentation" => Unparsed (key, value, position)
                 | "provides" => 
                     let
                         val [packageName, version] = String.tokens Char.isSpace value
                     in
                         Provides (packageName, SemVer.fromString version, position)
                     end
-                | "description" => Description (value, position)
                 | "requires" => 
                     let
                         val (packageName :: constraint) = String.tokens Char.isSpace value
@@ -118,11 +156,38 @@ struct
                 | (_ :: (_, position) :: _) => raise Error ("At most one 'description' directive is allowed, but a second one is specified on line " ^ Int.toString position)
 
             val requires = List.mapPartial (fn (Requires directive) => SOME directive | _ => NONE) directives
+            
+            fun unparsed key = 
+                let
+                    val directives' = List.mapPartial (fn (Unparsed (key', value, position)) => if key' = key then SOME (value, position) else NONE | _ => NONE) directives
+                in
+                    case directives' of
+                          [] => NONE
+                        | [directive] => SOME directive
+                        | (_ :: (_, position) :: _) => raise Error ("At most one '" ^ key ^ "' directive is allowed, but a second one is specified on line " ^ Int.toString position)
+                end
+                
         in
             {
                 provides = provides,
                 description = description,
-                requires = requires
+                requires = requires,
+                maintainer = unparsed "maintainer",
+                upstreamVersion = unparsed "upstream-version",
+                upstreamUrl = unparsed "upstream-url",
+                git = unparsed "git",
+                svn = unparsed "svn",
+                hg = unparsed "hg",
+                cvs = unparsed "cvs",
+                documentationUrl = unparsed "documentation-url",
+                bugUrl = unparsed "bug-url",
+                license = unparsed "license",
+                platform = unparsed "platform",
+                build = unparsed "build",
+                test = unparsed "test",
+                install = unparsed "install",
+                uninstall = unparsed "uninstall",
+                documentation = unparsed "documentation"
             }
         end
     
