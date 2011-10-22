@@ -11,7 +11,7 @@ struct
   fun retrieveTemp url =
       let val tmpName = OS.FileSys.tmpName ()
       in (* XXX: FIXME: security bug if url is untrusted. *)
-          if OS.Process.system ("curl " ^ url ^ " > " ^ tmpName) <> 0
+          if not (OS.Process.isSuccess (OS.Process.system ("curl " ^ url ^ " > " ^ tmpName)))
           then raise HttpException "download fail"
           else tmpName
       end
@@ -26,12 +26,14 @@ struct
 
   fun handleIOError error = raise HttpException "file IO error"
 
+  (* LIB: This really should be in a library somewhere. *)
   fun finally f final =
       (f () handle e => (final (); raise e))
       before (final ())
 
   (* Return the contents of a file. Won't work in SML/NJ if the file is
    * more than 20MB... *)
+  (* LIB: This really should be in a library somewhere. *)
   fun readFile fname =
       let val file = TextIO.openIn fname
       in finally
