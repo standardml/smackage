@@ -8,3 +8,5 @@ Group is
    src/get-git.sml
    src/get-http.sml
    src/smackage-path.sml
+   src/http-downloader.sig
+   src/curl-lib.sml
