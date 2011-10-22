@@ -20,6 +20,29 @@
         provides: PACKAGE_NAME SEMANTIC_VERSION     (exactly once)
         description: ANY_STRING                     (at most once)
         requires: PACKAGE_NAME VERSION_CONSTRAINTS  (zero or more)
+        comment: ANY_STRING                         (zero or more)
+    
+    Apart from that, the following keys are supported, but their values are not checked for syntax errors at the moment:
+    
+        maintainer: FULL_NAME <EMAIL>               
+        keywords: KEYWORD_1 KEYWORD_2 KEYWORD_3
+        upstream-version: VERSION
+        upstream-url: URL
+        git: URL
+        svn: URL
+        hg: URL
+        cvs: URL
+        documentation-url: URL
+        bug-url: URL
+        license: CANONICAL_LICENSE_NAME
+        platform: SML_PLATFORM
+        build: COMMAND
+        test: COMMAND
+        install: COMMAND
+        uninstall: COMMAND
+        documentation: COMMAND
+        
+    All of these keys can appear at most once.
 
     Please note that the parser is rather lax at the moment; it will accept url values that aren't really URLs etc.
     This will likely change in the future, so please be careful to get it right when pasting or typing in the values.
