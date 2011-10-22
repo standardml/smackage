@@ -1,3 +1,27 @@
+
+(*
+    This defines the data structure and syntax for smackage package definitions (smackspec files).
+    The general syntax is a flat key/value format, eg.
+
+        provides: test 1.2.3beta
+        description:
+            This is a sample smackspec file.
+
+        requires: smacklib >= 1.2.3
+        requires: ioextras 0.0.45
+
+    Lines that aren't indented or empty must contain a key name followed by a colon (with no whitspace before the colon).
+    The string to the right of the colon as well as any following indented or empty lines constitutes the value belonging
+    to that key. There is no order and keys may occur multiple times. Lines with only whitespace at the beginning of the
+    file are ignored. Keys that have no meaning in smackspec are syntax errors.
+    
+    The values have further syntactic restrictions depending on the key, vaguely summerized here:
+    
+        provides: PACKAGE_NAME SEMANTIC_VERSION     (exactly once)
+        description: ANY_STRING                     (at most once)
+        requires: PACKAGE_NAME VERSION_CONSTRAINTS  (zero or more)
+*)
+
 signature SPEC =
 sig
 
@@ -15,7 +39,9 @@ sig
     
     type smackspec
     
-    val parseFile : string -> smackspec
+    val fromFile : string -> smackspec
+
+    val fromString : string -> smackspec
     
 end
 
@@ -147,15 +173,24 @@ struct
             | (SOME line) => readLines (file, position + 1, (line, position) :: lines)
 
 
-    fun parseFile filename : smackspec =
+    fun parseStream stream = 
         let
-            val file = TextIO.openIn filename
-            val lines = readLines (file, 1, [])
-            val _ = TextIO.closeIn file
+            val lines = readLines (stream, 1, [])
             val keyValues = parseKeyValues lines
         in
             parseDirectives keyValues
         end
+
+    fun fromFile filename =
+        let
+            val file = TextIO.openIn filename
+            val result = parseStream file
+            val _ = TextIO.closeIn file
+        in
+            result
+        end
+
+    fun fromString string = parseStream (TextIO.openString string)
 
 end
 
