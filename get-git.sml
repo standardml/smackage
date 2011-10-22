@@ -1,4 +1,6 @@
 (* Manipulating packages with git *)
+(* Try running 'GetGit.poll "git://github.com/robsimmons/toy.git"' *)
+(* Robert J. Simmons *)
 
 structure GetGit = struct
 
