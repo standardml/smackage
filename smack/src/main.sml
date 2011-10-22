@@ -113,7 +113,7 @@ struct
          print "\tlist\t\t\t\tList installed packages\n";
          print "\trefresh\t\t\t\tRefresh the versions.smackspec index\n";
          print "\tsearch <name>\t\t\tFind an appropriate package\n";
-         print "\tsource <name> <protocol> <url>\t\t\tAdd a local source\n";
+         print "\tsource <name> <protocol> <url>\t\t\tAdd a smackage source\n";
          print "\tuninstall <name> [version]\tRemove a package\n";
          print "\tupdate\t\t\t\tUpdate the package database\n");
 
