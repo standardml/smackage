@@ -1,47 +1,52 @@
 signature SPEC =
 sig
 
+    exception Error of string
+
     type position
 
     type packageName
 
     type requirement
 
+    type package
+    
+    type description
+    
     type smackspec
     
-    (* Parses KEY: VALUE where KEY is alphanumeric and VALUE is any string, 
-       continuing as long as every line is either indented by one or more spaces or tabs,
-       or is empty. *)
-    val parseKeyValues : (string * position) list -> (string * string * position) list
-
+    val parseFile : string -> smackspec
+    
 end
 
 
-structure Spec (*: SPEC*) =
+structure Spec : SPEC =
 struct
+
+    exception Error of string
 
     type position = int
 
     type packageName = string
 
-    type requirement = packageName * string * position
+    type requirement = packageName * SemVer.constraint * position
 
     type package = packageName * SemVer.semver * position
     
-    type description = string option * position
-    
-    type requirements = requirement list
+    type description = string * position
     
     type smackspec = {
-        package : package,
-        description : description,
-        requirements : requirements
+        provides : package,
+        description : description option,
+        requires : requirement list
         }
-
+         
     datatype directive
-        = Provides of package
+        = Comment
+        | Provides of package
         | Description of description
-        | Requirement of requirement
+        | Requires of requirement
+
         
     fun dropWhile' predicate ([], count) = ([], count)
       | dropWhile' predicate ((head :: tail), count) = 
@@ -50,30 +55,52 @@ struct
                 else (head :: tail, count)
 
     fun dropWhile predicate list = #1 (dropWhile' predicate (list, 0))
+
     
     fun parseDirectives keyValues = 
         let
         
             fun parse (key, value, position) = case key of
-                  "provides" => 
+                  "comment" => Comment
+                | "provides" => 
                     let
                         val [packageName, version] = String.tokens Char.isSpace value
                     in
                         Provides (packageName, SemVer.fromString version, position)
                     end
-                | "description" => Description (SOME value, position)
+                | "description" => Description (value, position)
                 | "requires" => 
                     let
                         val (packageName :: constraint) = String.tokens Char.isSpace value
                     in
-                        Requirement (packageName, String.concatWith " " constraint, position)
+                        Requires (packageName, String.concatWith " " constraint, position)
                     end
+                | keyword => raise Error ("Unknown directive '" ^ keyword ^ "' on line " ^ Int.toString position)
             
             val directives = map parse keyValues
+            
+            val providesDirectives = List.mapPartial (fn (Provides directive) => SOME directive | _ => NONE) directives
+            val provides = case providesDirectives of
+                  [] => raise Error ("A 'provides' directive is required, eg: provides: mypackage 0.2.5")
+                | [directive] => directive
+                | (_ :: (_, _, position) :: _) => raise Error ("Only one 'provides' directive is allowed, but a second one is specified on line " ^ Int.toString position)
+            
+            val descriptionDirectives = List.mapPartial (fn (Description directive) => SOME directive | _ => NONE) directives
+            val description = case descriptionDirectives of
+                  [] => NONE
+                | [directive] => SOME directive
+                | (_ :: (_, position) :: _) => raise Error ("At most one 'description' directive is allowed, but a second one is specified on line " ^ Int.toString position)
+
+            val requires = List.mapPartial (fn (Requires directive) => SOME directive | _ => NONE) directives
         in
-            ()
+            {
+                provides = provides,
+                description = description,
+                requires = requires
+            }
         end
     
+
     fun parseKeyValues lines =
         let
 
@@ -113,12 +140,14 @@ struct
             parse (lines', [])
         end 
     
+
     fun readLines (file, position, lines) = 
         case TextIO.inputLine file of
               NONE => rev lines
             | (SOME line) => readLines (file, position + 1, (line, position) :: lines)
 
-    fun parseFile filename =
+
+    fun parseFile filename : smackspec =
         let
             val file = TextIO.openIn filename
             val lines = readLines (file, 1, [])
