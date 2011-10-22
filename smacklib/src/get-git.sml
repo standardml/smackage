@@ -34,21 +34,6 @@ fun poll (gitAddr: string) =
                   then String.extract (tag, 1, NONE)
                   else raise SemVer.InvalidVersion (* Not a version tag *)
                 | _ => raise SemVer.InvalidVersion (* Not a tag at all *)
-
-            (* Modified to use SemVer module *)
-            (*fun numAndMore str = 
-               case Int.fromString str of 
-                  NONE => NONE
-                | SOME i => 
-                  SOME (i, String.extract (str, size (Int.toString i), NONE))
-
-            val (major, minor, patch, ps) = 
-               case map numAndMore (String.tokens (eq #".") tag) of
-                  [ SOME (major, ""), SOME (minor, ""), SOME (patch, ps) ] =>
-                  (major, minor, patch, ps)
-                | _ => raise NotSemVar*)
-
-            (* XXX check that ps is [A-Za-z][0-9A-Za-z-]* *)
          in 
             SOME (hash, SemVer.fromString tag)
          end handle _ => NONE
@@ -56,5 +41,58 @@ fun poll (gitAddr: string) =
       List.mapPartial process input
    end handle _ => raise Fail "I/O error trying to access temporary file"
 
+fun chdirSuccess s = 
+   let val () = print ("Changing directory: `" ^ s ^ "`\n") in
+      OS.FileSys.chDir s
+   end
+
+fun systemSuccess s = 
+   let val () = print ("Running: `" ^ s ^ "`\n") in
+      if OS.Process.system s = OS.Process.success then ()
+      else raise Fail ("System call `" ^ s ^ "` returned failure")
+   end
+
+fun download projName gitAddr = 
+   ( OS.FileSys.mkDir ("git-repo")
+   ; chdirSuccess ("git-repo")
+   ; systemSuccess ("git init")
+   ; systemSuccess ("git remote add origin " ^ gitAddr))
+
+(*[ val get: string -> string -> SemVer.semver -> unit ]*)
+fun get basePath projName gitAddr semver = 
+   let val olddir = OS.FileSys.getDir () in 
+   let 
+      val projPath = OS.Path.joinDirFile { dir = basePath, file = projName } 
+      val () = if OS.FileSys.isDir projPath then () 
+               else raise Fail ("file `" ^ projName 
+                                ^ "` exists and isn't a directory")
+      val () = chdirSuccess projPath
+
+      (* Get the repository in place if it's not there *)
+      val repoPath = OS.Path.joinDirFile { dir = projPath, file = "git-repo" }
+      val () = if OS.FileSys.access (repoPath, []) 
+               then (if OS.FileSys.isDir repoPath then ()
+                     else raise Fail "file `git-repo` exists and isn't\
+                                     \ a directory")
+               else download projName gitAddr 
+
+      (* Update the repository *)
+      val () = chdirSuccess repoPath
+      val () = systemSuccess ("git fetch --tags")
+      val () = systemSuccess ("git pull origin master")
+ 
+      (* Output *)
+      val ver = "v" ^ SemVer.toString semver
+      val () = systemSuccess ( "git archive " ^ ver ^ " --format tar > ../"
+                             ^ ver ^ "/" ^ ver ^ ".tar.gz")
+      
+      (* Unpack, clean up *)
+      val verPath = OS.Path.joinDirFile { dir = projPath, file = ver }
+      val () = chdirSuccess verPath
+      val () = systemSuccess ("tar xzvf " ^ ver ^ ".tar.gz")
+      val () = OS.FileSys.remove (ver ^ ".tar.gz")
+   in
+      ()
+   end handle exn => (OS.FileSys.chDir olddir; raise exn) end
 end
 

@@ -15,7 +15,7 @@ sig
     *    smackage_root_dir exists, but not that smackage_root_dir/packlib 
     *    exists.
     * 
-    * get (X,Y,Z,ps) - 
+    * get semver - 
     *    Makes semantic version X.Y.Zps available within
     *    the package directory smackage_root_dir/some_package/vX.Y.Zps,
     *    which it assumes has already been created for it. *)

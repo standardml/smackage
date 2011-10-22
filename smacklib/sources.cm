@@ -10,3 +10,4 @@ Group is
    src/smackage-path.sml
    src/http-downloader.sig
    src/curl-lib.sml
+   src/smacklib.sml
