@@ -24,14 +24,21 @@ struct
         val values = untilNone () 
         val _ = OS.FileSys.closeDir dh
     in
-        List.mapPartial 
-            (fn x => SOME (SemVer.fromString x) handle _ => NONE) values
-    end 
+        ListMergeSort.sort SemVer.<
+            (List.mapPartial 
+                (fn x => SOME (SemVer.fromString x) handle _ => NONE) values)
+    end
 
+    (** Create the empty directory for pkg at a given version, and update
+        symlinks accordingly.
+
+        The question we face is whether the new package we are installing
+        should replace some other as the target of a version symlink. *)
     fun createPackagePaths (pkg,ver) =
     let
         val newPaths = map (fn x => pkg ^ "/" ^ x) (SemVer.allPaths ver)
-        
+        val existing = installedVersions pkg
+        val isLatest = length existing = 0 orelse SemVer.< (hd existing, ver)
     in
         newPaths
     end
