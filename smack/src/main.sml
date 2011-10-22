@@ -34,33 +34,7 @@ struct
         raise SmackExn "Cannot find smackage home. Try setting SMACKAGE_HOME"
     end
 
-    (** Parse the versions.smackspec file to produce a list of available
-        (package,version,protocol) triples. *)
-    fun parseVersionsSpec () =
-    let
-        val fp = TextIO.openIn (smackHome ^ "/versions.smackspec")
-                    handle _ => raise Fail 
-                        ("Cannot open `$SMACKAGE_HOME/versions.smackspec'. " ^ 
-                         "Try running `smack refresh' to update this file.")
 
-        val stanza = ref "";
-        
-        fun readStanzas () = 
-        let
-            val line = TextIO.inputLine fp
-        in
-            if line = NONE then [!stanza] else
-            if line = SOME "\n"
-                then (!stanza before stanza := "") :: readStanzas ()
-                else (stanza := (!stanza) ^ (valOf line); readStanzas ())
-        end
-
-        val stanzas = readStanzas () handle _ => (TextIO.closeIn fp; [])
-
-        val _ = TextIO.closeIn fp
-    in
-        map (Spec.toVersionSpec o Spec.fromString) stanzas
-    end
 
     (** Install a package with a given name and version.
         An empty version string means "the latest version".
@@ -68,11 +42,17 @@ struct
         if no such package or version is found. *)
     fun install name version =
     let
+        val _ = VersionIndex.loadVersions smackHome
         val _ = if version = "" then 
                     raise Fail "Install needs an explicit version for now."
                 else ()
         val ver = SemVer.fromString version
         val _ = SmackLib.install smackHome (name,ver)
+        val _ = print "Candidates:\n"
+        val candidates = VersionIndex.queryVersions name
+        val _ = List.app 
+            (fn (n,v,p) => print (n ^ " " ^ SemVer.toString v ^ "\n")) 
+                candidates
     in
         ()
     end

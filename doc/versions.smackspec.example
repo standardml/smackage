@@ -1,0 +1,8 @@
+provides: foolib 1.0.0
+remote: git git@github.com:standardml/smackage.git
+
+provides: foolib 1.0.2
+remote: git git@github.com:standardml/smackage.git
+
+provides: foolib 2.0.0
+remote: git git@github.com:standardml/smackage.git

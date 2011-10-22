@@ -235,7 +235,9 @@ struct
 
             fun parseKeyLine (line, position) = 
                 let
-                    val (key :: valueParts) = String.fields (fn c => c = #":") line
+                    val (key,valueParts) = 
+                        (fn (key :: valueParts) => (key,valueParts) | _ => raise Fail "parseKeyValues: key error") 
+                            (String.fields (fn c => c = #":") line)
                 in
                     if CharVector.all (fn c => Char.isAlphaNum c orelse c = #"-") key
                         then (key, String.concatWith ":" valueParts)
