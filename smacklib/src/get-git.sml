@@ -52,7 +52,7 @@ fun systemSuccess s =
       else raise Fail ("System call `" ^ s ^ "` returned failure")
    end
 
-fun download projName gitAddr = 
+fun download gitAddr = 
    ( OS.FileSys.mkDir ("git-repo")
    ; chdirSuccess ("git-repo")
    ; systemSuccess ("git init")
@@ -74,7 +74,7 @@ fun get basePath projName gitAddr semver =
                then (if OS.FileSys.isDir repoPath then ()
                      else raise Fail "file `git-repo` exists and isn't\
                                      \ a directory")
-               else download projName gitAddr 
+               else download gitAddr 
 
       (* Update the repository *)
       val () = chdirSuccess repoPath
@@ -82,18 +82,19 @@ fun get basePath projName gitAddr semver =
       val () = systemSuccess ("git pull origin master")
       val () = print "Repository is updated\n" 
 
-      (* Output *)
+      (* Output via cloning *)
       val ver = "v" ^ SemVer.toString semver
-      val () = systemSuccess ( "git archive " ^ ver ^ " --format tar > ../"
-                             ^ ver ^ "/" ^ ver ^ ".tar.gz")
-      
-      (* Unpack, clean up *)
       val verPath = OS.Path.joinDirFile { dir = projPath, file = ver }
       val () = chdirSuccess verPath
-      val () = systemSuccess ("tar xzvf " ^ ver ^ ".tar.gz")
-      val () = OS.FileSys.remove (ver ^ ".tar.gz")
+      val () = systemSuccess ("git init")
+      val () = systemSuccess ("git remote add origin " ^ repoPath)
+      val () = systemSuccess ("git fetch --tags --quiet")
+      val () = systemSuccess ("git checkout " ^ ver ^ " --quiet")
+
+      (* Clean up *)
+      val () = systemSuccess ( "rm -Rf .git" )
    in
-      ()
+      chdirSuccess olddir
    end handle exn => (OS.FileSys.chDir olddir; raise exn) end
 end
 
