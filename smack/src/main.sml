@@ -2,45 +2,14 @@ structure Smack =
 struct
     exception SmackExn of string
 
-<<<<<<< HEAD
-=======
-    (* gian - I think it might be worth distinguishing where a .smackage 
-     * configuration
-     * file lives (maybe have a stateful Configure struct with defaults, in
-     * case there's no such file) from the place where smackage code goes.
-     * Course, if we can figure out where the directory is, we can just have
-     * such a hypothetical config file go in $(SMACKAGE_HOME)/config, so 
-     * that would work too... -rjs 2:30am est, SML hack day *)
-
-    (** Attempt to ascertain the smackage home directory.
-        Resolved in this order:
-
-        SMACKAGE_HOME environment variable
-        ~/.smackage/
-        /usr/local/smackage/
-        /opt/smackage/
-    *)
-    val smackHome =
-    let
-        fun tryDir (SOME s) = ((OS.FileSys.openDir s; true) handle _ => false)
-          | tryDir NONE = false
-        val envHome = OS.Process.getEnv "SMACKAGE_HOME"
-        val envHome' = if OS.Process.getEnv "HOME" = NONE 
-            then NONE 
-            else SOME (valOf (OS.Process.getEnv "HOME") ^ "/.smackage")
-    in
-        if tryDir envHome then valOf envHome else
-        if tryDir envHome' then valOf envHome' else
-        if tryDir (SOME "/usr/local/smackage") then "/usr/local/smackage" else
-        if tryDir (SOME "/opt/smackage") then "/opt/smackage" else
-        raise SmackExn "Cannot find smackage home. Try setting SMACKAGE_HOME"
-    end
-
     (** Parse the versions.smackspec file to produce a list of available
         (package,version,protocol) triples. *)
     fun parseVersionsSpec () =
     let
-        val fp = TextIO.openIn (smackHome ^ "/versions.smackspec")
+        val versions = 
+           OS.Path.joinDirFile { dir = !Configure.smackHome,
+                                 file = "versions.smackspec" } 
+        val fp = TextIO.openIn versions
                     handle _ => raise Fail 
                         ("Cannot open `$SMACKAGE_HOME/versions.smackspec'. " ^ 
                          "Try running `smack refresh' to update this file.")
@@ -64,7 +33,6 @@ struct
         map (Spec.toVersionSpec o Spec.fromString) stanzas
     end
 
->>>>>>> 09ddf6bdca80b3ae9a95263ba101daebf038a984
     (** Install a package with a given name and version.
         An empty version string means "the latest version".
         raises SmackExn in the event that the package is already installed or
@@ -102,7 +70,56 @@ struct
 
     fun update () = raise SmackExn "Not implemented"
 
-    fun source pkg prot url = raise Fail "Not implemented"
+    fun newsource pkg prot uri =  
+       let 
+          val prot = Protocol.fromString (prot ^ " " ^ uri)
+          val sourcesLocal = 
+             OS.Path.joinDirFile { dir = !Configure.smackHome
+                                 , file = "sources.local"}
+          val file = TextIO.openIn sourcesLocal
+
+          fun getLine () = 
+             case Option.map 
+                    (String.tokens Char.isSpace) 
+                    (TextIO.inputLine file) of              
+                NONE => NONE
+              | SOME [] => getLine ()
+              | SOME [ pkg', prot', uri' ] =>
+                   SOME (pkg', Protocol.fromString (prot' ^ " " ^ uri'))
+              | SOME s => raise Fail ( "Bad source line: " 
+                                     ^ String.concatWith " " s)
+
+          fun read_big accum = 
+             case getLine () of 
+                NONE => List.rev accum
+              | SOME line => read_big (line :: accum)
+
+          fun read_small accum = 
+             case getLine () of
+                NONE => List.rev ((pkg, prot) :: accum)
+              | SOME (pkg', prot') => 
+                (case String.compare (pkg, pkg') of
+                    LESS => 
+                      read_big ((pkg', prot') :: (pkg, prot) :: accum)
+                  | EQUAL => 
+                      ( print ("WARNING: overwriting old source specification\n\
+                              \OLD: " ^ pkg' ^ Protocol.toString prot' ^ "\n\
+                              \NEW: " ^ pkg ^ Protocol.toString prot ^ "\n")
+                      ; read_big ((pkg, prot) :: accum))
+                  | GREATER => 
+                      read_small ((pkg', prot') :: accum))
+
+          val sources = read_small []
+
+          val file = TextIO.openOut sourcesLocal
+
+          fun write [] = TextIO.closeOut file
+            | write ((pkg, prot) :: sources) = 
+              ( TextIO.output (file, pkg ^ " " ^ Protocol.toString prot ^ "\n")
+              ; write sources)
+       in
+          write sources
+       end
 
     fun printUsage () =
         (print "Usage: smackage <command> [args]\n";
@@ -117,11 +134,11 @@ struct
          print "\tuninstall <name> [version]\tRemove a package\n";
          print "\tupdate\t\t\t\tUpdate the package database\n");
 
-    fun main _ = 
+    fun main args = 
        let
           val () = Configure.init ()
        in
-          case CommandLine.arguments () of
+          case args of
              ("--help"::_) => (printUsage(); OS.Process.success)
            | ("-h"::_) => (printUsage(); OS.Process.success)
            | ("help"::_) => (printUsage(); OS.Process.success)
@@ -130,7 +147,8 @@ struct
            | ["update"] => (update (); OS.Process.success)
            | ["search",pkg] => (search pkg ""; OS.Process.success)
            | ["search",pkg,ver] => (search pkg ver; OS.Process.success)
-           | ["source",pkg,prot,url] => (source pkg prot url; OS.Process.success)
+           | ["source",pkg,prot,url] => 
+                (newsource pkg prot url; OS.Process.success)
            | ["refresh"] => (OS.Process.success)
            | ["install",pkg,ver] => (install pkg ver; OS.Process.success)
            | ["install",pkg] => (install pkg ""; OS.Process.success)
@@ -144,5 +162,5 @@ struct
            (TextIO.output (TextIO.stdErr, s ^ "\n"); OS.Process.failure)
 end
 
-val _ = OS.Process.exit(Smack.main())
+val _ = OS.Process.exit(Smack.main(CommandLine.arguments ()))
 
