@@ -1,6 +1,7 @@
 Group is
    $/basis.cm
    $/smlnj-lib.cm
+   src/protocol.sml
    src/semver.sml
 
    src/conductor.sig

@@ -3,24 +3,13 @@
 
 signature CONDUCTOR =
 sig
-   (* package smackage_root_dir some_package
-    * 
-    * Given a package, either returns NONE ("I don't know where or how to get 
-    * "some_package") or SOME { poll, get }.
-    * 
-    * poll ()
-    *    Query the remote store for which tags are available. Optionally,
-    *    this may instead query smackage_root_dir/packlib to support people
-    *    working with local libraries. This function assumes that 
-    *    smackage_root_dir exists, but not that smackage_root_dir/packlib 
-    *    exists.
-    * 
-    * get semver - 
-    *    Makes semantic version X.Y.Zps available within
-    *    the package directory smackage_root_dir/some_package/vX.Y.Zps,
-    *    which it assumes has already been created for it. *)
-   val package: string -> string -> 
-                   { poll: unit -> (string * SemVer.semver) list 
-                   , get: SemVer.semver -> unit }
+   (* get smackagePath packageName ver prot 
+    *    Makes semantic version ver available within
+    *    the package directory ($smackagePath)/($packageName)/v($ver).
+    *    It assumes this directory exists. *)
+   val get: string -> string -> SemVer.semver -> Protocol.protocol -> unit
+
+   (* Old function, throws an error now *)
+   val package: 'a -> 'b -> { get: 'c, poll: 'd }
 end
 
