@@ -34,6 +34,32 @@ struct
         raise SmackExn "Cannot find smackage home. Try setting SMACKAGE_HOME"
     end
 
+    (** Parse the versions.smackspec file to produce a list of available
+        (package,version,protocol) triples. *)
+    fun parseVersionsSpec () =
+    let
+        val fp = TextIO.openIn (smackHome ^ "/versions.smackspec")
+                    handle _ => raise Fail 
+                        ("Cannot open `$SMACKAGE_HOME/versions.smackspec'. " ^ 
+                         "Try running `smack refresh' to update this file.")
+
+        val stanza = ref "";
+        
+        fun readStanzas () = 
+        let
+            val line = TextIO.inputLine fp
+        in
+            if line = NONE then [!stanza] else
+            if line = SOME "\n"
+                then (!stanza before stanza := "") :: readStanzas ()
+                else (stanza := (!stanza) ^ (valOf line); readStanzas ())
+        end
+
+        val stanzas = readStanzas ()
+    in
+        map (Spec.toVersionSpec o Spec.fromString) stanzas
+    end
+
     (** Install a package with a given name and version.
         An empty version string means "the latest version".
         raises SmackExn in the event that the package is already installed or
@@ -78,6 +104,7 @@ struct
          print "\tinfo <name> [version]\t\tDisplay package information.\n";
          print "\tinstall <name> [version]\tInstall the named package\n";
          print "\tlist\t\t\t\tList installed packages\n";
+         print "\trefresh\t\t\t\tRefresh the versions.smackspec index\n";
          print "\tsearch <name>\t\t\tFind an appropriate package\n";
          print "\tuninstall <name> [version]\tRemove a package\n";
          print "\tupdate\t\t\t\tUpdate the package database\n");
@@ -91,6 +118,7 @@ struct
         | ["update"] => (update (); OS.Process.success)
         | ["search",pkg] => (search pkg ""; OS.Process.success)
         | ["search",pkg,ver] => (search pkg ver; OS.Process.success)
+        | ["refresh"] => (OS.Process.success)
         | ["install",pkg,ver] => (install pkg ver; OS.Process.success)
         | ["install",pkg] => (install pkg ""; OS.Process.success)
         | ["uninstall",pkg,ver] => (uninstall pkg ver; OS.Process.success)
