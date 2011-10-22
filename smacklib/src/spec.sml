@@ -5,7 +5,7 @@
         provides: test 1.2.3beta
         description:
             This is a sample smackspec file.
-
+        remote: git git://example.org/test.git
         requires: smacklib >= 1.2.3
         requires: ioextras 0.0.45
 
@@ -18,6 +18,7 @@
     
         provides: PACKAGE_NAME SEMANTIC_VERSION     (exactly once)
         description: ANY_STRING                     (at most once)
+        remote: TYPE URL                            (exactly once)
         requires: PACKAGE_NAME VERSION_CONSTRAINTS  (zero or more)
         comment: ANY_STRING                         (zero or more)
     
@@ -27,10 +28,6 @@
         keywords: KEYWORD_1 KEYWORD_2 KEYWORD_3
         upstream-version: VERSION
         upstream-url: URL
-        git: URL
-        svn: URL
-        hg: URL
-        cvs: URL
         documentation-url: URL
         bug-url: URL
         license: CANONICAL_LICENSE_NAME
