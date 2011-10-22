@@ -1,4 +1,8 @@
-(** Deal with filesystem elements in a sensible way. *)
+(** Deal with filesystem elements in a sensible way. 
+
+FIXME: This is heavily dependent on symlinks working. Windows will need some
+deeper thought.
+*)
 structure SmackagePath =
 struct
     (** Return the full filesystem path to a package.
@@ -9,7 +13,9 @@ struct
     (** Retrieve a list of currently installed versions of pkg.
         We do this by listing the directory, and ignoring everything
         that's not a valid semantic version.  This ignores the symlinks
-        like v1 and v1.6, and only gets the full versions like v1.6.2
+        like v1 and v1.6, and only gets the full versions like v1.6.2.
+
+        The result *MUST* be sorted in descending order.
     *)
     fun installedVersions pkg =
     let
@@ -33,14 +39,63 @@ struct
         symlinks accordingly.
 
         The question we face is whether the new package we are installing
-        should replace some other as the target of a version symlink. *)
+        should replace some other as the target of a version symlink.
+        
+        FIXME: There is very little error handling in here at the moment.
+        This is somewhat intentional, as an exception anywhere should bail out
+        the whole process.
+
+        This will leave the current working directory as the newly created
+        directory for this package.
+    *)
     fun createPackagePaths (pkg,ver) =
     let
+        (* Create the top-level package directory if it doesn't exist *)
+        val _ = OS.FileSys.isDir (getPackageDir pkg) handle _ =>
+                    (OS.FileSys.mkDir (getPackageDir pkg); true)
+        val _ = OS.FileSys.chDir (getPackageDir pkg)
+
         val newPaths = map (fn x => pkg ^ "/" ^ x) (SemVer.allPaths ver)
         val existing = installedVersions pkg
-        val isLatest = length existing = 0 orelse SemVer.< (hd existing, ver)
+
+        val majorPrefix = Int.toString (#1 ver)
+        val majors = 
+            List.filter 
+                (fn x => String.isPrefix majorPrefix (SemVer.toString x)) 
+                    existing
+        val symlinks = 
+            if length majors = 0 orelse SemVer.< (hd majors, ver) 
+                then ["v" ^ majorPrefix] else []
+
+        val minorPrefix = Int.toString (#1 ver) ^ "." ^ Int.toString (#2 ver)
+        val minors = List.filter (fn x => String.isPrefix minorPrefix (SemVer.toString x)) existing
+        val symlinks' = symlinks @
+            (if length minors = 0 orelse SemVer.< (hd minors, ver)
+                then ["v" ^ minorPrefix] else [])
+
+        val versionDir = "v" ^ SemVer.toString ver
+        val _ = OS.FileSys.mkDir (getPackageDir pkg ^ "/" ^ versionDir) handle _ => ()
+
+        fun replaceOrCreateSymlink dst link =
+        let
+            (* Delete the old link if it exists *)
+            val e = OS.FileSys.isLink link handle _ => false
+            val _ = 
+                (if e then OS.FileSys.remove link else ())
+                handle _ => ()
+
+            (* Create the new one *)
+            (* TODO: Windows support *)
+            val _ = Posix.FileSys.symlink {old = dst, new = link}
+        in
+            ()
+        end
+
+        val _ = List.app (replaceOrCreateSymlink versionDir) symlinks'
+
+        val _ = OS.FileSys.chDir versionDir
     in
-        newPaths
+        ["v" ^ SemVer.toString ver] @ symlinks @ symlinks'
     end
 end
 
