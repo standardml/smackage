@@ -47,6 +47,8 @@
     This will likely change in the future, so please be careful to get it right when pasting or typing in the values.
 *)
 
+
+
 signature SPEC =
 sig
 
@@ -82,7 +84,6 @@ end
 
 structure Spec : SPEC =
 struct
-
     exception Error of string
 
     type position = int
@@ -104,10 +105,7 @@ struct
         maintainer : unparsed option,
         upstreamVersion : unparsed option,
         upstreamUrl : unparsed option,
-        git : unparsed option,
-        svn : unparsed option,
-        hg : unparsed option,
-        cvs : unparsed option,
+        remote : Protocol.protocol, 
         documentationUrl : unparsed option,
         bugUrl : unparsed option,
         license : unparsed option,
@@ -124,6 +122,7 @@ struct
         = Comment
         | Provides of package
         | Description of description
+        | Remote of Protocol.protocol * position
         | Requires of requirement
         | Unparsed of string * string * position
 
@@ -147,10 +146,7 @@ struct
                 | "keywords" => Unparsed (key, value, position)
                 | "upstream-version" => Unparsed (key, value, position)
                 | "upstream-url" => Unparsed (key, value, position)
-                | "git" => Unparsed (key, value, position)
-                | "svn" => Unparsed (key, value, position)
-                | "hg" => Unparsed (key, value, position)
-                | "cvs" => Unparsed (key, value, position)
+                | "remote" => Remote (Protocol.fromString value, position)
                 | "documentation-url" => Unparsed (key, value, position)
                 | "bug-url" => Unparsed (key, value, position)
                 | "license" => Unparsed (key, value, position)
@@ -186,6 +182,13 @@ struct
                 | (_ :: (_, position) :: _) => 
                     raise Error ("At most one 'description' directive is allowed, but a second one is specified on line " ^ Int.toString position)
 
+            val remoteDirectives = List.mapPartial (fn (Remote directive) => SOME directive | _ => NONE) directives
+            val remote = case remoteDirectives of
+                  [] => raise Error ("A 'remote' directive is required, eg: remote: git git://example.org/foo.git")
+                | [directive] => directive
+                | (_ :: (_, position) :: _) => 
+                    raise Error ("Only one 'remote' directive is allowed, but a second one is specified on line " ^ Int.toString position)
+
             val requires = List.mapPartial (fn (Requires directive) => SOME directive | _ => NONE) directives
             
             fun unparsed key = 
@@ -212,14 +215,11 @@ struct
                 maintainer = unparsed "maintainer",
                 upstreamVersion = unparsed "upstream-version",
                 upstreamUrl = unparsed "upstream-url",
-                git = unparsed "git",
-                svn = unparsed "svn",
-                hg = unparsed "hg",
-                cvs = unparsed "cvs",
+                remote = #1 remote,
                 documentationUrl = unparsed "documentation-url",
-                bugUrl = unparsed "bug-url",
+                bugUrl = unparsed "bug-url", 
                 license = unparsed "license",
-                platform = unparsed "platform",
+                platform = unparsed "platform", 
                 build = unparsed "build",
                 test = unparsed "test",
                 install = unparsed "install",

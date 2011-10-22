@@ -1,6 +1,7 @@
 $(SML_LIB)/basis/basis.mlb
 $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
 src/semver.sml
+src/protocol.sml
 src/get-git.sml
 src/get-http.sml
 src/conductor.sig
