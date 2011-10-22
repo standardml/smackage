@@ -13,7 +13,9 @@ struct
     (** Retrieve a list of currently installed versions of pkg.
         We do this by listing the directory, and ignoring everything
         that's not a valid semantic version.  This ignores the symlinks
-        like v1 and v1.6, and only gets the full versions like v1.6.2
+        like v1 and v1.6, and only gets the full versions like v1.6.2.
+
+        The result *MUST* be sorted in descending order.
     *)
     fun installedVersions pkg =
     let
@@ -42,6 +44,9 @@ struct
         FIXME: There is very little error handling in here at the moment.
         This is somewhat intentional, as an exception anywhere should bail out
         the whole process.
+
+        This will leave the current working directory as the newly created
+        directory for this package.
     *)
     fun createPackagePaths (pkg,ver) =
     let
