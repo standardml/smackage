@@ -1,4 +1,3 @@
-
 (*
     This defines the data structure and syntax for smackage package definitions (smackspec files).
     The general syntax is a flat key/value format, eg.
@@ -24,7 +23,7 @@
     
     Apart from that, the following keys are supported, but their values are not checked for syntax errors at the moment:
     
-        maintainer: FULL_NAME <EMAIL>               
+        maintainer: FULL_NAME <EMAIL_ADDRESS>               
         keywords: KEYWORD_1 KEYWORD_2 KEYWORD_3
         upstream-version: VERSION
         upstream-url: URL
@@ -64,11 +63,19 @@ sig
     type description
     
     type smackspec
-    
+
+    (* Parses a smackspec file. *)
     val fromFile : string -> smackspec
 
+    (* Parses a smackspec string. *)
     val fromString : string -> smackspec
     
+    (* Wraps error reporting around fromFile or fromString. Example:
+           withErrorPrinter fromString "provides: foo-bar 1.2.3" "foobar.smackspec"
+
+       In case of a parse error, this would print a message ala:
+           Error in 'foobar.smackspec': Some error on line 2
+    *)
     val withErrorPrinter : (string -> smackspec) -> string -> string -> smackspec
 end
 
