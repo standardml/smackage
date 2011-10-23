@@ -21,7 +21,7 @@ struct
                 ("Installation method for " ^ name ^ " " ^ 
                  SemVer.toString ver ^ " not found")
 
-        val _ = SmackLib.install (!Configure.smackHome) (name,ver)
+        val _ = SmackLib.install (!Configure.smackHome) (name,ver,proto)
     in
         ()
     end
