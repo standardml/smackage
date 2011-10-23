@@ -68,8 +68,40 @@ struct
     (** Display metadata for a given package, plus installed status *)
     fun info name version = raise SmackExn "Not implemented"
 
+    (* Hey, what does update do? *)
     fun update () = raise SmackExn "Not implemented"
 
+    (* utility function - read a line from a file and get the source spec *)
+    fun getLine file = 
+       case Option.map 
+              (String.tokens Char.isSpace) 
+              (TextIO.inputLine file) of              
+          NONE => NONE
+        | SOME [] => getLine file
+        | SOME [ pkg', prot', uri' ] =>
+             SOME (pkg', Protocol.fromString (prot' ^ " " ^ uri'))
+        | SOME s => raise Fail ( "Bad source line: " 
+                               ^ String.concatWith " " s)
+
+    (* Referesh the versions.smackspec file *)
+    fun refresh () = 
+       let 
+          val sourcesLocal = 
+             OS.Path.joinDirFile { dir = !Configure.smackHome
+                                 , file = "sources.local"}
+          val file = TextIO.openIn sourcesLocal
+
+          fun read () =
+             case getLine file of
+                NONE => TextIO.closeIn file
+              | SOME s => 
+                   ( print ("Imagine " ^ #1 s ^ "\n")
+                   ; read ())
+       in
+          read ()
+       end
+
+    (* Manipulate the sources.local source spec file *)
     fun modsource pkg maybe_prot =  
        let 
           val sourcesLocal = 
@@ -77,28 +109,17 @@ struct
                                  , file = "sources.local"}
           val file = TextIO.openIn sourcesLocal
 
-          fun getLine () = 
-             case Option.map 
-                    (String.tokens Char.isSpace) 
-                    (TextIO.inputLine file) of              
-                NONE => NONE
-              | SOME [] => getLine ()
-              | SOME [ pkg', prot', uri' ] =>
-                   SOME (pkg', Protocol.fromString (prot' ^ " " ^ uri'))
-              | SOME s => raise Fail ( "Bad source line: " 
-                                     ^ String.concatWith " " s)
-
           fun notfound () =
              raise SmackExn ( "Could not find source spec for `" ^ pkg 
                             ^ "` in sources.local to delete it")
 
           fun read_big accum = 
-             case getLine () of 
-                NONE => List.rev accum
+             case getLine file of 
+                NONE => List.rev accum 
               | SOME line => read_big (line :: accum)
 
           fun read_small accum = 
-             case getLine () of
+             case getLine file of
                 NONE => 
                 (case maybe_prot of 
                     NONE => notfound ()
@@ -122,7 +143,7 @@ struct
                            ; read_big ((pkg, prot) :: accum)))
                   | GREATER => read_small ((pkg', prot') :: accum))
 
-          val sources = read_small []
+          val sources = read_small [] before TextIO.closeIn file
 
           val file = TextIO.openOut sourcesLocal
 
@@ -167,7 +188,7 @@ struct
            | ["unsource",pkg] => 
                 ( modsource pkg NONE
                 ; OS.Process.success)
-           | ["refresh"] => (OS.Process.success)
+           | ["refresh"] => (refresh (); OS.Process.success)
            | ["install",pkg,ver] => (install pkg ver; OS.Process.success)
            | ["install",pkg] => (install pkg ""; OS.Process.success)
            | ["uninstall",pkg,ver] => (uninstall pkg ver; OS.Process.success)
