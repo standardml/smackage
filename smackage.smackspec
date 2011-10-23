@@ -1,0 +1,4 @@
+description: Smackage, a simple Standard ML package manager
+maintainer: Gian Perrone, Robert J. Simmons, Michael Sullivan
+bug-url: https://github.com/standardml/smackage/issues
+install: mlton smack/smack.mlb -o
