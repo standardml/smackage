@@ -144,7 +144,7 @@ struct
          print "\trefresh\t\t\t\tRefresh the versions.smackspec index\n";
          print "\tsearch <name>\t\t\tFind an appropriate package\n";
          print "\tsource <name> <protocol> <url>\tAdd a smackage source to sources.local\n";
-         print "\tunsource <name>\t\t\tRemove a smackage source to sources.local\n";
+         print "\tunsource <name>\t\t\tRemove a smackage source from sources.local\n";
          print "\tuninstall <name> [version]\tRemove a package\n";
          print "\tupdate\t\t\t\tUpdate the package database\n");
 
