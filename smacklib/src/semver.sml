@@ -1,12 +1,13 @@
 signature SEMVER =
 sig
-    eqtype semver
+    type semver
     type constraint
 
     exception InvalidVersion
 
     val fromString : string -> semver
     val toString : semver -> string
+    val eq : semver * semver -> bool
     val compare : semver * semver -> order
     val satisfies : semver * constraint -> bool
     val < : semver * semver -> bool
@@ -14,6 +15,17 @@ sig
     val >= : semver * semver -> bool
     val > : semver * semver -> bool
     val allPaths : semver -> string list
+
+    (* intelligentSelect is a way of resolving a partially-specified semantic
+     * version which makes sense to Rob at the time.
+     *
+     * It will prefer tags with special versions over tags with 
+     * no versions (so `intelligentSelect NONE [ 2.0.0beta, 1.9.3 ]` will 
+     * return `SOME 1.9.3`) but will prefer nothing to something (so 
+     * `intelligentSelect (SOME "v2") [ 2.0.0beta, 1.9.3 ]` or 
+     * `intelligentSelect (SOME "2") [ 2.0.0beta, 1.9.3 ]` will return 
+     * `SOME 2.0.0beta` with the assumption that they meant to do that *)
+    val intelligentSelect : string option -> semver list -> semver option
 end
 
 structure SemVer : SEMVER =
@@ -23,33 +35,43 @@ struct
 
     exception InvalidVersion
 
-    fun fromString s =
+    fun eq (x: semver, y) = x = y
+
+    fun fromString' s =
     let
         val s' = if String.sub (s,0) = #"v" 
                     then String.extract (s, 1, NONE)
                     else s
         val f = String.fields (fn #"." => true | _ => false) s'
 
-        val _ = if length f <> 3 then raise InvalidVersion else ()
-
+        fun fail () = raise Fail ("`" ^ s ^ "` not a valid semantic version")
         fun vtoi i = 
-            case Int.fromString i of NONE => raise InvalidVersion | SOME v => v
-
-        val major = vtoi (List.nth (f,0))
-        val minor = vtoi (List.nth (f,1))
-        
-        fun until [] = []
-          | until (h::t) = if Char.isDigit h then h :: until t else []
-
-        val patch' = List.nth (f,2)
-        val patch'' = String.implode (until (String.explode patch'))
-        val str = if patch'' = patch' then NONE 
-                    else SOME (String.extract (patch', size patch'', NONE))
-        val patch = vtoi patch''
-
+            case Int.fromString i of 
+               NONE => fail ()
+             | SOME v => v
     in
-        (major, minor, patch, str)
+        case f of 
+           [ major ] => (vtoi major, NONE, NONE, NONE)
+         | [ major, minor ] => (vtoi major, SOME (vtoi minor), NONE, NONE)
+         | [ major, minor, patch ] =>
+           let 
+              fun until [] = []
+                | until (h::t) = if Char.isDigit h then h :: until t else []
+              val patchN = String.implode (until (String.explode patch))
+              val special = 
+                 if patch = patchN then NONE 
+                 else SOME (String.extract (patch, size patchN, NONE))
+           in
+              (vtoi major, SOME (vtoi minor), SOME (vtoi patchN), special)
+           end
+         | _ => fail ()
     end
+
+    fun fromString s = 
+       case fromString' s of
+          (major, SOME minor, SOME patch, special) => 
+             (major, minor, patch, special)
+        | _ => raise Fail ("`" ^ s ^ "` is an incomplete semantic version")
 
     fun toString (ma,mi,pa,s) =
         Int.toString ma ^ "." ^
@@ -76,6 +98,7 @@ struct
     fun a <= b = compare (a,b) <> GREATER
     fun a >= b = compare (a,b) <> LESS
     fun a > b = compare (a,b) = GREATER
+    fun max a b = if b > a then b else a
 
     (** Accepts a version and a version constraint of the form:
       X.Y.Z   (exactly this version)
@@ -110,4 +133,41 @@ struct
          "v" ^ Int.toString ma ^ "." ^ Int.toString mi,
          "v" ^ toString v]
 
+
+    fun intelligentSelect spec vers = 
+       let
+          val spec = Option.map fromString' spec
+
+          (* Does a version number meet the specification? *)
+          val satisfies = 
+             case spec of
+                NONE => 
+                   (fn _ => true)
+              | SOME (major, NONE, _, _) => 
+                   (fn ver => #1 ver = major)
+              | SOME (major, SOME minor, NONE, _) =>
+                   (fn ver => #1 ver = major
+                              andalso #2 ver = minor)
+              | SOME (major, SOME minor, SOME patch, special) => 
+                   (fn ver => #1 ver = major
+                              andalso #2 ver = minor
+                              andalso #3 ver = patch
+                              andalso #4 ver = special)
+
+          fun best NONE ver = 
+              if satisfies ver then SOME ver else NONE
+            | best (SOME oldBest) ver = 
+              if satisfies ver 
+              then (case (#4 oldBest, #4 ver) of
+                       (NONE, NONE) => SOME (max oldBest ver)
+                     | (SOME _, SOME _) => SOME (max oldBest ver)
+                     | (_, NONE) => SOME ver
+                     | (NONE, _) => SOME oldBest)
+              else SOME oldBest
+
+          fun process best [] = best
+            | process oldBest (ver :: vers) = process (best oldBest ver) vers
+       in
+          process NONE vers
+       end
 end
