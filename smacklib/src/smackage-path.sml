@@ -5,6 +5,8 @@ deeper thought.
 *)
 structure SmackagePath =
 struct
+    exception Metadata of string
+
     (** Retrieve a list of currently installed versions of pkg.
         We do this by listing the directory, and ignoring everything
         that's not a valid semantic version.  This ignores the symlinks
@@ -40,6 +42,23 @@ struct
         List.filter (fn v => SemVer.satisfies (v,constr)) cand
     end
 
+    (** Get the metadata for a currently-installed package *)
+    fun packageMetadata smackage_root (pkg,ver) =
+    let
+        val pkgDir' = OS.Path.joinDirFile {dir = smackage_root, file = "lib"}
+        val pkgDir'' = OS.Path.joinDirFile {dir = pkgDir', file = pkg}
+        val pkgDir = OS.Path.joinDirFile 
+                            {dir = pkgDir'', file = "v" ^ SemVer.toString ver}
+        val specFile = OS.Path.joinDirFile {dir=pkgDir,file=pkg ^ ".smackspec"}
+ 
+    in
+        if not (OS.FileSys.access (specFile, []))
+            then raise Metadata "Spec file not found"  else
+        if not (OS.FileSys.access (specFile, [ OS.FileSys.A_READ ]))
+            then raise Metadata "Spec file exists but can't be read"
+        else Spec.fromFile specFile
+    end
+
 
     (** Create the empty directory for pkg at a given version, and update
         symlinks accordingly.
@@ -57,6 +76,10 @@ struct
     fun createPackagePaths smackage_root (pkg,ver) =
     let
         val pkgDir' = OS.Path.joinDirFile {dir = smackage_root, file = "lib"}
+
+        val _ = if not (OS.FileSys.access (pkgDir', [])) then
+                    OS.FileSys.mkDir pkgDir' else ()
+
         val pkgDir = OS.Path.joinDirFile {dir = pkgDir', file = pkg}
         (* Create the top-level package directory if it doesn't exist *)
         val _ = OS.FileSys.isDir pkgDir handle _ =>
