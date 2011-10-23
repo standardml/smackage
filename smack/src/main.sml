@@ -160,7 +160,8 @@ struct
               | SOME s => (poll fileName s; read fileName file)
 
           fun dofile fileName = 
-             read fileName (TextIO.openIn fileName) (* handle _ => () *)
+             read fileName (TextIO.openIn fileName) 
+             handle _ => print ("WARNING: error reading " ^ fileName ^ "\n")
        in
           ( app dofile (!Configure.smackSources @ [ "sources.local" ])
           ; TextIO.closeOut output
