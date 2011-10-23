@@ -70,9 +70,8 @@ struct
 
     fun update () = raise SmackExn "Not implemented"
 
-    fun newsource pkg prot uri =  
+    fun modsource pkg maybe_prot =  
        let 
-          val prot = Protocol.fromString (prot ^ " " ^ uri)
           val sourcesLocal = 
              OS.Path.joinDirFile { dir = !Configure.smackHome
                                  , file = "sources.local"}
@@ -89,6 +88,10 @@ struct
               | SOME s => raise Fail ( "Bad source line: " 
                                      ^ String.concatWith " " s)
 
+          fun notfound () =
+             raise SmackExn ( "Could not find source spec for `" ^ pkg 
+                            ^ "` in sources.local to delete it")
+
           fun read_big accum = 
              case getLine () of 
                 NONE => List.rev accum
@@ -96,18 +99,28 @@ struct
 
           fun read_small accum = 
              case getLine () of
-                NONE => List.rev ((pkg, prot) :: accum)
+                NONE => 
+                (case maybe_prot of 
+                    NONE => notfound ()
+                  | SOME prot => List.rev ((pkg, prot) :: accum))
               | SOME (pkg', prot') => 
                 (case String.compare (pkg, pkg') of
                     LESS => 
-                      read_big ((pkg', prot') :: (pkg, prot) :: accum)
+                    (case maybe_prot of 
+                        NONE => notfound ()
+                      | SOME prot => 
+                           read_big ((pkg', prot') :: (pkg, prot) :: accum))
                   | EQUAL => 
-                      ( print ("WARNING: overwriting old source specification\n\
-                              \OLD: " ^ pkg' ^ Protocol.toString prot' ^ "\n\
-                              \NEW: " ^ pkg ^ Protocol.toString prot ^ "\n")
-                      ; read_big ((pkg, prot) :: accum))
-                  | GREATER => 
-                      read_small ((pkg', prot') :: accum))
+                    (case maybe_prot of 
+                        NONE =>  
+                           ( print ("Deleting source spec " ^ pkg ^ "...\n")
+                           ; read_big accum)
+                      | SOME prot => 
+                           ( print ("WARNING: overwriting source spec\n\
+                                \OLD: " ^ pkg' ^ Protocol.toString prot' ^ "\n\
+                                \NEW: " ^ pkg ^ Protocol.toString prot ^ "\n")
+                           ; read_big ((pkg, prot) :: accum)))
+                  | GREATER => read_small ((pkg', prot') :: accum))
 
           val sources = read_small []
 
@@ -118,7 +131,7 @@ struct
               ( TextIO.output (file, pkg ^ " " ^ Protocol.toString prot ^ "\n")
               ; write sources)
        in
-          write sources
+          write sources; print "Done.\n"
        end
 
     fun printUsage () =
@@ -130,7 +143,8 @@ struct
          print "\tlist\t\t\t\tList installed packages\n";
          print "\trefresh\t\t\t\tRefresh the versions.smackspec index\n";
          print "\tsearch <name>\t\t\tFind an appropriate package\n";
-         print "\tsource <name> <protocol> <url>\t\t\tAdd a smackage source\n";
+         print "\tsource <name> <protocol> <url>\tAdd a smackage source to sources.local\n";
+         print "\tunsource <name>\t\t\tRemove a smackage source to sources.local\n";
          print "\tuninstall <name> [version]\tRemove a package\n";
          print "\tupdate\t\t\t\tUpdate the package database\n");
 
@@ -148,7 +162,11 @@ struct
            | ["search",pkg] => (search pkg ""; OS.Process.success)
            | ["search",pkg,ver] => (search pkg ver; OS.Process.success)
            | ["source",pkg,prot,url] => 
-                (newsource pkg prot url; OS.Process.success)
+                ( modsource pkg (SOME (Protocol.fromString (prot ^ " " ^ url)))
+                ; OS.Process.success)
+           | ["unsource",pkg] => 
+                ( modsource pkg NONE
+                ; OS.Process.success)
            | ["refresh"] => (OS.Process.success)
            | ["install",pkg,ver] => (install pkg ver; OS.Process.success)
            | ["install",pkg] => (install pkg ""; OS.Process.success)
