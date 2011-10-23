@@ -21,11 +21,12 @@ sig
      *
      * It will prefer tags with special versions over tags with 
      * no versions (so `intelligentSelect NONE [ 2.0.0beta, 1.9.3 ]` will 
-     * return `SOME 1.9.3`) but will prefer nothing to something (so 
+     * return `SOME (1.9.3, "1")`) but will prefer nothing to something (so 
      * `intelligentSelect (SOME "v2") [ 2.0.0beta, 1.9.3 ]` or 
      * `intelligentSelect (SOME "2") [ 2.0.0beta, 1.9.3 ]` will return 
-     * `SOME 2.0.0beta` with the assumption that they meant to do that *)
-    val intelligentSelect : string option -> semver list -> semver option
+     * `SOME (2.0.0beta, "2")` *)
+    val intelligentSelect :
+       string option -> semver list -> (semver * string) option
 end
 
 structure SemVer : SEMVER =
@@ -137,6 +138,13 @@ struct
     fun intelligentSelect spec vers = 
        let
           val spec = Option.map fromString' spec
+          val ts = Int.toString
+          fun specstr (major, NONE, _, _) = ts major
+            | specstr (major, SOME minor, NONE, _) = ts major ^ "." ^ ts minor
+            | specstr (major, SOME minor, SOME patch, NONE) =
+                 ts major ^ "." ^ ts minor ^ "." ^ ts patch
+            | specstr (major, SOME minor, SOME patch, SOME special) =
+                 ts major ^ "." ^ ts minor ^ "." ^ ts patch ^ special
 
           (* Does a version number meet the specification? *)
           val satisfies = 
@@ -168,6 +176,9 @@ struct
           fun process best [] = best
             | process oldBest (ver :: vers) = process (best oldBest ver) vers
        in
-          process NONE vers
+          case (process NONE vers, spec) of 
+             (NONE, _) => NONE
+           | (SOME ver, NONE) => SOME (ver, Int.toString (#1 ver))
+           | (SOME ver, SOME spec) => SOME (ver, specstr spec)
        end
 end
