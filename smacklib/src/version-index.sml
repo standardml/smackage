@@ -63,5 +63,19 @@ struct
         (SOME (#3 (hd 
             (List.filter (fn (n,v,p) => n = pkg andalso v = ver) 
                 (!versionIndex))))) handle _ => NONE
+
+    fun getLatestSatisfying pkg constraint =
+    let
+        val cand = List.filter 
+            (fn (n,v,_) => n = pkg andalso SemVer.satisfies (v,constraint))
+                (!versionIndex)
+        val _ = if length cand = 0 then 
+                    raise Fail ("Could not satisfy constraint `" ^ pkg ^ 
+                                " " ^ constraint ^ "' not found") else ()
+
+    in
+        List.foldl (fn ((n,v,p),v') => if SemVer.>(v,v') 
+                        then v else v') (#2 (hd cand)) cand
+    end
 end
 

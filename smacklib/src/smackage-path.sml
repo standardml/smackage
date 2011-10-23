@@ -14,7 +14,7 @@ struct
     *)
     fun installedVersions smackage_root pkg =
     let
-        val pkgDir = smackage_root ^ "/" ^ pkg
+        val pkgDir = OS.Path.joinDirFile {dir = smackage_root, file = pkg}
         val dh = OS.FileSys.openDir pkgDir
         fun untilNone () = 
         let
@@ -45,13 +45,14 @@ struct
     *)
     fun createPackagePaths smackage_root (pkg,ver) =
     let
-        val pkgDir = smackage_root ^ "/" ^ pkg
+        val pkgDir = OS.Path.joinDirFile {dir = smackage_root, file = pkg}
         (* Create the top-level package directory if it doesn't exist *)
         val _ = OS.FileSys.isDir pkgDir handle _ =>
                     (OS.FileSys.mkDir pkgDir; true)
         val _ = OS.FileSys.chDir pkgDir
 
-        val newPaths = map (fn x => pkg ^ "/" ^ x) (SemVer.allPaths ver)
+        val newPaths = map (fn x => 
+            OS.Path.joinDirFile {dir = pkg, file = x}) (SemVer.allPaths ver)
         val existing = installedVersions smackage_root pkg
 
         val majorPrefix = Int.toString (#1 ver)
@@ -64,13 +65,16 @@ struct
                 then ["v" ^ majorPrefix] else []
 
         val minorPrefix = Int.toString (#1 ver) ^ "." ^ Int.toString (#2 ver)
-        val minors = List.filter (fn x => String.isPrefix minorPrefix (SemVer.toString x)) existing
+        val minors = List.filter 
+            (fn x => String.isPrefix minorPrefix (SemVer.toString x)) existing
+
         val symlinks' = symlinks @
             (if length minors = 0 orelse SemVer.< (hd minors, ver)
                 then ["v" ^ minorPrefix] else [])
 
         val versionDir = "v" ^ SemVer.toString ver
-        val _ = OS.FileSys.mkDir (pkgDir ^ "/" ^ versionDir) handle _ => ()
+        val _ = OS.FileSys.mkDir 
+            (OS.Path.joinDirFile {dir=pkgDir, file=versionDir}) handle _ => ()
 
         val _ = List.app (Symlink.replaceOrCreateSymlink versionDir) symlinks'
 
