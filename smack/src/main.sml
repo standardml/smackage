@@ -5,22 +5,30 @@ struct
     fun // (dir, file) = OS.Path.joinDirFile { dir = dir, file = file }
     infix 5 //
 
-    (** Install a package with a given name and version.
-        An empty version string means "the latest version".
+    (** Install a package with a given name and version specification.
+        NONE means "the latest version", and specifications are handled by
+        SemVer.intelligentSelect.
         raises SmackExn in the event that the package is already installed or
         if no such package or version is found. *)
     fun install name spec =
     let
         val () = VersionIndex.loadVersions (!Configure.smackHome)
-        val ver' = 
-           SemVer.intelligentSelect spec 
-              (map #2 (VersionIndex.queryVersions name))
+        val vers =
+           case map #2 (VersionIndex.queryVersions name) of
+              [] => raise SmackExn 
+                 ( "I don't know about the package `" ^ name 
+                 ^ "`, run 'smack selfupdate'?")
+            | vers => vers
+
+        val ver' = SemVer.intelligentSelect spec vers
+              
         val (ver, normalized_spec) = 
            case ver' of 
-              NONE => raise SmackExn 
-              ("Could not find a package to install for `" ^ name 
-               ^ (case spec of NONE => "" | SOME s => " " ^ s)
-               ^ "` found, try 'smack refresh'?")
+              NONE => 
+              raise SmackExn 
+                 ("No acceptable version of `" ^ name 
+                 ^ (case spec of NONE => "" | SOME s => " " ^ s)
+                 ^ "` found, try 'smack refresh'?")
             | SOME x => x
 
         val verstring = SemVer.toString ver
@@ -117,38 +125,52 @@ struct
                                ^ String.concatWith " " s)
 
     (* Referesh the versions.smackspec file *)
+    (* XXX this should notice when there is a redundant source in different
+     * (or the same) sources file, issue a warning, and then pick only the
+     * latter source definition, but we'll want string maps for that *)
+    (* XXX if you've got a bad source, the error handling in 'poll' seems
+     * not to work.
+     * This is bad because 'smack selfup' needs to be able to recover if we
+     * get a bad repository into the master sources file. *)
     fun refresh () = 
+       let val oldDir = OS.FileSys.getDir () in
        let 
-          val sourcesLocal = 
-             OS.Path.joinDirFile { dir = !Configure.smackHome
-                                 , file = "sources.local"}
-          val file = TextIO.openIn sourcesLocal
+          val () = OS.FileSys.chDir (!Configure.smackHome) 
 
-          val versionSpackspec = 
-             OS.Path.joinDirFile { dir = !Configure.smackHome
-                                 , file = "versions.smackspec"}
+          val versionSpackspec = "versions.smackspec"
           val output = TextIO.openOut versionSpackspec
       
-          fun print s = TextIO.output (output, s)
-          fun print1 pkg prot ver =
-             ( print ("provides: " ^ pkg ^ " " ^ SemVer.toString ver ^ "\n")
-             ; print ("remote: " ^ Protocol.toString prot ^ "\n\n"))
+          fun emit s = TextIO.output (output, s)
+          fun emitSpec pkg prot ver =
+             ( emit ("provides: " ^ pkg ^ " " ^ SemVer.toString ver ^ "\n")
+             ; emit ("remote: " ^ Protocol.toString prot ^ "\n\n"))
 
-          fun poll (pkg, prot) =
-             app (print1 pkg prot) (Conductor.poll prot)
-             handle Fail s => 
-                raise Fail ("When trying to read poll `" ^ pkg
-                            ^ "`, got the following error \n\t\""
-                            ^ s ^ "\"\nYou may need to 'smack unbind " 
-                            ^ pkg ^ "'")
+          fun poll fileName (pkg, prot) =
+             app (emitSpec pkg prot) (Conductor.poll prot)
+             handle exn => (* Why is this not getting called? *)
+                print ("WARNING: When trying to poll `" ^ pkg
+                      ^ "`, got the following error \n\t\""
+                      ^ exnMessage exn 
+                      ^ "\"\nYou may need to run 'smack unsource " 
+                      ^ pkg ^ "'\n")
 
-          fun read () =
+          fun read fileName file = 
              case getLine file of
                 NONE => TextIO.closeIn file
-              | SOME s => (poll s; read ())
+              | SOME s => (poll fileName s; read fileName file)
+
+          fun dofile fileName = 
+             read fileName (TextIO.openIn fileName) (* handle _ => () *)
        in
-          read (); TextIO.closeOut output
-       end
+          ( app dofile (!Configure.smackSources @ [ "sources.local" ])
+          ; TextIO.closeOut output
+          ; OS.FileSys.chDir oldDir)
+       end handle exn => (OS.FileSys.chDir oldDir; raise exn) end
+
+    fun selfupdate () = 
+       ( refresh ()
+       ; install "smackage" (SOME "v0")
+       ; refresh ())
 
     (* Manipulate the sources.local source spec file *)
     fun modsource pkg maybe_prot =  
@@ -211,7 +233,7 @@ struct
          print "\tinfo <name> [version]\t\tDisplay package information.\n";
          print "\tinstall <name> [version]\tInstall the named package\n";
          print "\tlist\t\t\t\tList installed packages\n";
-         print "\trefresh\t\t\t\tRefresh the versions.smackspec index\n";
+         print "\trefresh\t\t\t\tRefresh the package index\n";
          print "\tsearch <name>\t\t\tFind an appropriate package\n";
          print "\tsource <name> <protocol> <url>\tAdd a smackage source to sources.local\n";
          print "\tunsource <name>\t\t\tRemove a source from sources.local\n";

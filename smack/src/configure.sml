@@ -1,6 +1,9 @@
 (** Stateful configuration, hopefully with sensible defaults *)
 structure Configure =
 struct
+   fun // (dir, file) = OS.Path.joinDirFile { dir = dir, file = file }
+   infix 5 //
+
    val smackHome = ref "<dummy>"
 
    val smackSources: string list ref = ref [] 
@@ -41,8 +44,8 @@ struct
          fun create () = 
             let
                val () = 
-                  print ("NOTICE: `" ^ fileName ^ "` doesn't exist in\
-                         \ $(SMACKAGE_HOME), trying to create it.\n")
+                  print ("NOTICE: file `" ^ fileName ^ "` doesn't exist,\
+                         \ trying to create it.\n")
                val file = TextIO.openOut filePath
             in
                ( TextIO.output (file, contents)
@@ -59,6 +62,27 @@ struct
       end handle exn => 
              ( print ("Error with `" ^ fileName ^ "` file.\n")
              ; raise exn)
+
+   fun initDir dirName = 
+      let 
+         val dirPath = 
+            OS.Path.joinDirFile { dir = !smackHome, file = dirName }
+         fun create () = 
+            let
+               val () = 
+                  print ("NOTICE: directory `" ^ dirName ^ "` doesn't exist,\
+                         \ trying to create it.\n")
+            in
+               OS.FileSys.mkDir dirPath
+            end
+      in
+         if not (OS.FileSys.access (dirPath, []))
+           then create () else
+         if not (OS.FileSys.isDir dirPath)
+           then raise Fail ("File `" ^ dirName
+                            ^ "` exists and is not a directory")
+         else ()
+      end
 
    fun readConfigFile () = 
       let
@@ -86,10 +110,11 @@ struct
       ( initSmackHome ()
       ; initFile "sources.local" 
            "smackage git git://github.com/standardml/smackage.git\n"
-      ; initFile "config"
-           "source sources.local\n"
-      ; initFile "packages.installed"
-           "\n"
+      ; initFile "config" ("source lib" // "smackage" // "v0" // "sources\n")
+      ; initFile "packages.installed" "\n"
+      ; initFile "versions.smackspec" "\n"
+      ; initDir "lib"
+      ; initDir "bin"
       ; readConfigFile ())
         
 (*
