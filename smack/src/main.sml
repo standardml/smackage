@@ -2,35 +2,37 @@ structure Smack =
 struct
     exception SmackExn of string
 
-    (** Parse the versions.smackspec file to produce a list of available
-        (package,version,protocol) triples. *)
-    fun parseVersionsSpec () =
+<<<<<<< HEAD
+    (* gian - I think it might be worth distinguishing where a .smackage 
+     * configuration
+     * file lives (maybe have a stateful Configure struct with defaults, in
+     * case there's no such file) from the place where smackage code goes.
+     * Course, if we can figure out where the directory is, we can just have
+     * such a hypothetical config file go in $(SMACKAGE_HOME)/config, so 
+     * that would work too... -rjs 2:30am est, SML hack day *)
+
+    (** Attempt to ascertain the smackage home directory.
+        Resolved in this order:
+
+        SMACKAGE_HOME environment variable
+        ~/.smackage/
+        /usr/local/smackage/
+        /opt/smackage/
+    *)
+    val smackHome =
     let
-        val versions = 
-           OS.Path.joinDirFile { dir = !Configure.smackHome,
-                                 file = "versions.smackspec" } 
-        val fp = TextIO.openIn versions
-                    handle _ => raise Fail 
-                        ("Cannot open `$SMACKAGE_HOME/versions.smackspec'. " ^ 
-                         "Try running `smack refresh' to update this file.")
-
-        val stanza = ref "";
-        
-        fun readStanzas () = 
-        let
-            val line = TextIO.inputLine fp
-        in
-            if line = NONE then [!stanza] else
-            if line = SOME "\n"
-                then (!stanza before stanza := "") :: readStanzas ()
-                else (stanza := (!stanza) ^ (valOf line); readStanzas ())
-        end
-
-        val stanzas = readStanzas () handle _ => (TextIO.closeIn fp; [])
-
-        val _ = TextIO.closeIn fp
+        fun tryDir (SOME s) = ((OS.FileSys.openDir s; true) handle _ => false)
+          | tryDir NONE = false
+        val envHome = OS.Process.getEnv "SMACKAGE_HOME"
+        val envHome' = if OS.Process.getEnv "HOME" = NONE 
+            then NONE 
+            else SOME (valOf (OS.Process.getEnv "HOME") ^ "/.smackage")
     in
-        map (Spec.toVersionSpec o Spec.fromString) stanzas
+        if tryDir envHome then valOf envHome else
+        if tryDir envHome' then valOf envHome' else
+        if tryDir (SOME "/usr/local/smackage") then "/usr/local/smackage" else
+        if tryDir (SOME "/opt/smackage") then "/opt/smackage" else
+        raise SmackExn "Cannot find smackage home. Try setting SMACKAGE_HOME"
     end
 
     (** Install a package with a given name and version.
@@ -39,10 +41,17 @@ struct
         if no such package or version is found. *)
     fun install name version =
     let
+        val _ = VersionIndex.loadVersions smackHome
         val _ = if version = "" then 
                     raise Fail "Install needs an explicit version for now."
                 else ()
         val ver = SemVer.fromString version
+        val _ = SmackLib.install smackHome (name,ver)
+        val _ = print "Candidates:\n"
+        val candidates = VersionIndex.queryVersions name
+        val _ = List.app 
+            (fn (n,v,p) => print (n ^ " " ^ SemVer.toString v ^ "\n")) 
+                candidates
         val _ = SmackLib.install (!Configure.smackHome) (name,ver)
     in
         ()

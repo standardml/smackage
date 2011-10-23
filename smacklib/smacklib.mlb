@@ -5,10 +5,11 @@ src/posix-symlink.sml
 
 src/semver.sml
 src/protocol.sml
+src/spec.sml
+src/version-index.sml
 src/get-git.sml
 src/get-http.sml
 src/conductor.sig
 src/conductor.sml
 src/smackage-path.sml
-src/spec.sml
 src/smacklib.sml

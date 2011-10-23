@@ -2,3 +2,13 @@ This is the start of a package manager for Standard ML libraries.
 
 The implementation mostly just contains stubs, but the semantic versioning
 library should be helpful along the way.
+
+Development notes:
+
+Create a $HOME/.smackage directory.
+
+You might like to copy doc/versions.smackspec.example to $HOME/.smackage/versions.smackspec
+
+smack install foolib 1.0.0
+
+Will list installation candidates, and attempt to create folders.  Eventually these two activities will have some relation to one another.
