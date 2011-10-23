@@ -277,6 +277,7 @@ struct
     fun readLines (file, position, lines) = 
         case TextIO.inputLine file of
               NONE => rev lines
+            | (SOME "\n") => readLines (file, position + 1, lines)
             | (SOME line) => readLines (file, position + 1, (line, position) :: lines)
 
 
@@ -286,7 +287,11 @@ struct
             val keyValues = parseKeyValues lines
         in
             parseDirectives keyValues
-        end
+        end handle (e as Error s) => (
+            TextIO.output (TextIO.stdErr, "Error in smackspec: " ^ s ^ "\n"); 
+            raise e
+        )
+
 
     fun fromFile filename =
         let
@@ -299,7 +304,7 @@ struct
 
     fun fromString string = parseStream (TextIO.openString string)
 
-    fun withErrorPrinter parser input name = parser input
+    fun withErrorPrinter parser name input = parser input
         handle (e as Error s) => (
             TextIO.output (TextIO.stdErr, "Error in '" ^ name ^ "': " ^ s ^ "\n"); 
             raise e

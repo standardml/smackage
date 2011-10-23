@@ -25,9 +25,21 @@ struct
 
         val stanzas = readStanzas () handle _ => (TextIO.closeIn fp; [])
 
+        fun whitespace s =
+        let
+            fun ws [] = true
+              | ws (#"\n"::t) = ws t
+              | ws (#"\r"::t) = ws t
+              | ws (#" "::t) = ws t
+              | ws (#"\t"::t) = ws t
+              | ws _ = false
+        in
+            ws (String.explode s)
+        end
         val _ = TextIO.closeIn fp
     in
-        map (Spec.toVersionSpec o Spec.fromString) stanzas
+        map (Spec.toVersionSpec o Spec.fromString) 
+            (List.filter (fn s => not (whitespace s)) stanzas)
     end
 
     (* Avoid re-loading the version index ever again. *)
