@@ -163,7 +163,7 @@ struct
                         | _ => raise Error ("The syntax for the 'provides' field should resemble 'provides: my-package 1.2.3' on line " ^ Int.toString position))
                 | "requires" => 
                     (case String.tokens Char.isSpace value of
-                          (packageName :: constraint) => Requires (packageName, String.concatWith " " constraint, position)
+                          [ packageName, constraint ] => Requires (packageName, SemVer.constrFromString constraint, position)
                         | _ => raise Error ("The syntax for the 'requires' field should resemble 'requires: some-package >= 1.2.3' on line " ^ Int.toString position))
                 | keyword => raise Error ("Unknown directive '" ^ keyword ^ "' on line " ^ Int.toString position)
             

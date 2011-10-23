@@ -71,7 +71,8 @@ struct
                 (!versionIndex)
         val _ = if length cand = 0 then 
                     raise Fail ("Could not satisfy constraint `" ^ pkg ^ 
-                                " " ^ constraint ^ "' not found") else ()
+                                " " ^ SemVer.constrToString constraint
+                                ^ "' not found") else ()
 
     in
         List.foldl (fn ((n,v,p),v') => if SemVer.>(v,v') 

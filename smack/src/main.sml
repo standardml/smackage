@@ -10,7 +10,7 @@ struct
         SemVer.intelligentSelect.
         raises SmackExn in the event that the package is already installed or
         if no such package or version is found. *)
-    fun install name spec =
+    fun install name specStr =
     let
         val () = VersionIndex.loadVersions (!Configure.smackHome)
         val vers =
@@ -20,6 +20,7 @@ struct
                  ^ "`, run 'smack selfupdate'?")
             | vers => vers
 
+        val spec = Option.map SemVer.constrFromString specStr
         val ver' = SemVer.intelligentSelect spec vers
               
         val (ver, normalized_spec) = 
@@ -27,13 +28,13 @@ struct
               NONE => 
               raise SmackExn 
                  ("No acceptable version of `" ^ name 
-                 ^ (case spec of NONE => "" | SOME s => " " ^ s)
+                 ^ (case specStr of NONE => "" | SOME s => " " ^ s)
                  ^ "` found, try 'smack refresh'?")
             | SOME x => x
 
         val verstring = SemVer.toString ver
         val _ = 
-           if spec = NONE
+           if not (Option.isSome spec)
            then print ( "No major version specified, picked v" 
                       ^ normalized_spec ^ ".\n"
                       ^ "Selected `" ^ name ^ " v" 

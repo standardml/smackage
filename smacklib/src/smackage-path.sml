@@ -90,7 +90,7 @@ struct
             OS.Path.joinDirFile {dir = pkg, file = x}) (SemVer.allPaths ver)
         val existing = installedVersions smackage_root pkg
 
-        val majorPrefix = Int.toString (#1 ver)
+        val majorPrefix = SemVer.constrToString (SemVer.major ver)
         val majors = 
             List.filter 
                 (fn x => String.isPrefix majorPrefix (SemVer.toString x)) 
@@ -99,7 +99,7 @@ struct
             if length majors = 0 orelse SemVer.< (hd majors, ver) 
                 then ["v" ^ majorPrefix] else []
 
-        val minorPrefix = Int.toString (#1 ver) ^ "." ^ Int.toString (#2 ver)
+        val minorPrefix = SemVer.constrToString (SemVer.minor ver)
         val minors = List.filter 
             (fn x => String.isPrefix minorPrefix (SemVer.toString x)) existing
 
