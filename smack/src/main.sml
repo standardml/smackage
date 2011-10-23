@@ -131,7 +131,7 @@ struct
               ( TextIO.output (file, pkg ^ " " ^ Protocol.toString prot ^ "\n")
               ; write sources)
        in
-          write sources; print "Done.\n"
+          write sources; print "Done rewriting sources.local.\n"
        end
 
     fun printUsage () =
@@ -180,5 +180,4 @@ struct
            (TextIO.output (TextIO.stdErr, s ^ "\n"); OS.Process.failure)
 end
 
-val _ = OS.Process.exit(Smack.main(CommandLine.arguments ()))
 
