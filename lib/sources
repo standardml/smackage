@@ -1,3 +1,8 @@
+celf git git://github.com/clf/celf.git
+llf git git://github.com/clf/llf.git
+lollimon git git://github.com/clf/lollimon.git
+ollibot git git://github.com/clf/ollibot.git
 smackage git git://github.com/standardml/smackage.git 
+sml-json git git://github.com/standardml/SML-JSON.git
 tom7-lib git git://github.com/robsimmons/sml-lib.git
 twelf git git://github.com/standardml/twelf.git
