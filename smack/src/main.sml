@@ -2,48 +2,26 @@ structure Smack =
 struct
     exception SmackExn of string
 
-    (** Attempt to ascertain the smackage home directory.
-        Resolved in this order:
-
-        SMACKAGE_HOME environment variable
-        ~/.smackage/
-        /usr/local/smackage/
-        /opt/smackage/
-    *)
-    val smackHome =
-    let
-        fun tryDir (SOME s) = ((OS.FileSys.openDir s; true) handle _ => false)
-          | tryDir NONE = false
-        val envHome = OS.Process.getEnv "SMACKAGE_HOME"
-        val envHome' = if OS.Process.getEnv "HOME" = NONE 
-            then NONE 
-            else SOME (valOf (OS.Process.getEnv "HOME") ^ "/.smackage")
-    in
-        if tryDir envHome then valOf envHome else
-        if tryDir envHome' then valOf envHome' else
-        if tryDir (SOME "/usr/local/smackage") then "/usr/local/smackage" else
-        if tryDir (SOME "/opt/smackage") then "/opt/smackage" else
-        raise SmackExn "Cannot find smackage home. Try setting SMACKAGE_HOME"
-    end
-
     (** Install a package with a given name and version.
         An empty version string means "the latest version".
         raises SmackExn in the event that the package is already installed or
         if no such package or version is found. *)
     fun install name version =
     let
-        val _ = VersionIndex.loadVersions smackHome
-        val _ = if version = "" then 
-                    raise Fail "Install needs an explicit version for now."
-                else ()
-        val ver = SemVer.fromString version
-        val _ = SmackLib.install smackHome (name,ver)
-        val _ = print "Candidates:\n"
-        val candidates = VersionIndex.queryVersions name
-        val _ = List.app 
-            (fn (n,v,p) => print (n ^ " " ^ SemVer.toString v ^ "\n")) 
-                candidates
-        val _ = SmackLib.install (!Configure.smackHome) (name,ver)
+        val _ = VersionIndex.loadVersions (!Configure.smackHome)
+        val ver = if version = "" then VersionIndex.latestVersion name 
+                    else SemVer.fromString version
+
+        val _ = print ("Selected " ^ name ^ " " ^ SemVer.toString ver ^ "\n")
+       
+        val proto = 
+            case VersionIndex.getProtocol (name,ver) of
+                SOME p => p
+              | NONE => raise SmackExn 
+                ("Installation method for " ^ name ^ " " ^ 
+                 SemVer.toString ver ^ " not found")
+
+        val _ = SmackLib.install (!Configure.smackHome) (name,ver,proto)
     in
         ()
     end
@@ -65,8 +43,20 @@ struct
     (** Search for a package in the index, with an optional version *)
     fun search name version = raise SmackExn "Not implemented"
 
-    (** Display metadata for a given package, plus installed status *)
-    fun info name version = raise SmackExn "Not implemented"
+    (** Display metadata for a given package, plus installed status.
+        FIXME: Doesn't really do this, but displaying all versions is a start.
+    *)
+    fun info name version = 
+    let
+        val _ = VersionIndex.loadVersions (!Configure.smackHome)
+        val _ = print "Candidates:\n"
+        val candidates = VersionIndex.queryVersions name
+        val _ = List.app 
+            (fn (n,v,p) => print (n ^ " " ^ SemVer.toString v ^ "\n")) 
+                candidates 
+    in
+        ()
+    end
 
     (* Hey, what does update do? *)
     fun update () = raise SmackExn "Not implemented"

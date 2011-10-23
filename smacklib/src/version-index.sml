@@ -36,5 +36,20 @@ struct
             versionIndex := parseVersionsSpec smackage_root
 
     fun queryVersions pkg = List.filter (fn (n,_,_) => pkg = n) (!versionIndex)
+
+    fun latestVersion pkg =
+    let
+        val cand = queryVersions pkg
+        val _ = if length cand = 0 then 
+                    raise Fail ("Package `"^pkg^"' not found") else ()
+    in
+        List.foldl (fn ((n,v,p),v') => if SemVer.>(v,v') 
+                        then v else v') (#2 (hd cand)) cand
+    end
+
+    fun getProtocol (pkg,ver) = 
+        (SOME (#3 (hd 
+            (List.filter (fn (n,v,p) => n = pkg andalso v = ver) 
+                (!versionIndex))))) handle _ => NONE
 end
 
