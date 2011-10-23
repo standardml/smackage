@@ -1,8 +1,14 @@
 signature SMACKLIB =
 sig
+    (** Adds or removes a particular packages from the library *)
     val install : string -> string * SemVer.semver * Protocol.protocol -> unit
     val uninstall : string -> string * SemVer.semver -> unit
-    val versions : string -> SemVer.semver list
+
+    (** Returns a list of installed versions *)
+    (* XXX should probably be sorted, relies on the filesystem for this now *)
+    val versions : string -> string -> SemVer.semver list
+
+    (** Returns the smackspec for a particular smackage package *)
     val info : string -> string * SemVer.semver -> Spec.spec
 end
 
@@ -32,8 +38,22 @@ struct
 
     fun uninstall smackage_root (pkg,ver) = raise Fail "Not implemented"
 
-    (* Should return a sorted list of available versions *)
-    fun versions pkg = raise Fail "Not implemented"
+    fun versions smackage_root pkg = 
+       let
+          val pkgRoot = smackage_root // "lib" // pkg
+          fun read dir accum = 
+             case OS.FileSys.readDir dir of 
+                NONE => rev accum before OS.FileSys.closeDir dir
+              | SOME file => 
+                   if String.isPrefix "v" file 
+                      andalso 3 = length (String.tokens (fn x => x = #".") file)
+                   then read dir (SemVer.fromString file :: accum)
+                   else read dir accum
+       in 
+          if OS.FileSys.access (pkgRoot, [])
+          then read (OS.FileSys.openDir pkgRoot) []
+          else []
+       end
     
     fun info smackage_root (pkg,ver) = 
         Spec.fromFile 

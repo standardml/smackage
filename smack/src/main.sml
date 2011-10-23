@@ -2,6 +2,9 @@ structure Smack =
 struct
     exception SmackExn of string
 
+    fun // (dir, file) = OS.Path.joinDirFile { dir = dir, file = file }
+    infix 5 //
+
     (** Install a package with a given name and version.
         An empty version string means "the latest version".
         raises SmackExn in the event that the package is already installed or
@@ -38,7 +41,26 @@ struct
     end
 
     (** List the packages currently installed. *)
-    fun listInstalled () = raise SmackExn "Not implemented"
+    fun listInstalled () = 
+       let
+          val libRoot = !Configure.smackHome // "lib"
+          fun printver ver = 
+             print ("   Version: " ^ SemVer.toString ver ^ "\n")
+          fun read dir = 
+             case OS.FileSys.readDir dir of 
+                NONE => OS.FileSys.closeDir dir
+              | SOME pkg => 
+                   ( print ("Package " ^ pkg ^ ":")
+                   ; case SmackLib.versions (!Configure.smackHome) pkg of
+                        [] => print " (no versions installed)\n"
+                      | vers => (print "\n"; app printver vers)
+                   ; read dir)
+       in 
+          if OS.FileSys.access (libRoot, [])
+          then read (OS.FileSys.openDir libRoot) 
+          else ()
+       end
+
 
     (** Search for a package in the index, with an optional version *)
     fun search name version = raise SmackExn "Not implemented"
