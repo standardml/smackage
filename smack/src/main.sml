@@ -237,9 +237,13 @@ struct
            | ["unsource",pkg] => 
                 ( modsource pkg NONE
                 ; OS.Process.success)
+           | ["selfupdate"] => (selfupdate (); OS.Process.success)
+           | ["selfup"    ] => (selfupdate (); OS.Process.success)
            | ["refresh"] => (refresh (); OS.Process.success)
            | ["install",pkg,ver] => (install pkg (SOME ver); OS.Process.success)
+           | ["down"   ,pkg,ver] => (install pkg (SOME ver); OS.Process.success)
            | ["install",pkg] => (install pkg NONE; OS.Process.success)
+           | ["down"   ,pkg] => (install pkg NONE; OS.Process.success)
            | ["uninstall",pkg,ver] => (uninstall pkg ver; OS.Process.success)
            | ["uninstall",pkg] => (uninstall pkg ""; OS.Process.success)
            | ["list"] => (listInstalled(); OS.Process.success)
