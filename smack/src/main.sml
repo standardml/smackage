@@ -91,14 +91,30 @@ struct
                                  , file = "sources.local"}
           val file = TextIO.openIn sourcesLocal
 
+          val versionSpackspec = 
+             OS.Path.joinDirFile { dir = !Configure.smackHome
+                                 , file = "versions.smackspec"}
+          val output = TextIO.openOut versionSpackspec
+      
+          fun print s = TextIO.output (output, s)
+          fun print1 pkg prot ver =
+             ( print ("provides: " ^ pkg ^ " " ^ SemVer.toString ver ^ "\n")
+             ; print ("remote: " ^ Protocol.toString prot ^ "\n\n"))
+
+          fun poll (pkg, prot) =
+             app (print1 pkg prot) (Conductor.poll prot)
+             handle Fail s => 
+                raise Fail ("When trying to read poll `" ^ pkg
+                            ^ "`, got the following error \n\t\""
+                            ^ s ^ "\"\nYou may need to 'smack unbind " 
+                            ^ pkg ^ "'")
+
           fun read () =
              case getLine file of
                 NONE => TextIO.closeIn file
-              | SOME s => 
-                   ( print ("Imagine " ^ #1 s ^ "\n")
-                   ; read ())
+              | SOME s => (poll s; read ())
        in
-          read ()
+          read (); TextIO.closeOut output
        end
 
     (* Manipulate the sources.local source spec file *)

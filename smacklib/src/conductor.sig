@@ -9,7 +9,8 @@ sig
     *    It assumes this directory exists. *)
    val get: string -> string -> SemVer.semver -> Protocol.protocol -> unit
 
-   (* Old function, throws an error now *)
-   val package: 'a -> 'b -> { get: 'c, poll: 'd }
+   (* poll prot
+    *    Query the remote store for which tags are available. *)
+   val poll: Protocol.protocol -> SemVer.semver list 
 end
 
