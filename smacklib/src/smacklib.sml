@@ -8,6 +8,9 @@ end
 
 structure SmackLib : SMACKLIB =
 struct
+    fun // (dir, file) = OS.Path.joinDirFile { dir = dir, file = file }
+    infix 5 //
+
     (* TODO: Verify that the package and version actually exist. *)
     fun install smackage_root (pkg,ver,prot) =
         (SmackagePath.createPackagePaths smackage_root (pkg,ver);
@@ -20,7 +23,8 @@ struct
     
     fun info smackage_root (pkg,ver) = 
         Spec.fromFile 
-            (smackage_root ^ "/" ^ 
-             pkg ^ "/v" ^ SemVer.toString ver ^ "/" ^ 
-             pkg ^ ".smackspec")
+            ( smackage_root
+            // pkg 
+            // ("v" ^ SemVer.toString ver)
+            // (pkg ^ ".smackspeck"))
 end
