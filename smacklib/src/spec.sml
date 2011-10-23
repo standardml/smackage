@@ -234,12 +234,15 @@ struct
         let
 
             fun parseKeyLine (line, position) = 
-                case String.fields (fn c => c = #":") line of
-                      (key :: valueParts) => 
-                        if CharVector.all (fn c => Char.isAlphaNum c orelse c = #"-") key
-                            then (key, String.concatWith ":" valueParts)
-                            else raise Error ("The key '" ^ key ^ "' contains non-alphanumeric, non-dash characters on line " ^ Int.toString position)
-                    | _ => raise Error ("A key was expected (eg: 'foo: bar') on line " ^ Int.toString position)
+                let
+                    val (key,valueParts) = 
+                        (fn (key :: valueParts) => (key,valueParts) | _ => raise Fail "parseKeyValues: key error") 
+                            (String.fields (fn c => c = #":") line)
+                in
+                    if CharVector.all (fn c => Char.isAlphaNum c orelse c = #"-") key
+                        then (key, String.concatWith ":" valueParts)
+                        else raise Error ("The key '" ^ key ^ "' contains non-alphanumeric, non-dash characters on line " ^ Int.toString position)
+                end
             
             fun parseValueLines (lines : (string * position) list) = 
                 let
