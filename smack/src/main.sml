@@ -35,9 +35,9 @@ struct
         val _ = 
            if spec = NONE
            then print ( "No major version specified, picked v" 
-                      ^ verstring ^ "\n"
+                      ^ normalized_spec ^ ".\n"
                       ^ "Selected `" ^ name ^ " v" 
-                      ^ SemVer.toString ver ^ "`\n")
+                      ^ SemVer.toString ver ^ "`.\n")
            else print ( "Selected `" ^ name ^ " " ^ SemVer.toString ver ^ "`\n")
        
         val proto = 
