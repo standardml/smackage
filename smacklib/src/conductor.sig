@@ -5,7 +5,7 @@ signature CONDUCTOR =
 sig
    (* get smackagePath packageName ver prot 
     *    Makes semantic version ver available within
-    *    the package directory ($smackagePath)/($packageName)/v($ver).
+    *    the package directory ($smackagePath)/lib/($packageName)/v($ver).
     *    It assumes this directory exists. *)
    val get: string -> string -> SemVer.semver -> Protocol.protocol -> unit
 

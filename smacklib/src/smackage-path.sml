@@ -14,7 +14,8 @@ struct
     *)
     fun installedVersions smackage_root pkg =
     let
-        val pkgDir = OS.Path.joinDirFile {dir = smackage_root, file = pkg}
+        val pkgDir' = OS.Path.joinDirFile {dir = smackage_root, file = "lib"}
+        val pkgDir = OS.Path.joinDirFile {dir = pkgDir', file = pkg}
         val dh = OS.FileSys.openDir pkgDir
         fun untilNone () = 
         let
@@ -29,6 +30,16 @@ struct
             (List.mapPartial 
                 (fn x => SOME (SemVer.fromString x) handle _ => NONE) values)
     end
+
+    (** Return me the latest installed version satisfying a given constraint
+        in descending version order. *)
+    fun installedSatisfying smackage_root pkg constr =
+    let
+        val cand = installedVersions smackage_root pkg
+    in
+        List.filter (fn v => SemVer.satisfies (v,constr)) cand
+    end
+
 
     (** Create the empty directory for pkg at a given version, and update
         symlinks accordingly.
@@ -45,7 +56,8 @@ struct
     *)
     fun createPackagePaths smackage_root (pkg,ver) =
     let
-        val pkgDir = OS.Path.joinDirFile {dir = smackage_root, file = pkg}
+        val pkgDir' = OS.Path.joinDirFile {dir = smackage_root, file = "lib"}
+        val pkgDir = OS.Path.joinDirFile {dir = pkgDir', file = pkg}
         (* Create the top-level package directory if it doesn't exist *)
         val _ = OS.FileSys.isDir pkgDir handle _ =>
                     (OS.FileSys.mkDir pkgDir; true)

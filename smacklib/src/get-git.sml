@@ -62,7 +62,8 @@ fun download gitAddr =
 fun get basePath projName gitAddr semver = 
    let val olddir = OS.FileSys.getDir () in 
    let 
-      val projPath = OS.Path.joinDirFile { dir = basePath, file = projName } 
+      val projPath' = OS.Path.joinDirFile { dir = basePath, file = "lib" } 
+      val projPath = OS.Path.joinDirFile { dir = projPath', file = projName } 
       val () = if OS.FileSys.isDir projPath then () 
                else raise Fail ("file `" ^ projName 
                                 ^ "` exists and isn't a directory")
