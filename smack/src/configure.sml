@@ -47,9 +47,11 @@ struct
          fun tryDir (SOME s) = ((OS.FileSys.openDir s; true) handle _ => false)
            | tryDir NONE = false
          val envHome = OS.Process.getEnv "SMACKAGE_HOME"
-         val envHome' = if OS.Process.getEnv "HOME" = NONE 
-             then NONE 
-             else SOME (valOf (OS.Process.getEnv "HOME") ^ "/.smackage")
+         val envHome' = 
+            case OS.Process.getEnv "HOME" of 
+               NONE => NONE
+             | SOME home =>
+                  SOME (OS.Path.joinDirFile { dir = home, file = ".smackage" })
       in
          if tryDir envHome then smackHome := valOf envHome else
          if tryDir envHome' then smackHome := valOf envHome' else
