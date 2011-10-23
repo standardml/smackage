@@ -72,22 +72,7 @@ struct
         val versionDir = "v" ^ SemVer.toString ver
         val _ = OS.FileSys.mkDir (pkgDir ^ "/" ^ versionDir) handle _ => ()
 
-        fun replaceOrCreateSymlink dst link =
-        let
-            (* Delete the old link if it exists *)
-            val e = OS.FileSys.isLink link handle _ => false
-            val _ = 
-                (if e then OS.FileSys.remove link else ())
-                handle _ => ()
-
-            (* Create the new one *)
-            (* TODO: Windows support *)
-            val _ = Posix.FileSys.symlink {old = dst, new = link}
-        in
-            ()
-        end
-
-        val _ = List.app (replaceOrCreateSymlink versionDir) symlinks'
+        val _ = List.app (Symlink.replaceOrCreateSymlink versionDir) symlinks'
 
         val _ = OS.FileSys.chDir versionDir
     in

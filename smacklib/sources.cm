@@ -14,3 +14,6 @@ Group is
    src/http-downloader.sig
    src/curl-lib.sml
    src/smacklib.sml
+
+   src/posix-symlink.sml
+(*   src/bullshit-symlink.sml*)
