@@ -9,13 +9,28 @@ struct
         An empty version string means "the latest version".
         raises SmackExn in the event that the package is already installed or
         if no such package or version is found. *)
-    fun install name version =
+    fun install name spec =
     let
-        val _ = VersionIndex.loadVersions (!Configure.smackHome)
-        val ver = if version = "" then VersionIndex.latestVersion name 
-                    else SemVer.fromString version
+        val () = VersionIndex.loadVersions (!Configure.smackHome)
+        val ver' = 
+           SemVer.intelligentSelect spec 
+              (map #2 (VersionIndex.queryVersions name))
+        val (ver, normalized_spec) = 
+           case ver' of 
+              NONE => raise SmackExn 
+              ("Could not find a package to install for `" ^ name 
+               ^ (case spec of NONE => "" | SOME s => " " ^ s)
+               ^ "` found, try 'smack refresh'?")
+            | SOME x => x
 
-        val _ = print ("Selected " ^ name ^ " " ^ SemVer.toString ver ^ "\n")
+        val verstring = SemVer.toString ver
+        val _ = 
+           if spec = NONE
+           then print ( "No major version specified, picked v" 
+                      ^ verstring ^ "\n"
+                      ^ "Selected `" ^ name ^ " v" 
+                      ^ SemVer.toString ver ^ "`\n")
+           else print ( "Selected `" ^ name ^ " " ^ SemVer.toString ver ^ "`\n")
        
         val proto = 
             case VersionIndex.getProtocol (name,ver) of
@@ -223,8 +238,8 @@ struct
                 ( modsource pkg NONE
                 ; OS.Process.success)
            | ["refresh"] => (refresh (); OS.Process.success)
-           | ["install",pkg,ver] => (install pkg ver; OS.Process.success)
-           | ["install",pkg] => (install pkg ""; OS.Process.success)
+           | ["install",pkg,ver] => (install pkg (SOME ver); OS.Process.success)
+           | ["install",pkg] => (install pkg NONE; OS.Process.success)
            | ["uninstall",pkg,ver] => (uninstall pkg ver; OS.Process.success)
            | ["uninstall",pkg] => (uninstall pkg ""; OS.Process.success)
            | ["list"] => (listInstalled(); OS.Process.success)
