@@ -33,38 +33,36 @@ struct
          raise Fail "Cannot find smackage home. Try setting SMACKAGE_HOME"
       end
 
-   fun initSourcesLocal () = 
+   fun initFile fileName contents = 
       let
-         val sourcesLocal =
-            OS.Path.joinDirFile { dir = !smackHome, file = "sources.local" }
+         val filePath =
+            OS.Path.joinDirFile { dir = !smackHome, file = fileName }
+
          fun create () = 
             let
                val () = 
-                  print "NOTICE: `sources.local` doesn't exist in\
-                        \ $(SMACKAGE_HOME), trying to create it.\n"
-               val file = TextIO.openOut sourcesLocal
+                  print ("NOTICE: `" ^ fileName ^ "` doesn't exist in\
+                         \ $(SMACKAGE_HOME), trying to create it.\n")
+               val file = TextIO.openOut filePath
             in
-               ( TextIO.output 
-                    (file, "rob-toy git git://github.com/robsimmons/toy.git")
+               ( TextIO.output (file, contents)
                ; TextIO.closeOut file)
             end
       in
-         if not (OS.FileSys.access (sourcesLocal, []))
+         if not (OS.FileSys.access (filePath, []))
            then create () else
-         if not (OS.FileSys.access (sourcesLocal, [ OS.FileSys.A_READ
-                                                  , OS.FileSys.A_WRITE ]))
-           then raise Fail "Can't read/write to sources.local (run as sudo?)" 
+         if not (OS.FileSys.access (filePath, [ OS.FileSys.A_READ
+                                              , OS.FileSys.A_WRITE ]))
+           then raise Fail ("Can't read/write to `" ^ fileName
+                            ^ "` (run as sudo?)")
          else ()
       end handle exn => 
-             ( print "Error checking `sources.local` file.\n"
+             ( print ("Error with `" ^ fileName ^ "` file.\n")
              ; raise exn)
 
    fun readConfigFile () = 
       let
          val config = OS.Path.joinDirFile { dir = !smackHome, file = "config" }
-
-         fun defaults () = 
-            ( smackSources := [ "sources.local" ] )
 
          fun loop file = 
             case Option.map 
@@ -78,8 +76,7 @@ struct
                   raise Fail ( "Bad configuration line: " 
                              ^ String.concatWith " " s )
       in 
-         if not (OS.FileSys.access (config, []))
-           then defaults () else
+         if not (OS.FileSys.access (config, [])) then () else
          if not (OS.FileSys.access (config, [ OS.FileSys.A_READ ]))
            then raise Fail "Config file exists but can't be read"
          else loop (TextIO.openIn config) 
@@ -87,7 +84,12 @@ struct
 
    fun init () =
       ( initSmackHome ()
-      ; initSourcesLocal ()
+      ; initFile "sources.local" 
+           "smackage git git://github.com/standardml/smackage.git\n"
+      ; initFile "config"
+           "source sources.local\n"
+      ; initFile "packages.installed"
+           "\n"
       ; readConfigFile ())
         
 (*
