@@ -52,8 +52,14 @@ struct
         val _ = print "Candidates:\n"
         val candidates = VersionIndex.queryVersions name
         val _ = List.app 
-            (fn (n,v,p) => print (n ^ " " ^ SemVer.toString v ^ "\n")) 
-                candidates 
+            (fn (n,v,p) => 
+             let
+                 val _ = print (n ^ " " ^ SemVer.toString v)
+                 val s = SOME (SmackagePath.packageMetadata 
+                            (!Configure.smackHome) (n,v)) handle _ => NONE
+                 val _ = case s of NONE => print "\n" 
+                                 | SOME sp => print (" (installed)\n" ^ Spec.toString sp ^ "\n")
+             in () end) candidates 
     in
         ()
     end
