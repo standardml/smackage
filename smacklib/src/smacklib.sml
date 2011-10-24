@@ -61,5 +61,6 @@ struct
             // "lib"
             // pkg 
             // ("v" ^ SemVer.toString ver)
-            // (pkg ^ ".smackspeck"))
+            // (pkg ^ ".smackspec"))
+        handle (Spec.SpecError s) => raise Fail ("Spec error: " ^ s)
 end

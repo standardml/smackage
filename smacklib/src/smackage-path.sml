@@ -56,7 +56,8 @@ struct
             then raise Metadata ("Spec file not found: " ^ specFile)  else
         if not (OS.FileSys.access (specFile, [ OS.FileSys.A_READ ]))
             then raise Metadata "Spec file exists but can't be read"
-        else Spec.fromFile specFile
+        else Spec.fromFile specFile 
+            handle (Spec.SpecError s) => raise Fail ("Spec error: " ^ s)
     end
 
 
