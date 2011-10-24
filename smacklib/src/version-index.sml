@@ -1,15 +1,15 @@
 structure VersionIndex =
 struct
+    fun // (dir, file) = OS.Path.joinDirFile { dir = dir, file = file }
+    infix 5 //
+
     val versionIndex = ref [] : (string * SemVer.semver * Protocol.protocol) list ref
 
     (** Parse the versions.smackspec file to produce a list of available
         (package,version,protocol) triples. *)
     fun parseVersionsSpec smackage_root =
     let
-        val fp = TextIO.openIn (smackage_root ^ "/versions.smackspec")
-                    handle _ => raise Fail 
-                        ("Cannot open `$SMACKAGE_HOME/versions.smackspec'. " ^ 
-                         "Try running `smack refresh' to update this file.")
+        val fp = TextIO.openIn (smackage_root // "versions.smackspec")
 
         val stanza = ref "";
         
