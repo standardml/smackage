@@ -1,0 +1,6 @@
+$(SML_LIB)/basis/basis.mlb
+$(MLTON_ROOT)/mlyacc-lib/mlyacc-lib.mlb
+sources-nonposix.mlb
+src/configure.sml
+src/main.sml
+src/go.sml
