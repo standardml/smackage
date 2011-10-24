@@ -115,10 +115,14 @@ struct
              let
                  val _ = print (n ^ " " ^ SemVer.toString v)
                  val s = SOME (SmackagePath.packageMetadata 
-                            (!Configure.smackHome) (n,v)) handle _ => NONE
-                 val _ = case s of NONE => print "\n" 
+                            (!Configure.smackHome) (n,v)) 
+                            handle (Spec.SpecError s) => 
+                                (print ("Spec Error: " ^ s ^ "\n"); NONE)
+                                 | (SmackagePath.Metadata s) => NONE
+
+                 val _ = case s of NONE => print "\n\n" 
                                  | SOME sp =>
-                                    print (" (installed)\n" ^
+                                    print (" (installed)\n\n" ^
                                         Spec.toString sp ^ "\n")
              in () end) candidates 
     in
