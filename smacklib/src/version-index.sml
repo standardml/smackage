@@ -78,5 +78,8 @@ struct
         List.foldl (fn ((n,v,p),v') => if SemVer.>(v,v') 
                         then v else v') (#2 (hd cand)) cand
     end
+
+    fun search query =
+        List.filter (fn (n,_,_) => String.isSubstring query n) (!versionIndex)
 end
 
