@@ -163,10 +163,6 @@ struct
     (* XXX this should notice when there is a redundant source in different
      * (or the same) sources file, issue a warning, and then pick only the
      * latter source definition, but we'll want string maps for that *)
-    (* XXX if you've got a bad source, the error handling in 'poll' seems
-     * not to work.
-     * This is bad because 'smack selfup' needs to be able to recover if we
-     * get a bad repository into the master sources file. *)
     fun refresh () = 
        let val oldDir = OS.FileSys.getDir () in
        let 
@@ -218,8 +214,8 @@ struct
           val file = TextIO.openIn sourcesLocal
 
           fun notfound () =
-             raise SmackExn ( "Could not find source spec for `" ^ pkg 
-                            ^ "` in sources.local to delete it")
+             raise SmackExn ( "WARNING: Package `" ^ pkg 
+                            ^ "` not in sources.local.")
 
           fun read_big accum = 
              case getLine file of 
@@ -260,7 +256,9 @@ struct
               ( TextIO.output (file, pkg ^ " " ^ Protocol.toString prot ^ "\n")
               ; write sources)
        in
-          write sources; print "Done rewriting sources.local.\n"
+          ( write sources
+          ; print "Done rewriting sources.local.\n\
+                  \You probably want to run 'smack refresh' now.\n")
        end
 
     fun printUsage () =
