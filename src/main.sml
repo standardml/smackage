@@ -264,7 +264,6 @@ struct
     fun printUsage () =
         (print "Usage: smackage <command> [args]\n";
          print " Commands:\n";
-         print "\tdown <name> [version]\t\tAlias for `install'\n";
          print "\thelp\t\t\t\tDisplay this usage and exit\n";
          print "\tinfo <name> [version]\t\tDisplay package information.\n";
          print "\tinstall <name> [version]\tInstall the named package\n";
@@ -272,7 +271,6 @@ struct
          print "\trefresh\t\t\t\tRefresh the package index\n";
          print "\tsearch <name>\t\t\tFind an appropriate package\n";
          print "\tselfupdate\t\t\tUpdate smackage\n";
-         print "\tselfup\t\t\t\tUpdate smackage\n";
          print "\tsource <name> <protocol> <url>\tAdd a smackage source to sources.local\n";
          print "\tunsource <name>\t\t\tRemove a source from sources.local\n";
          print "\tuninstall <name> [version]\tRemove a package\n"
@@ -298,16 +296,11 @@ struct
                 ( modsource pkg NONE
                 ; OS.Process.success)
            | ["selfupdate"] => (selfupdate (); OS.Process.success)
-           | ["selfup"    ] => (selfupdate (); OS.Process.success)
            | ["refresh"] => (refresh (); OS.Process.success)
            | ["install",pkg,ver] => 
                 ( install pkg (SOME (SemVer.constrFromString ver))
                 ; OS.Process.success)
-           | ["down"   ,pkg,ver] => 
-                ( install pkg (SOME (SemVer.constrFromString ver))
-                ; OS.Process.success)
            | ["install",pkg] => (install pkg NONE; OS.Process.success)
-           | ["down"   ,pkg] => (install pkg NONE; OS.Process.success)
            | ["uninstall",pkg,ver] => (uninstall pkg ver; OS.Process.success)
            | ["uninstall",pkg] => (uninstall pkg ""; OS.Process.success)
            | ["list"] => (listInstalled(); OS.Process.success)

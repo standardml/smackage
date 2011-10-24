@@ -49,8 +49,17 @@ signature SPEC =
 sig
     exception SpecError of string
 
+    datatype spec_entry =
+        Provides of string * SemVer.semver
+      | Description of string
+      | Requires of string * SemVer.constraint
+      | Maintainer of string
+      | Remote of Protocol.protocol
+      | License of string
+      | Platform of string
+      | Key of string * string 
+
     type spec
-    type spec_entry
 
     (* Parses a smackspec file. *)
     val fromFile : string -> spec
@@ -215,7 +224,8 @@ struct
     fun toVersionSpec (spec : spec) =
         (fn (pkg,ver) => (pkg,ver,remote spec)) (provides spec)
         handle (e as SpecError s) => (
-            TextIO.output (TextIO.stdErr, "Error in smackspec: " ^ s ^ "\n" ^ toString spec); 
+            TextIO.output (TextIO.stdErr, 
+                "Error in smackspec: " ^ s ^ "\n" ^ toString spec); 
             raise e)
 
 end
