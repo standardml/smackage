@@ -200,7 +200,8 @@ struct
        in
           ( app dofile (!Configure.smackSources @ [ "sources.local" ])
           ; TextIO.closeOut output
-          ; OS.FileSys.chDir oldDir)
+          ; OS.FileSys.chDir oldDir
+          ; VersionIndex.init (!Configure.smackHome))
        end handle exn => (OS.FileSys.chDir oldDir; raise exn) end
 
     fun selfupdate () = 

@@ -12,29 +12,35 @@ struct
        Resolved in this order:
 
        SMACKAGE_HOME environment variable
-       ~/.smackage/
        /usr/local/smackage/
        /opt/smackage/
+       ~/.smackage/
    *)
    fun initSmackHome () = 
-      let
-         fun tryDir (SOME s) = ((OS.FileSys.openDir s; true) handle _ => false)
-           | tryDir NONE = false
-         val envHome = OS.Process.getEnv "SMACKAGE_HOME"
-         val envHome' = 
-            case OS.Process.getEnv "HOME" of 
-               NONE => NONE
-             | SOME home =>
-                  SOME (OS.Path.joinDirFile { dir = home, file = ".smackage" })
-      in
-         if tryDir envHome then smackHome := valOf envHome else
-         if tryDir envHome' then smackHome := valOf envHome' else
-         if tryDir (SOME "/usr/local/smackage") 
-            then smackHome := "/usr/local/smackage" else
-         if tryDir (SOME "/opt/smackage") 
-            then smackHome := "/opt/smackage" else
-         raise Fail "Cannot find smackage home. Try setting SMACKAGE_HOME"
-      end
+   let 
+      val getEnv = OS.Process.getEnv
+      fun tryDir (SOME s) = ((OS.FileSys.openDir s; true) handle _ => false)
+        | tryDir NONE = false
+      fun useThisDir dir = 
+         if tryDir (SOME dir) then smackHome := dir
+         else ( print ( "NOTICE: dir `"
+                      ^ dir ^ "` doesn't exist, trying to create it.")
+              ; OS.FileSys.mkDir dir
+                handle _ => raise Fail "Couldn't create home directory"
+              ; smackHome := dir)
+   in
+      if Option.isSome (getEnv "SMACKAGE_HOME")
+         then (* $SMACKAGE_HOME is set, definitely go with that. *)
+           useThisDir (valOf (getEnv "SMACKAGE_HOME"))
+      else if tryDir (SOME "/usr/local/smackage") 
+         then smackHome := "/usr/local/smackage" 
+      else if tryDir (SOME "/opt/smackage") 
+         then smackHome := "/opt/smackage"
+      else if Option.isSome (OS.Process.getEnv "HOME")
+         then (* $HOME set, we're out of other options. Try ~/.smackage *)
+           useThisDir (valOf (getEnv "HOME") // ".smackage")
+      else raise Fail "Cannot find smackage home. Try setting SMACKAGE_HOME"
+   end
 
    fun initFile fileName contents = 
       let
@@ -70,7 +76,7 @@ struct
          fun create () = 
             let
                val () = 
-                  print ("NOTICE: directory `" ^ dirName ^ "` doesn't exist,\
+                  print ("NOTICE: dir `" ^ dirName ^ "` doesn't exist,\
                          \ trying to create it.\n")
             in
                OS.FileSys.mkDir dirPath
