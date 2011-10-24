@@ -50,8 +50,9 @@ build and start using smackage like this:
 
 Referring to Smackage packages
 ------------------------------
-Now you can refer to cmlib as `$SMACKAGE/cmlib/v0/cmlib.cm` (in SML/NJ .cm 
-files) or as `$(SMACKAGE)/cmlib/v0/cmlib.mlb` (in MLton .mlb files).
+If you've run the four lines as described above, you can refer to cmlib as 
+`$SMACKAGE/cmlib/v0/cmlib.cm` (in SML/NJ .cm files) or as 
+`$(SMACKAGE)/cmlib/v0/cmlib.mlb` (in MLton .mlb files).
 
 You might want to add `$SMACKAGE_HOME/bin` to your path if you want to use 
 applications compiled through smackage.
