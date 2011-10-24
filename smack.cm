@@ -1,6 +1,6 @@
 Group is
 	$/basis.cm
 	$/ml-yacc-lib.cm
-	../smacklib/sources.cm
+	sources.cm
 	src/main.sml
 	src/configure.sml

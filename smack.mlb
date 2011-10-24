@@ -1,6 +1,6 @@
 $(SML_LIB)/basis/basis.mlb
 $(MLTON_ROOT)/mlyacc-lib/mlyacc-lib.mlb
-../smacklib/smacklib.mlb
+sources.mlb
 src/configure.sml
 src/main.sml
 src/go.sml
