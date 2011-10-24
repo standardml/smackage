@@ -1,11 +1,16 @@
 signature SEMVER =
 sig
-    type semver
-    type constraint
+    eqtype semver     (* v0.2.4beta, v1.2.3, etc... *)
+    type constraint (* v1, v1.2, v2.3.6, v3.1.6, etc... *)
 
     exception InvalidVersion
 
+    val constrFromString : string -> constraint
+    val constrToString : constraint -> string
     val fromString : string -> semver
+    val major : semver -> constraint
+    val minor : semver -> constraint
+    val exact : semver -> constraint
     val toString : semver -> string
     val eq : semver * semver -> bool
     val compare : semver * semver -> order
@@ -20,23 +25,27 @@ sig
      * version which makes sense to Rob at the time.
      *
      * It will prefer tags with special versions over tags with 
-     * no versions (so `intelligentSelect NONE [ 2.0.0beta, 1.9.3 ]` will 
-     * return `SOME (1.9.3, "1")`) but will prefer nothing to something (so 
-     * `intelligentSelect (SOME "v2") [ 2.0.0beta, 1.9.3 ]` or 
-     * `intelligentSelect (SOME "2") [ 2.0.0beta, 1.9.3 ]` will return 
+     * no versions (so `intelligentSelect NONE [ v2.0.0beta, v1.9.3 ]` will 
+     * return `SOME (v1.9.3, "1")`) but will prefer nothing to something (so 
+     * `intelligentSelect (SOME v2) [ 2.0.0beta, 1.9.3 ]` will return 
      * `SOME (2.0.0beta, "2")` *)
     val intelligentSelect :
-       string option -> semver list -> (semver * string) option
+       constraint option -> semver list -> (semver * string) option
 end
 
-structure SemVer : SEMVER =
+structure SemVer:> SEMVER =
 struct
     type semver = int * int * int * string option
-    type constraint = string
+    type constraint = int * int option * int option * string option
 
     exception InvalidVersion
 
     fun eq (x: semver, y) = x = y
+
+    fun major (major, _, _, _) = (major, NONE, NONE, NONE)
+    fun minor (major, minor, _, _) = (major, SOME minor, NONE, NONE)
+    fun exact (major, minor, patch, special) =
+       (major, SOME minor, SOME patch, special)
 
     fun fromString' s =
     let
@@ -68,17 +77,26 @@ struct
          | _ => fail ()
     end
 
+    fun constrFromString s = fromString' s
+
     fun fromString s = 
        case fromString' s of
           (major, SOME minor, SOME patch, special) => 
              (major, minor, patch, special)
         | _ => raise Fail ("`" ^ s ^ "` is an incomplete semantic version")
 
-    fun toString (ma,mi,pa,s) =
-        Int.toString ma ^ "." ^
-        Int.toString mi ^ "." ^
-        Int.toString pa ^
+    val ts = Int.toString
+
+    fun toString (ma,mi,pa,s) = 
+        ts ma ^ "." ^ ts mi ^ "." ^ ts pa ^
         (if s = NONE then "" else valOf s)
+
+    fun constrToString (major, NONE, _, _) = ts major
+      | constrToString (major, SOME minor, NONE, _) = ts major ^ "." ^ ts minor
+      | constrToString (major, SOME minor, SOME patch, NONE) =
+           ts major ^ "." ^ ts minor ^ "." ^ ts patch
+      | constrToString (major, SOME minor, SOME patch, SOME special) =
+           ts major ^ "." ^ ts minor ^ "." ^ ts patch ^ special
 
     fun compare ((ma,mi,pa,st),(ma',mi',pa',st')) = 
         if ma < ma' then LESS else
@@ -101,30 +119,18 @@ struct
     fun a > b = compare (a,b) = GREATER
     fun max a b = if b > a then b else a
 
-    (** Accepts a version and a version constraint of the form:
-      X.Y.Z   (exactly this version)
-      < X.Y.Z
-      > X.Y.Z
-      <= X.Y.Z
-      >= X.Y.Z
-      <> X.Y.Z (not this version) *)
-    fun satisfies (v, spec) =
-    let
-        val f = String.fields (fn #" " => true | _ => false) spec
-        val (cmd,v') = 
-            if (length f <> 1 andalso length f <> 2) then raise InvalidVersion
-                else if length f = 1 then ("=",fromString (hd f)) else
-                    (List.nth (f,0), fromString (List.nth (f,1)))
-    in
-        case cmd of
-            "=" => v = v'
-          | "<" => v < v'
-          | ">" => v > v'
-          | "<=" => v <= v'
-          | ">=" => v >= v'
-          | "<>" => v <> v'
-          | _ => raise InvalidVersion
-    end
+   (* Does a version number meet the specification? *)
+   fun satisfies ((ver: semver), spec) = 
+      case spec of
+         (major, NONE, _, _) =>
+            (#1 ver = major)
+       | (major, SOME minor, NONE, _) =>
+            (#1 ver = major andalso #2 ver = minor)
+       | (major, SOME minor, SOME patch, special) => 
+            (#1 ver = major
+             andalso #2 ver = minor
+             andalso #3 ver = patch
+             andalso #4 ver = special)
 
     (** Enumerate the various paths that this version could give rise to.
         e.g., for version 1.6.2beta1, we could potentially have these paths:
@@ -137,30 +143,10 @@ struct
 
     fun intelligentSelect spec vers = 
        let
-          val spec = Option.map fromString' spec
-          val ts = Int.toString
-          fun specstr (major, NONE, _, _) = ts major
-            | specstr (major, SOME minor, NONE, _) = ts major ^ "." ^ ts minor
-            | specstr (major, SOME minor, SOME patch, NONE) =
-                 ts major ^ "." ^ ts minor ^ "." ^ ts patch
-            | specstr (major, SOME minor, SOME patch, SOME special) =
-                 ts major ^ "." ^ ts minor ^ "." ^ ts patch ^ special
-
-          (* Does a version number meet the specification? *)
-          val satisfies = 
-             case spec of
-                NONE => 
-                   (fn _ => true)
-              | SOME (major, NONE, _, _) => 
-                   (fn ver => #1 ver = major)
-              | SOME (major, SOME minor, NONE, _) =>
-                   (fn ver => #1 ver = major
-                              andalso #2 ver = minor)
-              | SOME (major, SOME minor, SOME patch, special) => 
-                   (fn ver => #1 ver = major
-                              andalso #2 ver = minor
-                              andalso #3 ver = patch
-                              andalso #4 ver = special)
+          val satisfies =
+             case spec of 
+                NONE => (fn _ => true)
+              | SOME spec => (fn (ver: semver) => satisfies (ver, spec))
 
           fun best NONE ver = 
               if satisfies ver then SOME ver else NONE
@@ -179,6 +165,6 @@ struct
           case (process NONE vers, spec) of 
              (NONE, _) => NONE
            | (SOME ver, NONE) => SOME (ver, Int.toString (#1 ver))
-           | (SOME ver, SOME spec) => SOME (ver, specstr spec)
+           | (SOME ver, SOME spec) => SOME (ver, constrToString spec)
        end
 end

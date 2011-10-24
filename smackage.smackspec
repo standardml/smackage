@@ -1,0 +1,10 @@
+description: Smackage, a simple Standard ML package manager
+maintainer: Gian Perrone <gianp at itu dot dk>
+maintainer: Robert J. Simmons <robsimmons at itu dot dk>
+maintainer: Michael Sullivan 
+maintainer: Joakim Ahnfelt-Rønne
+keywords: package manager, terrible puns, violence
+bug-url: https://github.com/standardml/smackage/issues
+platform: mlton
+build: mlton smack/smack.mlb -o smack
+install: mv smack ../../../bin/smack

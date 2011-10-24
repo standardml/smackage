@@ -110,7 +110,7 @@ struct
             (String.fields Char.isSpace s)
 
     fun parseRequires s =
-        (fn [pkg,con] => (pkg,con)
+        (fn [pkg,con] => (pkg,SemVer.constrFromString con)
           | _ => raise SpecError ("Invalid 'requires:' content: `" ^ s ^ "'"))
             (String.fields Char.isSpace s)
 
@@ -182,7 +182,7 @@ struct
       | toString' (Description s) =
         "description: " ^ s 
       | toString' (Requires (p,v)) =
-        "requires: " ^ p ^ " " ^ v
+        "requires: " ^ p ^ " " ^ SemVer.constrToString v
       | toString' (Maintainer s) =
         "maintainer: " ^ s
       | toString' (Remote p) =
