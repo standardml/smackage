@@ -7,9 +7,17 @@ struct
   fun remove s = 
       if not (OS.Process.isSuccess (OS.Process.system ("rm -rf " ^ s)))
       then raise Fail "removing old version directory failed" else ()
+
   fun copyDir dst src =
-      if not (OS.Process.isSuccess (OS.Process.system ("cp -r " ^ src ^ " " ^ dst)))
-      then raise Fail "copying version failed" else ()
+      let
+         val print = fn _ => () (* comment this to debug *) 
+         val () = print ("Current directory: " ^ OS.FileSys.getDir () ^ "\n")
+         val line = "cp -r " ^ src ^ " " ^ dst 
+         val () = print ("COPY: " ^ line ^ "\n")
+      in
+         if not (OS.Process.isSuccess (OS.Process.system line))
+         then raise Fail "copying version failed" else ()
+      end
 
   fun replaceOrCreateSymlink target link =
       let
