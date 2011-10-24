@@ -1,7 +1,7 @@
 BIN=bin
 
 all:
-	echo "Run 'make mlton' or 'make smlnj'"
+	echo "Run 'make mlton', 'make smlnj' or 'make polyml'"
 	false
 
 mlton:
@@ -14,7 +14,11 @@ smlnj:
 	sml src/go-nj.sml
 	bin/.mkexec `which sml` `pwd` smack
 
+polyml:
+	polyml < src/poly_build.sml
+	gcc -o smack smack-poly.o -lpolymain -lpolyml
+
 clean:
 	rm -f $(BIN)/smack
 
-.PHONY: clean mlton smlnj
+.PHONY: clean mlton smlnj polyml
