@@ -48,8 +48,8 @@ build and start using smackage like this:
    
     $ cd smackage
     $ make mlton # (or make smlnj, not yet supported)
-    $ bin/smack selfupdate
-    $ bin/smack install cmlib v0
+    $ bin/smackage selfupdate
+    $ bin/smackage install cmlib v0
 
 Referring to Smackage packages
 ------------------------------

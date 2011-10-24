@@ -5,20 +5,24 @@ all:
 	false
 
 mlton:
-	mlton -output $(BIN)/smack smack.mlb
+	mlton -output $(BIN)/smackage smack.mlb
 
 win+mlton:
-	mlton -output $(BIN)/smack smack-nonposix.mlb
+	mlton -output $(BIN)/smackage smack-nonposix.mlb
 
 smlnj:
 	sml src/go-nj.sml
-	bin/.mkexec `which sml` `pwd` smack
+	bin/.mkexec `which sml` `pwd` smackage
+
+win+smlnj:
+	sml src/go-nj-nonposix.sml
+	bin/.mkexec `which sml` `pwd` smackage
 
 polyml:
 	polyml < src/poly_build.sml
-	gcc -o smack smack-poly.o -lpolymain -lpolyml
+	gcc -o $(BIN)/smackage smack-poly.o -lpolymain -lpolyml
 
 clean:
-	rm -f $(BIN)/smack
+	rm -f $(BIN)/smackage
 
 .PHONY: clean mlton smlnj polyml
