@@ -1,7 +1,10 @@
+(* Interface to the stored $SMACKAGE_HOME/versions.smackspec file *)
+
 structure VersionIndex:> 
 sig
-   (* Load the versions.smackspec file, given $SMACKAGE_HOME *)
-   val loadVersions: string -> unit
+   (* Initialization, expects the value of $SMACKAGE_HOME, where the
+    * file versions.smackspec already exists. *)
+   val init: string -> unit
 
    (* Do we know anything about this package? *)
    val isKnown: string -> bool
@@ -60,10 +63,8 @@ struct
             (List.filter (fn s => not (whitespace s)) stanzas)
     end
 
-    (* Avoid re-loading the version index ever again. *)
-    fun loadVersions smackage_root = 
-        if length (!versionIndex) > 0 then () else
-            versionIndex := parseVersionsSpec smackage_root
+    fun init smackage_root = 
+        versionIndex := parseVersionsSpec smackage_root
 
     fun isKnown pkg = 
        not (null (List.filter (fn (n,_,_) => pkg = n) (!versionIndex)))

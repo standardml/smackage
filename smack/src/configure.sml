@@ -116,7 +116,8 @@ struct
       ; initFile "versions.smackspec" "\n"
       ; initDir "lib"
       ; initDir "bin"
-      ; readConfigFile ())
+      ; readConfigFile ()
+      ; VersionIndex.init (!smackHome))
         
 (*
    fun readConfig () = 

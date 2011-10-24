@@ -12,7 +12,6 @@ struct
         if no such package or version is found. *)
     fun install name specStr =
     let
-        val () = VersionIndex.loadVersions (!Configure.smackHome)
         val () =
            if VersionIndex.isKnown name then ()
            else raise SmackExn 
@@ -90,7 +89,6 @@ struct
     *)
     fun info name version = 
     let
-        val _ = VersionIndex.loadVersions (!Configure.smackHome)
         val _ = print "Candidates:\n"
         val candidates = VersionIndex.getAll name NONE
         val _ = List.app 
