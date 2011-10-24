@@ -39,7 +39,7 @@ struct
     let
         val cand = installedVersions smackage_root pkg
     in
-        List.filter (fn v => SemVer.satisfies (v,constr)) cand
+        List.filter (SemVer.satisfies constr) cand
     end
 
     (** Get the metadata for a currently-installed package *)

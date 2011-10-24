@@ -14,7 +14,7 @@ sig
     val toString : semver -> string
     val eq : semver * semver -> bool
     val compare : semver * semver -> order
-    val satisfies : semver * constraint -> bool
+    val satisfies : constraint -> semver -> bool
     val < : semver * semver -> bool
     val <= : semver * semver -> bool
     val >= : semver * semver -> bool
@@ -28,9 +28,13 @@ sig
      * no versions (so `intelligentSelect NONE [ v2.0.0beta, v1.9.3 ]` will 
      * return `SOME (v1.9.3, "1")`) but will prefer nothing to something (so 
      * `intelligentSelect (SOME v2) [ 2.0.0beta, 1.9.3 ]` will return 
-     * `SOME (2.0.0beta, "2")` *)
+     * `SOME (2.0.0beta, "2")` 
+     *
+     * The returned constraint is equal to the given constraint if an initial
+     * constraint was given, and is the major version of the returned semvar
+     * if no initial constraint was given. *)
     val intelligentSelect :
-       constraint option -> semver list -> (semver * string) option
+       constraint option -> semver list -> (constraint * semver) option
 end
 
 structure SemVer:> SEMVER =
@@ -120,7 +124,7 @@ struct
     fun max a b = if b > a then b else a
 
    (* Does a version number meet the specification? *)
-   fun satisfies ((ver: semver), spec) = 
+   fun satisfies spec (ver: semver) =
       case spec of
          (major, NONE, _, _) =>
             (#1 ver = major)
@@ -146,7 +150,7 @@ struct
           val satisfies =
              case spec of 
                 NONE => (fn _ => true)
-              | SOME spec => (fn (ver: semver) => satisfies (ver, spec))
+              | SOME spec => satisfies spec
 
           fun best NONE ver = 
               if satisfies ver then SOME ver else NONE
@@ -164,7 +168,7 @@ struct
        in
           case (process NONE vers, spec) of 
              (NONE, _) => NONE
-           | (SOME ver, NONE) => SOME (ver, Int.toString (#1 ver))
-           | (SOME ver, SOME spec) => SOME (ver, constrToString spec)
+           | (SOME ver, NONE) => SOME (major ver, ver)
+           | (SOME ver, SOME spec) => SOME (spec, ver)
        end
 end

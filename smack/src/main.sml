@@ -12,37 +12,32 @@ struct
         if no such package or version is found. *)
     fun install name specStr =
     let
-        val () = VersionIndex.loadVersions (!Configure.smackHome)
-        val vers =
-           case map #2 (VersionIndex.queryVersions name) of
-              [] => raise SmackExn 
-                 ( "I don't know about the package `" ^ name 
-                 ^ "`, run 'smack selfupdate'?")
-            | vers => vers
+        val () =
+           if VersionIndex.isKnown name then ()
+           else raise SmackExn 
+                         ( "I don't know about the package `" ^ name 
+                         ^ "`, run 'smack selfupdate'?")
 
-        val spec = Option.map SemVer.constrFromString specStr
-        val ver' = SemVer.intelligentSelect spec vers
-              
-        val (ver, normalized_spec) = 
-           case ver' of 
-              NONE => 
-              raise SmackExn 
+        val (spec, ver) = 
+           VersionIndex.getBest name 
+              (Option.map SemVer.constrFromString specStr)
+           handle _ => 
+           raise SmackExn 
                  ("No acceptable version of `" ^ name 
                  ^ (case specStr of NONE => "" | SOME s => " " ^ s)
                  ^ "` found, try 'smack refresh'?")
-            | SOME x => x
 
         val verstring = SemVer.toString ver
         val _ = 
-           if not (Option.isSome spec)
+           if not (Option.isSome specStr)
            then print ( "No major version specified, picked v" 
-                      ^ normalized_spec ^ ".\n"
+                      ^ SemVer.constrToString spec ^ ".\n"
                       ^ "Selected `" ^ name ^ " v" 
                       ^ SemVer.toString ver ^ "`.\n")
            else print ( "Selected `" ^ name ^ " " ^ SemVer.toString ver ^ "`\n")
        
         val proto = 
-            case VersionIndex.getProtocol (name,ver) of
+            case VersionIndex.getProtocol name ver of
                 SOME p => p
               | NONE => raise SmackExn 
                 ("Installation method for " ^ name ^ " " ^ 
@@ -91,7 +86,7 @@ struct
     *)
     fun search name version =
     let
-        val _ = VersionIndex.loadVersions (!Configure.smackHome)
+        val _ = VersionIndex.init (!Configure.smackHome)
         val res = VersionIndex.search name
         val _ = if length res = 0 then print "No packages found.\n" else ()
         val _ = List.app 
@@ -107,15 +102,14 @@ struct
     *)
     fun info name version = 
     let
-        val _ = VersionIndex.loadVersions (!Configure.smackHome)
         val _ = print "Candidates:\n"
-        val candidates = VersionIndex.queryVersions name
+        val candidates = VersionIndex.getAll name NONE
         val _ = List.app 
-            (fn (n,v,p) => 
+            (fn v => 
              let
-                 val _ = print (n ^ " " ^ SemVer.toString v)
+                 val _ = print (name ^ " " ^ SemVer.toString v)
                  val s = SOME (SmackagePath.packageMetadata 
-                            (!Configure.smackHome) (n,v)) 
+                            (!Configure.smackHome) (name,v)) 
                             handle (Spec.SpecError s) => 
                                 (print ("Spec Error: " ^ s ^ "\n"); NONE)
                                  | (SmackagePath.Metadata s) => NONE
