@@ -266,16 +266,19 @@ struct
     fun printUsage () =
         (print "Usage: smackage <command> [args]\n";
          print " Commands:\n";
+         print "\tdown <name> [version]\t\tAlias for `install'\n";
          print "\thelp\t\t\t\tDisplay this usage and exit\n";
          print "\tinfo <name> [version]\t\tDisplay package information.\n";
          print "\tinstall <name> [version]\tInstall the named package\n";
          print "\tlist\t\t\t\tList installed packages\n";
          print "\trefresh\t\t\t\tRefresh the package index\n";
          print "\tsearch <name>\t\t\tFind an appropriate package\n";
+         print "\tselfupdate\t\t\tUpdate smackage\n";
+         print "\tselfup\t\t\t\tUpdate smackage\n";
          print "\tsource <name> <protocol> <url>\tAdd a smackage source to sources.local\n";
          print "\tunsource <name>\t\t\tRemove a source from sources.local\n";
-         print "\tuninstall <name> [version]\tRemove a package\n";
-         print "\tupdate\t\t\t\tUpdate the package database\n");
+         print "\tuninstall <name> [version]\tRemove a package\n"
+         )
 
     fun main args = 
        let
