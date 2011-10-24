@@ -1,8 +1,8 @@
 signature SMACKLIB =
 sig
-    (** Adds or removes a particular packages from the library *)
-    val install : string -> string * SemVer.semver * Protocol.protocol -> unit
-    val uninstall : string -> string * SemVer.semver -> unit
+    (** Ensure that a package is present in the library; returns true if it
+     ** was already there *)
+    val download : string -> string * SemVer.semver * Protocol.protocol -> bool
 
     (** Returns a list of installed versions *)
     (* XXX should probably be sorted, relies on the filesystem for this now *)
@@ -27,14 +27,12 @@ struct
           OS.FileSys.access (pkgRoot // verString, [])
        end
 
-    fun install smackage_root (pkg,ver,prot) =
+    fun download smackage_root (pkg, ver, prot) =
        if exists smackage_root (pkg, ver) 
-       then print ( "Package `" ^ pkg ^ " " ^ SemVer.toString ver 
-                  ^ "` already installed, nothing to do.\n") 
+       then true
        else ( SmackagePath.createPackagePaths smackage_root (pkg,ver)
             ; Conductor.get smackage_root pkg ver prot
-            ; print ( "Package `" ^ pkg ^ " " ^ SemVer.toString ver 
-                    ^ "` installed.\n"))
+            ; false)
 
     fun uninstall smackage_root (pkg,ver) = raise Fail "Not implemented"
 

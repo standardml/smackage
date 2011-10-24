@@ -2,50 +2,71 @@ structure Smack =
 struct
     exception SmackExn of string
 
-    fun // (dir, file) = OS.Path.joinDirFile { dir = dir, file = file }
     infix 5 //
+    fun (dir // file) = OS.Path.joinDirFile { dir = dir, file = file }
+
+    (** Resolve the dependencies of a particular, newly-downloaded package.
+        XXX this should eventually be factored into another module that
+        does more intelligent checking to see if existing versions (that aren't 
+        the most recent but that have the virtue of being installed) will do. *)
+    fun resolveDependencies pkg ver = 
+    let exception NoDeps in let
+       val specFile = 
+          !Configure.smackHome // "lib" // pkg // ("v" ^ SemVer.toString ver)
+          // (pkg ^ ".smackspec")
+       val () = if OS.FileSys.access (specFile, []) then () else raise NoDeps
+  
+       val deps = Spec.requires (Spec.fromFile specFile)
+       val ltoi = Int.toString o length
+    in
+       ( if null deps then raise NoDeps else ()
+       ; if length deps = 1 then print "Resolving 1 dependency\n"
+         else print ("Resolving " ^ ltoi deps ^ "dependencies\n")
+       ; app (fn (pkg, spec) => install pkg (SOME spec)) deps
+       ; print ("Done resolving dependencies for `" ^ pkg ^ "`\n"))
+    end handle NoDeps => () end
 
     (** Install a package with a given name and version specification.
         NONE means "the latest version", and specifications are handled by
         SemVer.intelligentSelect.
         raises SmackExn in the event that the package is already installed or
         if no such package or version is found. *)
-    fun install name specStr =
+    and install pkg specStr =
     let
         val () =
-           if VersionIndex.isKnown name then ()
+           if VersionIndex.isKnown pkg then ()
            else raise SmackExn 
-                         ( "I don't know about the package `" ^ name 
+                         ( "I don't know about the package `" ^ pkg
                          ^ "`, run 'smack selfupdate'?")
 
         val (spec, ver) = 
-           VersionIndex.getBest name 
-              (Option.map SemVer.constrFromString specStr)
+           VersionIndex.getBest pkg specStr
            handle _ => 
            raise SmackExn 
-                 ("No acceptable version of `" ^ name 
-                 ^ (case specStr of NONE => "" | SOME s => " " ^ s)
+                 ("No acceptable version of `" ^ pkg
+                 ^ (case specStr of
+                       NONE => "" 
+                     | SOME s => " " ^ SemVer.constrToString s)
                  ^ "` found, try 'smack refresh'?")
 
-        val verstring = SemVer.toString ver
+        val name = pkg ^ " " ^ SemVer.toString ver
         val _ = 
            if not (Option.isSome specStr)
            then print ( "No major version specified, picked v" 
                       ^ SemVer.constrToString spec ^ ".\n"
-                      ^ "Selected `" ^ name ^ " v" 
-                      ^ SemVer.toString ver ^ "`.\n")
-           else print ( "Selected `" ^ name ^ " " ^ SemVer.toString ver ^ "`\n")
+                      ^ "Selected `" ^ name ^ "`.\n")
+           else print ( "Selected `" ^ name ^ "`\n")
        
         val proto = 
             case VersionIndex.getProtocol name ver of
                 SOME p => p
               | NONE => raise SmackExn 
-                ("Installation method for " ^ name ^ " " ^ 
-                 SemVer.toString ver ^ " not found")
-
-        val _ = SmackLib.install (!Configure.smackHome) (name,ver,proto)
+                ("Installation method for `" ^ name ^ "` not found")
     in
-        ()
+        if SmackLib.download (!Configure.smackHome) (name,ver,proto)
+        then print ( "Package `" ^ name ^ "` already installed.\n") 
+        else ( print ( "Package `" ^ name ^ "` downloaded.\n")
+             ; resolveDependencies pkg ver)
     end
 
     (** Uninstall a package with a given name and version.
@@ -169,7 +190,7 @@ struct
 
     fun selfupdate () = 
        ( refresh ()
-       ; install "smackage" (SOME "v0")
+       ; install "smackage" (SOME (SemVer.constrFromString "v0"))
        ; refresh ())
 
     (* Manipulate the sources.local source spec file *)
@@ -262,8 +283,12 @@ struct
            | ["selfupdate"] => (selfupdate (); OS.Process.success)
            | ["selfup"    ] => (selfupdate (); OS.Process.success)
            | ["refresh"] => (refresh (); OS.Process.success)
-           | ["install",pkg,ver] => (install pkg (SOME ver); OS.Process.success)
-           | ["down"   ,pkg,ver] => (install pkg (SOME ver); OS.Process.success)
+           | ["install",pkg,ver] => 
+                ( install pkg (SOME (SemVer.constrFromString ver))
+                ; OS.Process.success)
+           | ["down"   ,pkg,ver] => 
+                ( install pkg (SOME (SemVer.constrFromString ver))
+                ; OS.Process.success)
            | ["install",pkg] => (install pkg NONE; OS.Process.success)
            | ["down"   ,pkg] => (install pkg NONE; OS.Process.success)
            | ["uninstall",pkg,ver] => (uninstall pkg ver; OS.Process.success)
