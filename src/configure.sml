@@ -117,7 +117,8 @@ struct
       ; initFile "sources.local" 
            "smackage git git://github.com/standardml/smackage.git\n\
            \cmlib git git://github.com/standardml/cmlib.git\n"
-      ; initFile "config" ("source lib" // "smackage" // "v0" // "sources\n")
+      ; initFile "config" 
+            ("source " ^ ("lib" // "smackage" // "v0" // "sources") ^ "\n")
       ; initFile "packages.installed" "\n"
       ; initFile "versions.smackspec" "\n"
       ; initDir "lib"

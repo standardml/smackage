@@ -11,7 +11,8 @@ win+mlton:
 	mlton -output $(BIN)/smack smack-nonposix.mlb
 
 smlnj:
-	sml smack.cm # FIXME: This is wrong, I know.
+	sml src/go-nj.sml
+	bin/.mkexec `which sml` `pwd` smack
 
 clean:
 	rm -f $(BIN)/smack

@@ -278,7 +278,7 @@ struct
          print "\tuninstall <name> [version]\tRemove a package\n"
          )
 
-    fun main args = 
+    fun main (name, args) = 
        let
           val () = Configure.init ()
        in
@@ -316,6 +316,10 @@ struct
            (TextIO.output (TextIO.stdErr, s ^ "\n"); OS.Process.failure)
                 | (Fail s) => 
            (TextIO.output (TextIO.stdErr, s ^ "\n"); OS.Process.failure)
+                | exn =>
+           (TextIO.output (TextIO.stdErr, "UNEXPECTED ERROR: " 
+                                          ^ exnMessage exn ^ "\n")
+           ; OS.Process.failure)
 end
 
 
