@@ -1,4 +1,4 @@
-structure VersionIndex =
+structure VersionIndex = 
 struct
     fun // (dir, file) = OS.Path.joinDirFile { dir = dir, file = file }
     infix 5 //
@@ -47,6 +47,9 @@ struct
         if length (!versionIndex) > 0 then () else
             versionIndex := parseVersionsSpec smackage_root
 
+    fun isKnown pkg = 
+       not (null (List.filter (fn (n,_,_) => pkg = n) (!versionIndex)))
+
     fun queryVersions pkg = List.filter (fn (n,_,_) => pkg = n) (!versionIndex)
 
     fun latestVersion pkg =
@@ -64,19 +67,32 @@ struct
             (List.filter (fn (n,v,p) => n = pkg andalso v = ver) 
                 (!versionIndex))))) handle _ => NONE
 
-    fun getLatestSatisfying pkg constraint =
-    let
-        val cand = List.filter 
-            (fn (n,v,_) => n = pkg andalso SemVer.satisfies (v,constraint))
-                (!versionIndex)
-        val _ = if length cand = 0 then 
-                    raise Fail ("Could not satisfy constraint `" ^ pkg ^ 
-                                " " ^ SemVer.constrToString constraint
-                                ^ "' not found") else ()
+    fun name pkg NONE = pkg
+      | name pkg (SOME spec) = pkg ^ " " ^ SemVer.constrToString spec
 
+    fun getLatest pkg constraint =
+    let
+        val cand = queryVersions pkg
+        val cand' = 
+           case constraint of 
+              NONE => cand
+            | SOME spec => List.filter (SemVer.satisfies spec o #2) cand
+        val () = if length cand > 0 then () 
+                 else raise Fail ("Could not satisfy constraint `"
+                                 ^ name pkg constraint ^ "`") 
+        val best = 
+           List.foldl (fn ((n,v,p),v') => if SemVer.>(v,v') then v else v')
+              (#2 (hd cand)) cand
     in
-        List.foldl (fn ((n,v,p),v') => if SemVer.>(v,v') 
-                        then v else v') (#2 (hd cand)) cand
+        (best, case constraint of NONE => SemVer.major best | SOME spec => spec)
+    end
+
+    fun getBest pkg constraint = 
+    let in
+       case SemVer.intelligentSelect constraint (map #2 (queryVersions pkg)) of 
+          NONE => raise Fail ("Could not satisfy constraint `"  
+                             ^ name pkg constraint ^ "`")
+        | SOME (ver, spec) => (ver, spec)
     end
 end
 

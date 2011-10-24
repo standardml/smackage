@@ -13,30 +13,26 @@ struct
     fun install name specStr =
     let
         val () = VersionIndex.loadVersions (!Configure.smackHome)
-        val vers =
-           case map #2 (VersionIndex.queryVersions name) of
-              [] => raise SmackExn 
-                 ( "I don't know about the package `" ^ name 
-                 ^ "`, run 'smack selfupdate'?")
-            | vers => vers
+        val () =
+           if VersionIndex.isKnown name then ()
+           else raise SmackExn 
+                         ( "I don't know about the package `" ^ name 
+                         ^ "`, run 'smack selfupdate'?")
 
-        val spec = Option.map SemVer.constrFromString specStr
-        val ver' = SemVer.intelligentSelect spec vers
-              
-        val (ver, normalized_spec) = 
-           case ver' of 
-              NONE => 
-              raise SmackExn 
+        val (spec, ver) = 
+           VersionIndex.getBest name 
+              (Option.map SemVer.constrFromString specStr)
+           handle _ => 
+           raise SmackExn 
                  ("No acceptable version of `" ^ name 
                  ^ (case specStr of NONE => "" | SOME s => " " ^ s)
                  ^ "` found, try 'smack refresh'?")
-            | SOME x => x
 
         val verstring = SemVer.toString ver
         val _ = 
-           if not (Option.isSome spec)
+           if not (Option.isSome specStr)
            then print ( "No major version specified, picked v" 
-                      ^ normalized_spec ^ ".\n"
+                      ^ SemVer.constrToString spec ^ ".\n"
                       ^ "Selected `" ^ name ^ " v" 
                       ^ SemVer.toString ver ^ "`.\n")
            else print ( "Selected `" ^ name ^ " " ^ SemVer.toString ver ^ "`\n")
