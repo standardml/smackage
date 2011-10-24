@@ -102,8 +102,21 @@ struct
        end
 
 
-    (** Search for a package in the index, with an optional version *)
-    fun search name version = raise SmackExn "Not implemented"
+    (** Search for a package in the index, with an optional version.
+        FIXME: currently ignoring version.
+    *)
+    fun search name version =
+    let
+        val _ = VersionIndex.init (!Configure.smackHome)
+        val res = VersionIndex.search name
+        val _ = if length res = 0 then print "No packages found.\n" else ()
+        val _ = List.app 
+            (fn (n,v,p) => 
+                print (n ^ " " ^ SemVer.toString v ^ " (from " ^ 
+                    Protocol.toString p ^ ")\n")) res
+    in
+        ()
+    end
 
     (** Display metadata for a given package, plus installed status.
         FIXME: Doesn't really do this, but displaying all versions is a start.
@@ -117,14 +130,16 @@ struct
              let
                  val _ = print (name ^ " " ^ SemVer.toString v)
                  val s = SOME (SmackagePath.packageMetadata 
-                            (!Configure.smackHome) (name,v)) handle _ => NONE
-             in 
-                 case s of 
-                    NONE => print "\n" 
-                  | SOME sp => 
-                       ( print " (installed)\n"
-                       ; print (Spec.toString sp ^ "\n"))
-             end) candidates 
+                            (!Configure.smackHome) (name,v)) 
+                            handle (Spec.SpecError s) => 
+                                (print ("Spec Error: " ^ s ^ "\n"); NONE)
+                                 | (SmackagePath.Metadata s) => NONE
+
+                 val _ = case s of NONE => print "\n\n" 
+                                 | SOME sp =>
+                                    print (" (installed)\n\n" ^
+                                        Spec.toString sp ^ "\n")
+             in () end) candidates 
     in
         ()
     end

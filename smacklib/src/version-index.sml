@@ -19,6 +19,9 @@ sig
       string -> SemVer.constraint option -> SemVer.constraint * SemVer.semver
    val getBest: 
       string -> SemVer.constraint option -> SemVer.constraint * SemVer.semver
+
+   (* Rough search for a package name *)
+   val search : string -> (string * SemVer.semver * Protocol.protocol) list
 end = 
 struct
     fun // (dir, file) = OS.Path.joinDirFile { dir = dir, file = file }
@@ -118,5 +121,8 @@ struct
                              ^ name pkg constraint ^ "`")
         | SOME (ver, spec) => (ver, spec)
     end
+
+    fun search query =
+        List.filter (fn (n,_,_) => String.isSubstring query n) (!versionIndex)
 end
 
