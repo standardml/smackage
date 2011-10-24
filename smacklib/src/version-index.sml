@@ -9,7 +9,7 @@ sig
    (* Do we know anything about this package? *)
    val isKnown: string -> bool
 
-   (* How do we obtain this package? *)
+   (* How do we obtain this (version of this) package? *)
    val getProtocol: string -> SemVer.semver -> Protocol.protocol option
  
    (* Query for versions of packages (straightforwardly and heuristicly) *)
