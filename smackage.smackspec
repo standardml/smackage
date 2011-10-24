@@ -1,6 +1,6 @@
 description: Smackage, a simple Standard ML package manager
-maintainer: Gian Perrone <gianp at itu dot dk>
-maintainer: Robert J. Simmons <robsimmons at itu dot dk>
+maintainer: Gian Perrone <gdpe at itu dot dk>
+maintainer: Robert J. Simmons <robsimmons at gmail dot com>
 maintainer: Michael Sullivan 
 maintainer: Joakim Ahnfelt-Rønne
 keywords: package manager, terrible puns, violence
