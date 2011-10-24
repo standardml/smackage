@@ -2,3 +2,4 @@
 .cm
 /smack
 /bin/smack
+/bin/.heap*
