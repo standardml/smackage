@@ -47,9 +47,9 @@ Now, assuming you have downloaded the smackage source on your system, you can
 build and start using smackage like this:
    
     $ cd smackage
-    $ mlton smack/smack.mlb
-    $ smack/smack selfup
-    $ smack/smack down cmlib v0
+    $ make mlton # (or make smlnj, not yet supported)
+    $ bin/smack selfup
+    $ bin/smack down cmlib v0
 
 Referring to Smackage packages
 ------------------------------
