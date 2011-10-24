@@ -58,12 +58,12 @@ struct
            else print ( "Selected `" ^ name ^ "`\n")
        
         val proto = 
-            case VersionIndex.getProtocol name ver of
+            case VersionIndex.getProtocol pkg ver of
                 SOME p => p
               | NONE => raise SmackExn 
                 ("Installation method for `" ^ name ^ "` not found")
     in
-        if SmackLib.download (!Configure.smackHome) (name,ver,proto)
+        if SmackLib.download (!Configure.smackHome) (pkg,ver,proto)
         then print ( "Package `" ^ name ^ "` already installed.\n") 
         else ( print ( "Package `" ^ name ^ "` downloaded.\n")
              ; resolveDependencies pkg ver)

@@ -86,8 +86,8 @@ struct
 
     fun getProtocol pkg ver = 
         (SOME (#3 (hd 
-            (List.filter (fn (n,v,p) => n = pkg andalso v = ver) 
-                (!versionIndex))))) handle _ => NONE
+            (List.filter (fn (n,v,p) => (n = pkg andalso SemVer.eq (v, ver)))
+                (!versionIndex))))) (* handle _ => NONE *)
 
     fun name pkg NONE = pkg
       | name pkg (SOME spec) = pkg ^ " " ^ SemVer.constrToString spec
