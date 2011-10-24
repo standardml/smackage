@@ -1,5 +1,5 @@
-use "src/polyml/poly_mlyacc.sml";
-use "src/polyml/poly_smlnj-lib.sml";
+use "src/poly_mlyacc.sml";
+use "src/poly_smlnj-lib.sml";
 use "src/posix-symlink.sml";
 use "src/semver.sml";
 use "src/protocol.sml";
