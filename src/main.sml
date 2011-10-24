@@ -37,7 +37,7 @@ struct
            if VersionIndex.isKnown pkg then ()
            else raise SmackExn 
                          ( "I don't know about the package `" ^ pkg
-                         ^ "`, run 'smack selfupdate'?")
+                         ^ "`, run 'smackage selfupdate'?")
 
         val (spec, ver) = 
            VersionIndex.getBest pkg specStr
@@ -47,7 +47,7 @@ struct
                  ^ (case specStr of
                        NONE => "" 
                      | SOME s => " " ^ SemVer.constrToString s)
-                 ^ "` found, try 'smack refresh'?")
+                 ^ "` found, try 'smackage refresh'?")
 
         val name = pkg ^ " " ^ SemVer.toString ver
         val _ = 
@@ -182,7 +182,7 @@ struct
                 print ("WARNING: When trying to poll `" ^ pkg
                       ^ "`, got the following error \n\t\""
                       ^ exnMessage exn 
-                      ^ "\"\nYou may need to run 'smack unsource " 
+                      ^ "\"\nYou may need to run 'smackage unsource " 
                       ^ pkg ^ "'\n")
 
           fun read fileName file = 
@@ -258,7 +258,7 @@ struct
        in
           ( write sources
           ; print "Done rewriting sources.local.\n\
-                  \You probably want to run 'smack refresh' now.\n")
+                  \You probably want to run 'smackage refresh' now.\n")
        end
 
     fun printUsage () =
