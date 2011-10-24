@@ -38,7 +38,7 @@ struct
            else print ( "Selected `" ^ name ^ " " ^ SemVer.toString ver ^ "`\n")
        
         val proto = 
-            case VersionIndex.getProtocol (name,ver) of
+            case VersionIndex.getProtocol name ver of
                 SOME p => p
               | NONE => raise SmackExn 
                 ("Installation method for " ^ name ^ " " ^ 
@@ -92,16 +92,20 @@ struct
     let
         val _ = VersionIndex.loadVersions (!Configure.smackHome)
         val _ = print "Candidates:\n"
-        val candidates = VersionIndex.queryVersions name
+        val candidates = VersionIndex.getAll name NONE
         val _ = List.app 
-            (fn (n,v,p) => 
+            (fn v => 
              let
-                 val _ = print (n ^ " " ^ SemVer.toString v)
+                 val _ = print (name ^ " " ^ SemVer.toString v)
                  val s = SOME (SmackagePath.packageMetadata 
-                            (!Configure.smackHome) (n,v)) handle _ => NONE
-                 val _ = case s of NONE => print "\n" 
-                                 | SOME sp => print (" (installed)\n" ^ Spec.toString sp ^ "\n")
-             in () end) candidates 
+                            (!Configure.smackHome) (name,v)) handle _ => NONE
+             in 
+                 case s of 
+                    NONE => print "\n" 
+                  | SOME sp => 
+                       ( print " (installed)\n"
+                       ; print (Spec.toString sp ^ "\n"))
+             end) candidates 
     in
         ()
     end

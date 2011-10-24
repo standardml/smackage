@@ -1,4 +1,22 @@
-structure VersionIndex = 
+structure VersionIndex:> 
+sig
+   (* Load the versions.smackspec file, given $SMACKAGE_HOME *)
+   val loadVersions: string -> unit
+
+   (* Do we know anything about this package? *)
+   val isKnown: string -> bool
+
+   (* How do we obtain this package? *)
+   val getProtocol: string -> SemVer.semver -> Protocol.protocol option
+ 
+   (* Query for versions of packages (straightforwardly and heuristicly) *)
+   val getAll:
+      string -> SemVer.constraint option -> SemVer.semver list
+   val getLatest: 
+      string -> SemVer.constraint option -> SemVer.constraint * SemVer.semver
+   val getBest: 
+      string -> SemVer.constraint option -> SemVer.constraint * SemVer.semver
+end = 
 struct
     fun // (dir, file) = OS.Path.joinDirFile { dir = dir, file = file }
     infix 5 //
@@ -62,13 +80,17 @@ struct
                         then v else v') (#2 (hd cand)) cand
     end
 
-    fun getProtocol (pkg,ver) = 
+    fun getProtocol pkg ver = 
         (SOME (#3 (hd 
             (List.filter (fn (n,v,p) => n = pkg andalso v = ver) 
                 (!versionIndex))))) handle _ => NONE
 
     fun name pkg NONE = pkg
       | name pkg (SOME spec) = pkg ^ " " ^ SemVer.constrToString spec
+
+    fun getAll pkg NONE = map #2 (queryVersions pkg)
+      | getAll pkg (SOME spec) =
+           List.filter (SemVer.satisfies spec) (map #2 (queryVersions pkg))
 
     fun getLatest pkg constraint =
     let
@@ -84,7 +106,8 @@ struct
            List.foldl (fn ((n,v,p),v') => if SemVer.>(v,v') then v else v')
               (#2 (hd cand)) cand
     in
-        (best, case constraint of NONE => SemVer.major best | SOME spec => spec)
+        ( (case constraint of NONE => SemVer.major best | SOME spec => spec)
+        , best)
     end
 
     fun getBest pkg constraint = 
