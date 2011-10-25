@@ -24,7 +24,7 @@ struct
       fun useThisDir dir = 
          if tryDir (SOME dir) then smackHome := dir
          else ( print ( "NOTICE: dir `"
-                      ^ dir ^ "` doesn't exist, trying to create it.")
+                      ^ dir ^ "` doesn't exist, trying to create it.\n")
               ; OS.FileSys.mkDir dir
                 handle _ => raise Fail "Couldn't create home directory"
               ; smackHome := dir)
