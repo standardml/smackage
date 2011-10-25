@@ -61,7 +61,7 @@ fun download gitAddr =
    ( OS.FileSys.mkDir ("git-repo")
    ; chdirSuccess ("git-repo")
    ; systemSuccess ("git init")
-   ; systemSuccess ("git remote add origin " ^ (OS.Path.joinDirFile { dir = "..", file = "git-repo" })))
+   ; systemSuccess ("git remote add origin " ^ gitAddr))
 
 (*[ val get: string -> string -> SemVer.semver -> unit ]*)
 fun get basePath projName gitAddr semver = 
@@ -93,7 +93,7 @@ fun get basePath projName gitAddr semver =
       val verPath = OS.Path.joinDirFile { dir = projPath, file = ver }
       val () = chdirSuccess verPath
       val () = systemSuccess ("git init")
-      val () = systemSuccess ("git remote add origin " ^ repoPath)
+      val () = systemSuccess ("git remote add origin " ^ (OS.Path.joinDirFile { dir = "..", file = "git-repo" }))
       val () = systemSuccess ("git fetch --tags --quiet")
       val () = systemSuccess ("git checkout " ^ ver ^ " --quiet")
 
