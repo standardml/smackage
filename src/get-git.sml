@@ -61,7 +61,7 @@ fun download gitAddr =
    ( OS.FileSys.mkDir ("git-repo")
    ; chdirSuccess ("git-repo")
    ; systemSuccess ("git init")
-   ; systemSuccess ("git remote add origin " ^ gitAddr))
+   ; systemSuccess ("git remote add origin " ^ (OS.Path.joinDirFile { dir = "..", file = "git-repo" })))
 
 (*[ val get: string -> string -> SemVer.semver -> unit ]*)
 fun get basePath projName gitAddr semver = 
