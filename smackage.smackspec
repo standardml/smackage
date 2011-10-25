@@ -6,16 +6,13 @@ maintainer: Michael Sullivan
 maintainer: Joakim Ahnfelt-Rønne
 keywords: package manager
 bug-url: https://github.com/standardml/smackage/issues
-
 platform: mlton
-   build: make mlton
-   install: mv bin/smackage ../../../bin/smackage
-
+build: make mlton
+install: mv bin/smackage ../../../bin/smackage
 platform: smlnj
-   build: make smlnj
-   install: mv bin/smackage ../../../bin/smackage
-
+build: make smlnj
+install: mv bin/smackage ../../../bin/smackage
 platform: polyml
-   build: make polyml
-   install: mv bin/smackage ../../../bin/smackage
+build: make polyml
+install: mv bin/smackage ../../../bin/smackage
    
