@@ -20,7 +20,7 @@ win+smlnj:
 
 polyml:
 	polyml < src/poly_build.sml
-	gcc -o $(BIN)/smackage smack-poly.o -lpolymain -lpolyml
+	gcc -o $(BIN)/smackage $(BIN)/polyml-smackage.o -lpolymain -lpolyml
 
 clean:
 	rm -f $(BIN)/smackage

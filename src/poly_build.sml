@@ -13,5 +13,5 @@ use "src/smackage-path.sml";
 use "src/smacklib.sml";
 use "src/configure.sml";
 use "src/main.sml";
-fun polyMain () = OS.Process.exit(Smack.main(CommandLine.arguments ()));
-PolyML.export ("smack", polyMain);
+fun polyMain () = OS.Process.exit(Smack.main(CommandLine.name (), CommandLine.arguments ()));
+PolyML.export ("bin/polyml-smackage", polyMain);
