@@ -73,6 +73,7 @@ sig
     val provides : spec -> string * SemVer.semver
     val requires : spec -> (string * SemVer.constraint) list
     val remote : spec -> Protocol.protocol
+    val platforms : spec -> (string * spec) list
 end
 
 
@@ -124,7 +125,7 @@ struct
             (String.fields Char.isSpace s)
 
     fun parseLine line =
-    if String.isPrefix "#" line orelse line = "\n" then NONE else
+    if String.isPrefix "#" line orelse line = "\n" orelse line = "" then NONE else
     let
         val f = splitOnce #":" line
         val _ = if length f <> 2 then 
@@ -148,7 +149,7 @@ struct
     end
 
     fun parse lines =
-        List.mapPartial parseLine lines
+        List.mapPartial (parseLine o trim) lines
 
     fun readLines (file, position, lines) = 
         case TextIO.inputLine file of
@@ -227,6 +228,19 @@ struct
             TextIO.output (TextIO.stdErr, 
                 "Error in smackspec: " ^ s ^ "\n" ^ toString spec); 
             raise e)
+
+    fun platform2spec (s,[]) = (s,[])
+      | platform2spec (s, l as (Platform p :: t)) = (s,l)
+      | platform2spec (s,h::t) = platform2spec (s @ [h], t)
+
+    fun platforms (Platform p :: t) =
+        let
+            val (cont,t') = platform2spec ([],t)
+        in
+            (p,cont) :: platforms t'
+        end
+      | platforms (h::t) = platforms t
+      | platforms [] = []
 
 end
 
