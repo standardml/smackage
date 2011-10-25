@@ -5,7 +5,7 @@
 structure GetGit = struct
 
 fun systemSuccess s = 
-   let (* val () = print ("Running: `" ^ s ^ "`\n") *) in
+   let val () = print ("Running: `" ^ s ^ "`\n") in
       if OS.Process.isSuccess (OS.Process.system s) then ()
       else raise Fail ("System call `" ^ s ^ "` returned failure")
    end
