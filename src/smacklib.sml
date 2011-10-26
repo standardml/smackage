@@ -32,6 +32,7 @@ struct
        then true
        else ( SmackagePath.createPackagePaths smackage_root (pkg,ver)
             ; Conductor.get smackage_root pkg ver prot
+            ; SmackagePath.createVersionLinks smackage_root (pkg,ver)
             ; false)
 
     fun uninstall smackage_root (pkg,ver) = raise Fail "Not implemented"

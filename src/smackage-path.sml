@@ -61,15 +61,13 @@ struct
     end
 
 
-    (** Create the empty directory for pkg at a given version, and update
-        symlinks accordingly.
+    (** Create the empty directory for pkg at a given version, and
+        don't create the symlinks yet.
 
-        The question we face is whether the new package we are installing
-        should replace some other as the target of a version symlink.
-        
-        FIXME: There is very little error handling in here at the moment.
-        This is somewhat intentional, as an exception anywhere should bail out
-        the whole process.
+        Instead, call createVersionLinks *after* you've checked out the
+        source.  This will make non-posix platforms behave correctly.
+    
+
 
         This will leave the current working directory as the newly created
         directory for this package.
@@ -87,9 +85,37 @@ struct
                     (OS.FileSys.mkDir pkgDir; true)
         val _ = OS.FileSys.chDir pkgDir
 
+        val versionDir = "v" ^ SemVer.toString ver
+        val _ = OS.FileSys.mkDir 
+            (OS.Path.joinDirFile {dir=pkgDir, file=versionDir}) handle _ => ()
+
+        val _ = OS.FileSys.chDir versionDir
+    in
+        ()
+    end
+
+    (* Create major and minor version links to the concrete version.
+
+       The question we face is whether the new package we are installing
+       should replace some other as the target of a version symlink.
+        
+       FIXME: There is very little error handling in here at the moment.
+       This is somewhat intentional, as an exception anywhere should bail out
+       the whole process.
+    *)
+    fun createVersionLinks smackage_root (pkg,ver) =
+    let
+        val pkgDir' = OS.Path.joinDirFile {dir = smackage_root, file = "lib"}
+        val pkgDir = OS.Path.joinDirFile {dir = pkgDir', file = pkg}
+        val _ = OS.FileSys.chDir pkgDir
+
+        val versionDir = "v" ^ SemVer.toString ver
+
         val newPaths = map (fn x => 
-            OS.Path.joinDirFile {dir = pkg, file = x}) (SemVer.allPaths ver)
-        val existing = installedVersions smackage_root pkg
+            OS.Path.joinDirFile {dir = pkg, file = x}) 
+                (SemVer.allPaths ver)
+        val existing = 
+            List.filter (fn x => x <> ver) (installedVersions smackage_root pkg)
 
         val majorPrefix = SemVer.constrToString (SemVer.major ver)
         val majors = 
@@ -107,10 +133,6 @@ struct
         val symlinks' = symlinks @
             (if length minors = 0 orelse SemVer.< (hd minors, ver)
                 then ["v" ^ minorPrefix] else [])
-
-        val versionDir = "v" ^ SemVer.toString ver
-        val _ = OS.FileSys.mkDir 
-            (OS.Path.joinDirFile {dir=pkgDir, file=versionDir}) handle _ => ()
 
         val _ = List.app (Symlink.replaceOrCreateSymlink versionDir) symlinks'
 
