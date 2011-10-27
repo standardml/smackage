@@ -115,8 +115,8 @@ struct
    fun init () =
       ( initSmackHome ()
       ; initFile "sources.local" 
-           "smackage git git://github.com/standardml/smackage.git\n\
-           \cmlib git git://github.com/standardml/cmlib.git\n"
+           "cmlib git git://github.com/standardml/cmlib.git\n\
+           \smackage git git://github.com/standardml/smackage.git\n"
       ; initFile "config" 
             ("source " ^ ("lib" // "smackage" // "v0" // "sources") ^ "\n")
       ; initFile "packages.installed" "\n"
