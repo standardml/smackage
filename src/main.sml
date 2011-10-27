@@ -238,13 +238,14 @@ struct
                   | EQUAL => 
                     (case maybe_prot of 
                         NONE =>  
-                           ( print ("Deleting source spec " ^ pkg ^ "...\n")
-                           ; read_big accum)
+                         ( print ("Deleting source spec " ^ pkg ^ "...\n")
+                         ; read_big accum)
                       | SOME prot => 
-                           ( print ("WARNING: overwriting source spec\n\
-                                \OLD: " ^ pkg' ^ Protocol.toString prot' ^ "\n\
-                                \NEW: " ^ pkg ^ Protocol.toString prot ^ "\n")
-                           ; read_big ((pkg, prot) :: accum)))
+                         ( print
+                            ( "WARNING: overwriting source spec\nOLD: "
+                            ^ pkg' ^ " " ^ Protocol.toString prot' ^ "\nNEW: "
+                            ^ pkg ^ " " ^ Protocol.toString prot ^ "\n")
+                         ; read_big ((pkg, prot) :: accum)))
                   | GREATER => read_small ((pkg', prot') :: accum))
 
           val sources = read_small [] before TextIO.closeIn file
