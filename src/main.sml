@@ -8,7 +8,12 @@ struct
     (** Resolve the dependencies of a particular, newly-downloaded package.
         XXX this should eventually be factored into another module that
         does more intelligent checking to see if existing versions (that aren't 
-        the most recent but that have the virtue of being installed) will do. *)
+        the most recent but that have the virtue of being installed) will do.
+        
+        XXX should dependency resolution happen in 'download' mode?  If so,
+        do we run hooks or not?  At the moment, we run hooks. Might need to
+        change this.
+        *)
     fun resolveDependencies pkg ver = 
     let exception NoDeps in let
        val specFile = 
@@ -22,7 +27,7 @@ struct
        ( if null deps then raise NoDeps else ()
        ; if length deps = 1 then print "Resolving 1 dependency\n"
          else print ("Resolving " ^ ltoi deps ^ "dependencies\n")
-       ; app (fn (pkg, spec) => install pkg (SOME spec)) deps
+       ; app (fn (pkg, spec) => install pkg (SOME spec) true) deps 
        ; print ("Done resolving dependencies for `" ^ pkg ^ "`\n"))
     end handle NoDeps => () end
 
@@ -30,8 +35,14 @@ struct
         NONE means "the latest version", and specifications are handled by
         SemVer.intelligentSelect.
         raises SmackExn in the event that the package is already installed or
-        if no such package or version is found. *)
-    and install pkg specStr =
+        if no such package or version is found.
+        
+        'runHooks' controls whether to run 'build' and 'install' targets
+        after downloading. This is probably nasty, but it's the easiest
+        way to avoid dumb code duplication or large scale refactoring
+        right now.  I'll add a giant FIXME here. -- gian, 20111028
+        *)
+    and install pkg specStr runHooks =
     let
         val () =
            if VersionIndex.isKnown pkg then ()
@@ -67,14 +78,15 @@ struct
         then print ( "Package `" ^ name ^ "` already installed.\n") 
         else ( print ( "Package `" ^ name ^ "` downloaded.\n")
              ; resolveDependencies pkg ver 
-             ; SmackLib.build 
+             ; (if runHooks then
+                (SmackLib.build 
                 (!Configure.smackHome) 
                 (!Configure.platform,!Configure.compilers)
                 (pkg,ver)
-             ; SmackLib.install
+              ; SmackLib.install
                 (!Configure.smackHome)
                 (!Configure.platform,!Configure.compilers)
-                (pkg,ver)
+                (pkg,ver)) else ())
              )
     end
 
@@ -211,7 +223,7 @@ struct
 
     fun selfupdate () = 
        ( refresh ()
-       ; install "smackage" (SOME (SemVer.constrFromString "v0"))
+       ; install "smackage" (SOME (SemVer.constrFromString "v0")) true
        ; refresh ())
 
     (* Manipulate the sources.local source spec file *)
@@ -273,6 +285,7 @@ struct
     fun printUsage () =
         (print "Usage: smackage <command> [args]\n";
          print " Commands:\n";
+         print "\tdownload <name> [version]\tDownload a package without installing.\n";
          print "\thelp\t\t\t\tDisplay this usage and exit\n";
          print "\tinfo <name> [version]\t\tDisplay package information.\n";
          print "\tinstall <name> [version]\tInstall the named package\n";
@@ -307,9 +320,13 @@ struct
            | ["selfupdate"] => (selfupdate (); OS.Process.success)
            | ["refresh"] => (refresh (); OS.Process.success)
            | ["install",pkg,ver] => 
-                ( install pkg (SOME (SemVer.constrFromString ver))
+                ( install pkg (SOME (SemVer.constrFromString ver)) true
                 ; OS.Process.success)
-           | ["install",pkg] => (install pkg NONE; OS.Process.success)
+           | ["install",pkg] => (install pkg NONE true; OS.Process.success)
+           | ["download",pkg,ver] => 
+                ( install pkg (SOME (SemVer.constrFromString ver)) false
+                ; OS.Process.success)
+           | ["download",pkg] => (install pkg NONE false; OS.Process.success)
            | ["uninstall",pkg,ver] => (uninstall pkg ver; OS.Process.success)
            | ["uninstall",pkg] => (uninstall pkg ""; OS.Process.success)
            | ["list"] => (listInstalled(); OS.Process.success)
