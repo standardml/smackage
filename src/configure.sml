@@ -6,7 +6,11 @@ struct
 
    val smackHome = ref "<dummy>"
 
-   val smackSources: string list ref = ref [] 
+   val smackSources: string list ref = ref []
+
+   val platform : string ref = ref ""
+
+   val compilers : string list ref = ref []
 
    (** Attempt to ascertain the smackage home directory.
        Resolved in this order:
@@ -102,6 +106,10 @@ struct
              | SOME [] => loop file
              | SOME [ "source", file ] => 
                   ( smackSources := !smackSources @ [ file ])
+             | SOME [ "platform", p ] =>
+                  ( platform := p )
+             | SOME [ "compiler", cmp ] =>
+                  ( compilers := !compilers @ [ cmp ])
              | SOME s => 
                   raise Fail ( "Bad configuration line: " 
                              ^ String.concatWith " " s )
@@ -118,7 +126,10 @@ struct
            "smackage git git://github.com/standardml/smackage.git\n\
            \cmlib git git://github.com/standardml/cmlib.git\n"
       ; initFile "config" 
-            ("source " ^ ("lib" // "smackage" // "v0" // "sources") ^ "\n")
+            ("source " ^ ("lib" // "smackage" // "v0" // "sources") ^ "\n" ^ 
+             "compiler mlton\n" ^
+             "compiler smlnj\n" ^
+             "platform linux\n")  (* FIXME: Should really have this default in some sensible way *)
       ; initFile "packages.installed" "\n"
       ; initFile "versions.smackspec" "\n"
       ; initDir "lib"
