@@ -104,12 +104,12 @@ struct
                     (TextIO.inputLine file) of 
                NONE => TextIO.closeIn file
              | SOME [] => loop file
-             | SOME [ "source", file ] => 
-                  ( smackSources := !smackSources @ [ file ])
+             | SOME [ "source", f ] => 
+                  ( smackSources := !smackSources @ [ f ] ; loop file)
              | SOME [ "platform", p ] =>
-                  ( platform := p )
+                  ( platform := p ; loop file)
              | SOME [ "compiler", cmp ] =>
-                  ( compilers := !compilers @ [ cmp ])
+                  ( compilers := !compilers @ [ cmp ] ; loop file)
              | SOME s => 
                   raise Fail ( "Bad configuration line: " 
                              ^ String.concatWith " " s )
@@ -118,6 +118,29 @@ struct
          if not (OS.FileSys.access (config, [ OS.FileSys.A_READ ]))
            then raise Fail "Config file exists but can't be read"
          else loop (TextIO.openIn config) 
+      end
+
+   (* TODO: should probably move this somewhere else so it can be used.
+      TODO: delete temp file when we're done. *)
+   fun execWithOutput cmd =
+      let
+         val tmpName = OS.FileSys.tmpName ()
+         val _ = OS.Process.system (cmd ^ " > " ^ tmpName)
+         val tmp = TextIO.openIn tmpName
+      in         
+         (TextIO.inputAll tmp before TextIO.closeIn tmp)
+            handle exn => (TextIO.closeIn tmp handle _ => (); raise exn)
+      end
+
+   (** Attempt to guess an appropriate default 'platform' config value.
+       Based on the output of 'uname -s'. Defaults to 'linux' if we can't
+       guess, because that's probably safe for most POSIX-compliant systems. *)
+   fun guessPlatform () =
+      let
+         val s = execWithOutput "uname -s"
+      in
+         if String.isPrefix "Darwin" s then "osx" else
+         if String.isPrefix "CYGWIN" s then "win" else "linux"
       end
 
    fun init () =
@@ -129,7 +152,7 @@ struct
             ("source " ^ ("lib" // "smackage" // "v0" // "sources") ^ "\n" ^ 
              "compiler mlton\n" ^
              "compiler smlnj\n" ^
-             "platform linux\n")  (* FIXME: Should really have this default in some sensible way *)
+             "platform " ^ guessPlatform () ^ "\n")
       ; initFile "packages.installed" "\n"
       ; initFile "versions.smackspec" "\n"
       ; initDir "lib"

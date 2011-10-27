@@ -66,7 +66,16 @@ struct
         if SmackLib.download (!Configure.smackHome) (pkg,ver,proto)
         then print ( "Package `" ^ name ^ "` already installed.\n") 
         else ( print ( "Package `" ^ name ^ "` downloaded.\n")
-             ; resolveDependencies pkg ver)
+             ; resolveDependencies pkg ver 
+             ; SmackLib.build 
+                (!Configure.smackHome) 
+                (!Configure.platform,!Configure.compilers)
+                (pkg,ver)
+             ; SmackLib.install
+                (!Configure.smackHome)
+                (!Configure.platform,!Configure.compilers)
+                (pkg,ver)
+             )
     end
 
     (** Uninstall a package with a given name and version.

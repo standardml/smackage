@@ -4,6 +4,7 @@ Group is
    src/protocol.sml
    src/semver.sml
    src/version-index.sml
+   src/install.sml
 
    src/conductor.sig
    src/conductor.sml

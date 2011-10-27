@@ -7,6 +7,7 @@ use "src/spec.sml";
 use "src/version-index.sml";
 use "src/get-git.sml";
 use "src/get-http.sml";
+use "src/install.sml";
 use "src/conductor.sig";
 use "src/conductor.sml";
 use "src/smackage-path.sml";
