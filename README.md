@@ -47,7 +47,7 @@ Now, assuming you have downloaded the smackage source on your system, you can
 build and start using smackage like this:
    
     $ cd smackage
-    $ make mlton # (or make smlnj, not yet supported)
+    $ make mlton # (or make smlnj)
     $ bin/smackage selfupdate
     $ bin/smackage install cmlib v0
 
