@@ -74,6 +74,7 @@ sig
     val requires : spec -> (string * SemVer.constraint) list
     val remote : spec -> Protocol.protocol
     val platforms : spec -> (string * spec) list
+    val key : spec -> string -> string
 end
 
 
@@ -241,6 +242,10 @@ struct
         end
       | platforms (h::t) = platforms t
       | platforms [] = []
+
+    fun key [] name = raise SpecError ("Key `" ^ name ^ "' not found in spec.")
+      | key ((Key(k,v)::t)) name = if k = name then v else key t name
+      | key (h::t) name = key t name
 
 end
 

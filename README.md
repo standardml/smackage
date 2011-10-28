@@ -27,7 +27,7 @@ Setting up MLton
 MLton doesn't currently allow user-specific basis maps, so you'll have to be
 able to edit the [MLBasis Path Map](http://mlton.org/MLBasisPathMap), which
 is found in a place like `/usr/lib/mlton/mlb-path-map` or 
-`/usr/lib/mlton/mlb-path-map`, depending on your system. Add the line
+`/usr/local/lib/mlton/mlb-path-map`, depending on your system. Add the line
 
     SMACKAGE $SMACKAGE_HOME/lib
 
@@ -47,7 +47,7 @@ Now, assuming you have downloaded the smackage source on your system, you can
 build and start using smackage like this:
    
     $ cd smackage
-    $ make mlton # (or make smlnj, not yet supported)
+    $ make mlton # (or make smlnj)
     $ bin/smackage selfupdate
     $ bin/smackage install cmlib v0
 

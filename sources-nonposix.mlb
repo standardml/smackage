@@ -7,6 +7,7 @@ src/semver.sml
 src/protocol.sml
 src/spec.sml
 src/version-index.sml
+src/install.sml
 src/get-git.sml
 src/get-http.sml
 src/conductor.sig
