@@ -16,7 +16,7 @@ smlnj:
 
 win+smlnj:
 	sml src/go-nj-nonposix.sml
-	bin/.mkexec `which sml` `pwd` smackage
+	bin/.mkexec-win `which sml` `pwd` smackage
 
 polyml:
 	polyml < src/poly_build.sml
