@@ -21,80 +21,41 @@ sig
       string -> SemVer.constraint option -> SemVer.constraint * SemVer.semver
 
    (* Rough search for a package name *)
-   val search : string -> (string * SemVer.semver * Protocol.protocol) list
+   val search : string -> (string * Protocol.protocol SemVerDict.dict) list
 end = 
 struct
     fun // (dir, file) = OS.Path.joinDirFile { dir = dir, file = file }
     infix 5 //
 
-    val versionIndex = ref [] : (string * SemVer.semver * Protocol.protocol) list ref
-
-    (** Parse the versions.smackspec file to produce a list of available
-        (package,version,protocol) triples. *)
-    fun parseVersionsSpec smackage_root =
-    let
-        val fp = TextIO.openIn (smackage_root // "versions.smackspec")
-
-        val stanza = ref "";
-        
-        fun readStanzas () = 
-        let
-            val line = TextIO.inputLine fp
-        in
-            if line = NONE then [!stanza] else
-            if line = SOME "\n"
-                then (!stanza before stanza := "") :: readStanzas ()
-                else (stanza := (!stanza) ^ (valOf line); readStanzas ())
-        end
-
-        val stanzas = readStanzas () handle _ => (TextIO.closeIn fp; [])
-
-        fun whitespace s =
-        let
-            fun ws [] = true
-              | ws (#"\n"::t) = ws t
-              | ws (#"\r"::t) = ws t
-              | ws (#" "::t) = ws t
-              | ws (#"\t"::t) = ws t
-              | ws _ = false
-        in
-            ws (String.explode s)
-        end
-        val _ = TextIO.closeIn fp
-    in
-        map (Spec.toVersionSpec o Spec.fromString) 
-            (List.filter (fn s => not (whitespace s)) stanzas)
-    end
+    val versionIndex: Protocol.protocol SemVerDict.dict StringDict.dict ref = 
+       ref StringDict.empty
 
     fun init smackage_root = 
-        versionIndex := parseVersionsSpec smackage_root
-
-    fun isKnown pkg = 
-       not (null (List.filter (fn (n,_,_) => pkg = n) (!versionIndex)))
-
-    fun queryVersions pkg = List.filter (fn (n,_,_) => pkg = n) (!versionIndex)
-
-    fun latestVersion pkg =
-    let
-        val cand = queryVersions pkg
-        val _ = if length cand = 0 then 
-                    raise Fail ("Package `"^pkg^"' not found") else ()
+    let 
+       val specstanzas = 
+          FSUtil.getStanzas 
+              (TextIO.openIn (smackage_root // "versions.smackspec"))
     in
-        List.foldl (fn ((n,v,p),v') => if SemVer.>(v,v') 
-                        then v else v') (#2 (hd cand)) cand
+       versionIndex := Spec.toVersionIndex (map Spec.parse specstanzas)
     end
 
+    fun isKnown pkg = StringDict.member (!versionIndex) pkg
+
+    fun queryVersions pkg = 
+       case StringDict.find (!versionIndex) pkg of 
+          NONE => []
+        | SOME dict => SemVerDict.domain dict
+
     fun getProtocol pkg ver = 
-        (SOME (#3 (hd 
-            (List.filter (fn (n,v,p) => (n = pkg andalso SemVer.eq (v, ver)))
-                (!versionIndex))))) (* handle _ => NONE *)
+       Option.mapPartial (fn dict => SemVerDict.find dict ver) 
+          (StringDict.find (!versionIndex) pkg)
 
     fun name pkg NONE = pkg
       | name pkg (SOME spec) = pkg ^ " " ^ SemVer.constrToString spec
 
-    fun getAll pkg NONE = map #2 (queryVersions pkg)
+    fun getAll pkg NONE = queryVersions pkg
       | getAll pkg (SOME spec) =
-           List.filter (SemVer.satisfies spec) (map #2 (queryVersions pkg))
+           List.filter (SemVer.satisfies spec) (queryVersions pkg)
 
     fun getLatest pkg constraint =
     let
@@ -102,13 +63,13 @@ struct
         val cand' = 
            case constraint of 
               NONE => cand
-            | SOME spec => List.filter (SemVer.satisfies spec o #2) cand
+            | SOME spec => List.filter (SemVer.satisfies spec) cand
         val () = if length cand > 0 then () 
                  else raise Fail ("Could not satisfy constraint `"
                                  ^ name pkg constraint ^ "`") 
         val best = 
-           List.foldl (fn ((n,v,p),v') => if SemVer.>(v,v') then v else v')
-              (#2 (hd cand)) cand
+           List.foldl (fn (v,v') => if SemVer.>(v,v') then v else v')
+              (hd cand) cand
     in
         ( (case constraint of NONE => SemVer.major best | SOME spec => spec)
         , best)
@@ -116,13 +77,15 @@ struct
 
     fun getBest pkg constraint = 
     let in
-       case SemVer.intelligentSelect constraint (map #2 (queryVersions pkg)) of 
+       case SemVer.intelligentSelect constraint (queryVersions pkg) of 
           NONE => raise Fail ("Could not satisfy constraint `"  
                              ^ name pkg constraint ^ "`")
         | SOME (ver, spec) => (ver, spec)
     end
 
     fun search query =
-        List.filter (fn (n,_,_) => String.isSubstring query n) (!versionIndex)
+        List.filter 
+           (fn (pkg, versions) => String.isSubstring query pkg)
+           (StringDict.toList (!versionIndex))
 end
 

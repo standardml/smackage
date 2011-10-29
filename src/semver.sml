@@ -1,6 +1,7 @@
 signature SEMVER =
 sig
     eqtype semver     (* v0.2.4beta, v1.2.3, etc... *)
+    type t = semver
     type constraint (* v1, v1.2, v2.3.6, v3.1.6, etc... *)
 
     exception InvalidVersion
@@ -40,6 +41,7 @@ end
 structure SemVer:> SEMVER =
 struct
     type semver = int * int * int * string option
+    type t = semver
     type constraint = int * int option * int option * string option
 
     exception InvalidVersion
@@ -53,12 +55,18 @@ struct
 
     fun fromString' s =
     let
-        val s' = if String.sub (s,0) = #"v" 
-                    then String.extract (s, 1, NONE)
-                    else s
+        fun fail () = raise Fail ("`" ^ s ^ "` not a valid semantic version")
+
+        val s' = 
+           case String.tokens Char.isSpace s of 
+              [ s ] => 
+                 if String.sub (s,0) = #"v" 
+                 then String.extract (s, 1, NONE)
+                 else s
+            | _ => fail ()
+            
         val f = String.fields (fn #"." => true | _ => false) s'
 
-        fun fail () = raise Fail ("`" ^ s ^ "` not a valid semantic version")
         fun vtoi i = 
             case Int.fromString i of 
                NONE => fail ()

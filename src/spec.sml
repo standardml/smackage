@@ -1,6 +1,6 @@
 (*
-    This defines the data structure and syntax for smackage package definitions (smackspec files).
-    The general syntax is a flat key/value format, eg.
+    This defines the data structure and syntax for smackage package definitions
+    (smackspec files). The general syntax is a flat key/value format, eg:
 
         provides: test 1.2.3beta
         description: This is a sample smackspec file.
@@ -8,21 +8,12 @@
         requires: smacklib >= 1.2.3
         requires: ioextras 0.0.45
 
-    Lines that aren't indented or empty must contain a key name followed by a colon (with no whitspace before the colon).
-    The string to the right of the colon as well as any following indented or empty lines constitutes the value belonging
-    to that key. There is no order and keys may occur multiple times. Lines with only whitespace at the beginning of the
-    file are ignored. Keys that have no meaning in smackspec are syntax errors.
-    
-    The values have further syntactic restrictions depending on the key, vaguely summerized here:
-    
-        provides: PACKAGE_NAME SEMANTIC_VERSION     (exactly once)
-        description: ANY_STRING                     (at most once)
-        remote: TYPE URL                            (exactly once)
-        requires: PACKAGE_NAME VERSION_CONSTRAINTS  (zero or more)
-        comment: ANY_STRING                         (zero or more)
-    
-    Apart from that, the following keys are supported, but their values are not checked for syntax errors at the moment:
-    
+    The following keys are supported:
+
+        description: ANY_STRING
+        remote: TYPE URL
+        requires: PACKAGE_NAME PARTIAL_SEMVER [optional: (MINIMAL_SEMVER)]
+        comment: ANY_STRING
         maintainer: FULL_NAME <EMAIL_ADDRESS>               
         keywords: KEYWORD_1 KEYWORD_2 KEYWORD_3
         upstream-version: VERSION
@@ -36,217 +27,194 @@
         install: COMMAND
         uninstall: COMMAND
         documentation: COMMAND
-        
-    All of these keys can appear at most once.
 
-    Please note that the parser is rather lax at the moment; it will accept url values that aren't really URLs etc.
-    This will likely change in the future, so please be careful to get it right when pasting or typing in the values.
+    See https://github.com/standardml/smackage/wiki/Smackspec for more 
+    information. Please note that the parser is rather lax at the moment; it 
+    will accept url values that aren't really URLs, etc. This will likely 
+    change in the future.
 *)
 
-
+structure SemVerDict = ListDict (structure Key = SemVer)
+structure StringDict =
+   ListDict 
+      (structure Key = struct type t = string val compare = String.compare end)
 
 signature SPEC =
 sig
-    exception SpecError of string
+   exception SpecError of string
 
-    datatype spec_entry =
-        Provides of string * SemVer.semver
-      | Description of string
-      | Requires of string * SemVer.constraint
-      | Maintainer of string
-      | Remote of Protocol.protocol
-      | License of string
-      | Platform of string
-      | Key of string * string 
+   datatype spec_entry =
+       Provides of string * SemVer.semver
+     | Description of string
+     | Requires of string * SemVer.constraint * SemVer.semver option
+     | Maintainer of string
+     | Remote of Protocol.protocol
+     | License of string
+     | Platform of string
+     | Key of string * string 
 
-    type spec
+   type spec = spec_entry list
 
-    (* Parses a smackspec file. *)
-    val fromFile : string -> spec
+   (* Parse a smackspec file (every line should be an empty string or a valid
+    * spec_entry, such as one would get from FSUtil.getLines) *)
+   val parse: string list -> spec
+   val fromFile: string -> spec
+   val toString: spec -> string
 
-    (* Parses a smackspec string. *)
-    val fromString : string -> spec
-    val toString : spec -> string
-    val toVersionSpec : spec -> string * SemVer.semver * Protocol.protocol
-    
-    (* Helpers for extracting things from specs *)
-    val provides : spec -> string * SemVer.semver
-    val requires : spec -> (string * SemVer.constraint) list
-    val remote : spec -> Protocol.protocol
-    val platforms : spec -> (string * spec) list
-    val key : spec -> string -> string
+   (* Interprets the spec as a packages file, get the requirements *)
+   val key: spec -> string -> string list
+   val platforms: spec -> (string * spec) list
+   val provides: spec -> string * SemVer.semver
+   val remote: spec -> Protocol.protocol
+   val requires: 
+      spec -> (string * SemVer.constraint * SemVer.semver option) list
+
+   (* Interprests a series of specs as a versions.smackspec file *)
+   val toVersionIndex: 
+      spec list -> Protocol.protocol SemVerDict.dict StringDict.dict
 end
 
 
-structure Spec : SPEC =
+structure Spec:> SPEC =
 struct
-    exception SpecError of string
+   exception SpecError of string
 
-    datatype spec_entry =
-        Provides of string * SemVer.semver
-      | Description of string
-      | Requires of string * SemVer.constraint
-      | Maintainer of string
-      | Remote of Protocol.protocol
-      | License of string
-      | Platform of string
-      | Key of string * string (* We just push all the unused keys in here *)
+   datatype spec_entry =
+      Provides of string * SemVer.semver
+    | Description of string
+    | Requires of string * SemVer.constraint * SemVer.semver option
+    | Maintainer of string
+    | Remote of Protocol.protocol
+    | License of string
+    | Platform of string
+    | Key of string * string (* We just push all the unused keys in here *)
 
-    type spec = spec_entry list
-    
-    fun trim s =
-    let
-        fun trimStart (#" "::t) = trimStart t
-          | trimStart (#"\t"::t) = trimStart t
-          | trimStart l = l
+   type spec = spec_entry list
 
-        fun trimEnd (#"#"::t) = []
-          | trimEnd (#"\n"::t) = []
-          | trimEnd (h::t) = h :: trimEnd t
-          | trimEnd [] = []
-    in
-        String.implode (trimEnd (trimStart (String.explode s)))
-    end
+   (* Like String.fields, but split at most once *)
+   fun splitOnce delim s =
+      case CharVector.findi (fn (_, c) => c = delim) s of
+         NONE => (s, NONE)
+       | SOME (i, _) => 
+            (String.extract (s,0,SOME i), SOME (String.extract (s,i+1,NONE)))
 
-    (* Like String.fields, but split at most once *)
-    fun splitOnce delim s =
-        case CharVector.findi (fn (_,c) => c = delim) s of
-            NONE => [s]
-          | SOME (i,_) => 
-            [String.extract (s,0,SOME i), String.extract (s,i+1,NONE)]
+   fun parsePackage s =
+      case String.tokens Char.isSpace s of
+         [pkg, ver] => (pkg, SemVer.fromString ver)
+       | _ => raise SpecError ("Invalid 'provides:' content: `" ^ s ^ "'")
 
-    fun parsePackage s =
-        (fn [pkg,ver] => (pkg, SemVer.fromString ver)
-          | _ => raise SpecError ("Invalid 'provides:' content: `" ^ s ^ "'"))
-            (String.fields Char.isSpace s)
+   fun parseRequires s =
+      case String.tokens Char.isSpace s of
+         [pkg, con] => (pkg, SemVer.constrFromString con, NONE)
+       | [pkg, con, min] =>
+            if #"(" = String.sub (min, 0) 
+               andalso #")" = String.sub (min, size min - 1)
+            then ( pkg
+                 , SemVer.constrFromString con
+                 , SOME (SemVer.fromString 
+                            (String.substring (min, 1, size min - 2))))
+            else raise SpecError ("Invalid minimal version: `" ^ min ^ "'")
+       | _ => raise SpecError ("Invalid 'requires:' content: `" ^ s ^ "'")
 
-    fun parseRequires s =
-        (fn [pkg,con] => (pkg,SemVer.constrFromString con)
-          | _ => raise SpecError ("Invalid 'requires:' content: `" ^ s ^ "'"))
-            (String.fields Char.isSpace s)
+   fun parseLine "" = NONE
+     | parseLine line = 
+       let
+          val (key, value) = 
+             case splitOnce #":" line of 
+                (key, SOME value) => (key, value)
+              | _ => raise SpecError ("Malformed line in spec: `" ^ line ^ "'")
+          val () = 
+             if CharVector.all (fn c => Char.isAlphaNum c orelse c = #"-") key
+             then ()
+             else raise SpecError ("Invalid key in spec: `"^key^"'")
+       in case (key,value) of
+              ("provides",v) => SOME (Provides (parsePackage v))
+            | ("description",v) => SOME (Description v)
+            | ("requires",v) => SOME (Requires (parseRequires v))
+            | ("maintainer",v) => SOME (Maintainer v)
+            | ("remote",v) => SOME (Remote (Protocol.fromString v))
+            | ("license",v) => SOME (License v)
+            | ("platform",v) => SOME (Platform v)
+            | (k,v) => SOME (Key (k,v))
+       end
 
-    fun parseLine line =
-    if String.isPrefix "#" line orelse line = "\n" orelse line = "" 
-    then NONE else
-    let
-        val f = splitOnce #":" line
-        val _ = if length f <> 2 then 
-            raise SpecError ("Malformed line in spec: `" ^ line ^ "'")
-            else ()
-        val (key,value) = (List.nth(f,0), trim (List.nth(f,1)))
-        val _ = 
-            if CharVector.all (fn c => Char.isAlphaNum c orelse c = #"-") key
-                then ()
-                else raise SpecError ("Invalid key in spec: `"^key^"'")
-    in
-        case (key,value) of
-            ("provides",v) => SOME (Provides (parsePackage v))
-          | ("description",v) => SOME (Description v)
-          | ("requires",v) => SOME (Requires (parseRequires v))
-          | ("maintainer",v) => SOME (Maintainer v)
-          | ("remote",v) => SOME (Remote (Protocol.fromString v))
-          | ("license",v) => SOME (License v)
-          | ("platform",v) => SOME (Platform v)
-          | (k,v) => SOME (Key (k,v))
-    end
+   fun parse lines = List.mapPartial parseLine lines
 
-    fun parse lines =
-        List.mapPartial (parseLine o trim) lines
+   val fromFile = parse o FSUtil.getCleanLines o TextIO.openIn
 
-    fun readLines (file, position, lines) = 
-        case TextIO.inputLine file of
-              NONE => rev lines
-            | (SOME "\n") => readLines (file, position + 1, lines)
-            | (SOME line) => 
-                readLines (file, position + 1, line :: lines)
+   fun toString' (Provides (s,v)) = 
+          "provides: " ^ s ^ " " ^ SemVer.toString v
+     | toString' (Description s) =
+          "description: " ^ s 
+     | toString' (Requires (p,v,min)) =
+          ( "requires: " ^ p ^ " " ^ SemVer.constrToString v
+          ^ (case min of NONE => "" | SOME v => "(" ^ SemVer.toString v ^ ")"))
+     | toString' (Maintainer s) =
+          "maintainer: " ^ s
+     | toString' (Remote p) =
+          "remote: " ^ Protocol.toString p
+     | toString' (License s) =
+          "license: " ^ s
+     | toString' (Platform s) =
+          "platform: " ^ s
+     | toString' (Key (k,v)) = k ^ ": " ^ v
 
+   fun toString spec = String.concatWith "\n" (map toString' spec)
 
-    fun parseStream stream = 
-        let
-            val lines = readLines (stream, 1, [])
-        in
-            parse lines 
-        end handle (e as SpecError s) => (
-            TextIO.output (TextIO.stdErr, "Error in smackspec: " ^ s ^ "\n"); 
-            raise e
-        )
+   (* Helper functions *)
 
+   fun key s key =
+   let fun key' (key', v) = if key = key' then SOME v else NONE
+   in 
+      List.mapPartial (fn (Key kv) => key' kv | _ => NONE) s 
+   end
 
-    fun fromFile filename =
-        let
-            val file = TextIO.openIn filename
-            val result = parseStream file
-            val _ = TextIO.closeIn file
-        in
-            result
-        end
+   fun provides s =
+      case List.mapPartial (fn (Provides v) => SOME v | _ => NONE) s of
+         [] => raise SpecError "Missing `provides:' line in spec"
+       | [ v ] => v
+       | _ => raise SpecError "Multiple `provides:' lines in spec"
 
-    fun fromString string = parseStream (TextIO.openString string)
+   fun platforms [] = []
+     | platforms (Platform p :: t) =
+       let
+          fun loop [] s accum plats = rev ((s, rev accum) :: plats)
+            | loop (Platform p :: t) s accum plats = 
+                 loop t p [] ((s, rev accum) :: plats)
+            | loop (h :: t) s accum plats = 
+                 loop t s (h :: accum) plats
+       in
+           loop t p [] []
+       end
+     | platforms (h::t) = platforms t
 
-    fun withErrorPrinter parser name input = parser input
-        handle (e as SpecError s) => (
-            TextIO.output (TextIO.stdErr, "Error in '" ^ name ^ "': " ^ s ^ "\n"); 
-            raise e
-        )
+   fun remote s =
+      case List.mapPartial (fn (Remote v) => SOME v | _ => NONE) s of
+         [] => raise SpecError "Missing `remote:' line in spec"
+       | [ v ] => v
+       | _ => raise SpecError "Multiple `remote:' lines in spec"
 
-    fun toString' (Provides (s,v)) = 
-        "provides: " ^ s ^ " " ^ SemVer.toString v
-      | toString' (Description s) =
-        "description: " ^ s 
-      | toString' (Requires (p,v)) =
-        "requires: " ^ p ^ " " ^ SemVer.constrToString v
-      | toString' (Maintainer s) =
-        "maintainer: " ^ s
-      | toString' (Remote p) =
-        "remote: " ^ Protocol.toString p
-      | toString' (License s) =
-        "license: " ^ s
-      | toString' (Platform s) =
-        "platform: " ^ s
-      | toString' (Key (k,v)) = k ^ ": " ^ v
+   val requires = 
+      List.mapPartial (fn (Requires v) => SOME v | _ => NONE)
 
-    fun toString spec = 
-        String.concatWith "\n" (map toString' spec)
-
-    fun provides s =
-        (fn (Provides v) => v | _ => 
-            raise SpecError "Missing provides line in spec")
-            (hd (List.filter (fn (Provides _) => true | _ => false) s)) 
-                handle _ =>  raise SpecError "Missing provides: line in spec"
-
-    val requires = 
-        List.mapPartial (fn (Requires v) => SOME v | _ => NONE)
-
-    fun remote s =
-        (fn (Remote v) => v | _ => 
-            raise SpecError "Missing remote: line in spec")
-            (hd (List.filter (fn (Remote _) => true | _ => false) s)) 
-                handle _ =>  raise SpecError "Missing remote: line in spec"
-
-
-    fun toVersionSpec (spec : spec) =
-        (fn (pkg,ver) => (pkg,ver,remote spec)) (provides spec)
-        handle (e as SpecError s) => (
-            TextIO.output (TextIO.stdErr, 
-                "Error in smackspec: " ^ s ^ "\n" ^ toString spec); 
-            raise e)
-
-    fun platform2spec (s,[]) = (s,[])
-      | platform2spec (s, l as (Platform p :: t)) = (s,l)
-      | platform2spec (s,h::t) = platform2spec (s @ [h], t)
-
-    fun platforms (Platform p :: t) =
-        let
-            val (cont,t') = platform2spec ([],t)
-        in
-            (p,cont) :: platforms t'
-        end
-      | platforms (h::t) = platforms t
-      | platforms [] = []
-
-    fun key [] name = raise SpecError ("Key `" ^ name ^ "' not found in spec.")
-      | key ((Key(k,v)::t)) name = if k = name then v else key t name
-      | key (h::t) name = key t name
-
+   fun toVersionIndex (spec: spec list) = 
+   let 
+      fun folder (spec, dict) =
+      let 
+         val remote = remote spec 
+         val provides = 
+            List.mapPartial (fn (Provides v) => SOME v | _ => NONE) spec
+      in
+         List.foldr 
+            (fn ((pkg, semver), dict) => 
+                StringDict.insertMerge dict pkg 
+                   (SemVerDict.singleton semver remote)
+                   (fn dict => SemVerDict.insert dict semver remote))
+            dict
+            provides
+      end
+   in
+      List.foldr folder StringDict.empty spec
+   end
 end
 

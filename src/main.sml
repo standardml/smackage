@@ -27,7 +27,9 @@ struct
        ( if null deps then raise NoDeps else ()
        ; if length deps = 1 then print "Resolving 1 dependency\n"
          else print ("Resolving " ^ ltoi deps ^ "dependencies\n")
-       ; app (fn (pkg, spec) => install pkg (SOME spec) true) deps 
+       (* XXX here's the place to shortcut-stop if we have an acceptable
+        * version installed (issue #4) *)
+       ; app (fn (pkg, spec, _) => install pkg (SOME spec) true) deps 
        ; print ("Done resolving dependencies for `" ^ pkg ^ "`\n"))
     end handle NoDeps => () end
 
@@ -77,7 +79,7 @@ struct
         if SmackLib.download (!Configure.smackHome) (pkg,ver,proto)
         then print ( "Package `" ^ name ^ "` already installed.\n") 
         else ( print ( "Package `" ^ name ^ "` downloaded.\n")
-             ; resolveDependencies pkg ver 
+             ; resolveDependencies pkg ver (*
              ; (if runHooks then
                 (SmackLib.build 
                 (!Configure.smackHome) 
@@ -87,7 +89,7 @@ struct
                 (!Configure.smackHome)
                 (!Configure.platform,!Configure.compilers)
                 (pkg,ver)) else ())
-             )
+             *))
     end
 
     (** Uninstall a package with a given name and version.
@@ -132,9 +134,11 @@ struct
         val res = VersionIndex.search name
         val _ = if length res = 0 then print "No packages found.\n" else ()
         val _ = List.app 
-            (fn (n,v,p) => 
-                print (n ^ " " ^ SemVer.toString v ^ " (from " ^ 
-                    Protocol.toString p ^ ")\n")) res
+            (fn (n,dict) =>
+                SemVerDict.app 
+                   (fn (v, p) =>  
+                       print (n ^ " " ^ SemVer.toString v ^ " (from " ^ 
+                              Protocol.toString p ^ ")\n")) dict) res
     in
         ()
     end
@@ -335,6 +339,8 @@ struct
        end handle (SmackExn s) => 
            (TextIO.output (TextIO.stdErr, s ^ "\n"); OS.Process.failure)
                 | (Fail s) => 
+           (TextIO.output (TextIO.stdErr, s ^ "\n"); OS.Process.failure)
+                | (Spec.SpecError s) => 
            (TextIO.output (TextIO.stdErr, s ^ "\n"); OS.Process.failure)
                 | exn =>
            (TextIO.output (TextIO.stdErr, "UNEXPECTED ERROR: " 

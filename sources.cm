@@ -1,6 +1,7 @@
 Group is
    $/basis.cm
    util/sources.cm
+   src/fsutil.sml
 
    (* Smackage data types *)
    src/protocol.sml
@@ -8,10 +9,9 @@ Group is
    src/spec.sml
 
    (* Managing local data *)
-   src/fsutil.sml
    src/version-index.sml
    src/configure.sml
-   src/install.sml
+   (* src/install.sml *)
 
    (* Obtaining and manipulating code and packages *)
    src/get-git.sml

@@ -4,6 +4,7 @@ sig
      ** was already there *)
     val download : string -> string * SemVer.semver * Protocol.protocol -> bool
 
+(*
     (** Build a previously downloaded package by invoking a command
         specified as 'build:' in the spec file. *)
     val build : string -> (string * string list) -> 
@@ -13,6 +14,7 @@ sig
         specified as 'install:' in the spec file. *)
     val install : string -> (string * string list) -> 
                         (string * SemVer.semver) -> unit;
+*)
 
     (** Returns a list of installed versions *)
     (* XXX should probably be sorted, relies on the filesystem for this now *)
@@ -45,6 +47,7 @@ struct
             ; SmackagePath.createVersionLinks smackage_root (pkg,ver)
             ; false)
 
+(*
     fun build smackage_root host (pkg,ver) =
     let
         val pkgDir = (smackage_root // "lib" // pkg // "v"^SemVer.toString ver)
@@ -68,6 +71,7 @@ struct
     end handle (Spec.SpecError _) => () (* Silently fail if there is no spec. *)
 
     fun uninstall smackage_root (pkg,ver) = raise Fail "Not implemented"
+*)
 
     fun versions smackage_root pkg = 
        let
@@ -87,11 +91,14 @@ struct
        end
     
     fun info smackage_root (pkg,ver) = 
-        Spec.fromFile 
-            ( smackage_root
-            // "lib"
-            // pkg 
-            // ("v" ^ SemVer.toString ver)
-            // (pkg ^ ".smackspec"))
-        handle (Spec.SpecError s) => raise Fail ("Spec error: " ^ s)
+    let  
+       val file = 
+          ( smackage_root
+          // "lib"
+          // pkg 
+          // ("v" ^ SemVer.toString ver)
+          // (pkg ^ ".smackspec"))
+    in
+       Spec.fromFile file
+    end handle (Spec.SpecError s) => raise Fail ("Spec error: " ^ s)
 end

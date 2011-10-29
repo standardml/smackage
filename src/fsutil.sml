@@ -38,19 +38,22 @@ struct
          | trimStart (#"\t"::t) = trimStart t
          | trimStart l = l
 
-       fun trimEnd (#"#"::t) = []
-         | trimEnd (#"\n"::t) = []
-         | trimEnd (h::t) = h :: trimEnd t
-         | trimEnd [] = []
+       fun trimEnd (#"#"::t) accum = rev accum
+         | trimEnd (#"\n"::t) accum = rev accum
+         | trimEnd (h::t) accum = trimEnd t (h :: accum)
+         | trimEnd [] accum = rev accum
    in
-       String.implode (trimEnd (trimStart (String.explode s)))
+       String.implode (trimEnd (trimStart (String.explode s)) [])
    end
 
    fun getLines' trimmer splitter file = 
    let 
       fun loop accum stanzas = 
          case TextIO.inputLine file of 
-            NONE => rev (rev accum :: stanzas) before TextIO.closeIn file
+            NONE => 
+               if null accum
+               then (rev stanzas before TextIO.closeIn file)
+               else (rev (rev accum :: stanzas) before TextIO.closeIn file)
           | SOME s => 
                if splitter s 
                then (if null accum
