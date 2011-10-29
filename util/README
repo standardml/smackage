@@ -1,0 +1,5 @@
+Smackage would eventually like to enjoy the bounty of smackage itself - being 
+able to rely on other sources of library code! But unless we're distributing
+binaries, this leads to a problematic bootstrapping problem. This directory is
+where we put code that we should be able to get via smackage someday, mostly
+taken from CMlib.
