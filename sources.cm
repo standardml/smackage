@@ -1,6 +1,7 @@
 Group is
    $/basis.cm
-   $/smlnj-lib.cm
+   util/sources.cm
+
    src/protocol.sml
    src/semver.sml
    src/version-index.sml
@@ -10,11 +11,11 @@ Group is
    src/conductor.sml
    src/get-git.sml
    src/get-http.sml
-   src/smackage-path.sml
+(*  src/smackage-path.sml *)
    src/spec.sml
    src/http-downloader.sig
    src/curl-lib.sml
-   src/smacklib.sml
+(* src/smacklib.sml *)
 
-   src/posix-symlink.sml
+(*   src/posix-symlink.sml *)
 (*   src/bullshit-symlink.sml*)

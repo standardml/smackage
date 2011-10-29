@@ -1,6 +1,11 @@
-$(SML_LIB)/basis/basis.mlb
-$(MLTON_ROOT)/mlyacc-lib/mlyacc-lib.mlb
-sources.mlb
-src/configure.sml
-src/main.sml
-src/go.sml
+   $(SML_LIB)/basis/basis.mlb
+   $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
+   $(MLTON_ROOT)/mlyacc-lib/mlyacc-lib.mlb
+   sources.mlb
+
+   src/posix-symlink.sml
+   src/smackage-path.sml
+   src/smacklib.sml
+   src/configure.sml
+   src/main.sml
+   src/go.sml

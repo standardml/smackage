@@ -1,6 +1,11 @@
 Group is
-	$/basis.cm
-	$/ml-yacc-lib.cm
-	sources.cm
-	src/configure.sml
-	src/main.sml
+   $/basis.cm
+   $/ml-yacc-lib.cm
+   $/smlnj-lib.cm
+   sources.cm
+
+   src/posix-symlink.sml
+   src/smackage-path.sml
+   src/smacklib.sml     
+   src/configure.sml
+   src/main.sml
