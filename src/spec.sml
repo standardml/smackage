@@ -126,7 +126,8 @@ struct
             (String.fields Char.isSpace s)
 
     fun parseLine line =
-    if String.isPrefix "#" line orelse line = "\n" orelse line = "" then NONE else
+    if String.isPrefix "#" line orelse line = "\n" orelse line = "" 
+    then NONE else
     let
         val f = splitOnce #":" line
         val _ = if length f <> 2 then 

@@ -1,22 +1,37 @@
 
 structure FSUtil:>
 sig
-   (* Get all the lines from a file. *)
-   val getLines: string -> string list
+   (* Write a series of lines to a file. Adds a newline to every string. *)
+   val putLines: string -> string list -> unit
 
-   (* Trims leading whitespace, trailing newlines, and #linecomments. *)
-   val getCleanLines: string -> string list
+   (* ...Lines: Get the raw list of lines. *)
+   (* ...CleanLines: Also trim leading whitespace, newlines, #comments. *)
+   (* ...Stanzas: Also split up into empty-line separated segments. *)
 
-   (* Run a system command, get the output. *)
+   (* Read from a TextIO stream. *)
+   val getLines: TextIO.instream -> string list
+   val getCleanLines: TextIO.instream -> string list
+   val getStanzas: TextIO.instream -> string list list
+
+   (* Read from a system call. *)
    val systemLines: string -> string list
-   
-   (* Trims leading whitespace, trailing newlines, and #linecomments. *)
    val systemCleanLines: string -> string list
-
-   (* Write lines to a file; adds newlines. *)
-   val putLines: string list -> string -> unit
+   val systemStanzas: string -> string list list
 end = 
 struct
+   fun putLines fileName lines = 
+   let 
+      val file = TextIO.openOut fileName
+      fun loop lines =
+         case lines of 
+            [] => TextIO.closeOut file
+          | line :: lines => 
+               (TextIO.output (file, line ^ "\n"); loop lines) 
+   in 
+      loop []
+   handle exn => (TextIO.closeOut file handle _ => (); raise exn)
+   end
+
    fun trim s =
    let
        fun trimStart (#" "::t) = trimStart t
@@ -31,34 +46,28 @@ struct
        String.implode (trimEnd (trimStart (String.explode s)))
    end
 
-   fun getLines' trimmer fileName = 
+   fun getLines' trimmer splitter file = 
    let 
-      val file = TextIO.openIn fileName
-      fun loop accum = 
+      fun loop accum stanzas = 
          case TextIO.inputLine file of 
-            NONE => rev accum before TextIO.closeIn file
-          | SOME s => loop (trimmer s :: accum)
+            NONE => rev (rev accum :: stanzas) before TextIO.closeIn file
+          | SOME s => 
+               if splitter s 
+               then (if null accum
+                     then loop accum stanzas
+                     else loop [] (rev accum :: stanzas))
+               else loop (trimmer s :: accum) stanzas
    in
-      loop []
+      loop [] []
    handle exn => (TextIO.closeIn file handle _ => (); raise exn)
    end
 
-   val getLines = getLines' (fn x => x)
-   val getCleanLines = getLines' trim
+   fun isEmpty [] = true
+     | isEmpty (c :: cs) = if Char.isSpace c then isEmpty cs else false
 
-   
-   fun putLines lines fileName = 
-   let 
-      val file = TextIO.openOut fileName
-      fun loop lines =
-         case lines of 
-            [] => TextIO.closeOut file
-          | line :: lines => 
-               (TextIO.output (file, line ^ "\n"); loop lines) 
-   in 
-      loop []
-   handle exn => (TextIO.closeOut file handle _ => (); raise exn)
-   end
+   val getLines = hd o getLines' (fn x => x) (fn _ => false)
+   val getCleanLines = hd o getLines' trim (fn _ => false)
+   val getStanzas = getLines' trim (null o (String.tokens Char.isSpace))
 
    fun systemLines' reader cmd =
    let 
@@ -70,11 +79,12 @@ struct
          then () else raise Fail ("System call failed: `" ^ cmd' ^ "`")
       val cleanup = fn () => OS.FileSys.remove tmpName
    in         
-      (reader tmpName before cleanup ())
+      (reader (TextIO.openIn tmpName) before cleanup ())
       handle exn => (cleanup () handle _ => (); raise exn)
    end
 
    val systemLines = systemLines' getLines
    val systemCleanLines = systemLines' getCleanLines
+   val systemStanzas = systemLines' getStanzas
 
 end
