@@ -5,5 +5,6 @@ sig
   type filename = string
 
   val retrieve : url -> filename -> unit
-  val retrieveText : url -> string
+  val retrieveLines : url -> string list
+  val retrieveCleanLines : url -> string list
 end

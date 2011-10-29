@@ -120,27 +120,17 @@ struct
          else loop (TextIO.openIn config) 
       end
 
-   (* TODO: should probably move this somewhere else so it can be used.
-      TODO: delete temp file when we're done. *)
-   fun execWithOutput cmd =
-      let
-         val tmpName = OS.FileSys.tmpName ()
-         val _ = OS.Process.system (cmd ^ " > " ^ tmpName)
-         val tmp = TextIO.openIn tmpName
-      in         
-         (TextIO.inputAll tmp before TextIO.closeIn tmp)
-            handle exn => (TextIO.closeIn tmp handle _ => (); raise exn)
-      end
 
    (** Attempt to guess an appropriate default 'platform' config value.
        Based on the output of 'uname -s'. Defaults to 'linux' if we can't
        guess, because that's probably safe for most POSIX-compliant systems. *)
    fun guessPlatform () =
       let
-         val s = execWithOutput "uname -s"
-      in
-         if String.isPrefix "Darwin" s then "osx" else
-         if String.isPrefix "CYGWIN" s then "win" else "linux"
+         val s = FSUtil.systemCleanLines "uname -s"
+      in 
+         if null s then "win" else
+         if String.isPrefix "Darwin" (hd s) then "osx" else
+         if String.isPrefix "CYGWIN" (hd s) then "win" else "linux"
       end
 
    fun init () =

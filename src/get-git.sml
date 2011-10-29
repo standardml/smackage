@@ -5,25 +5,17 @@
 structure GetGit = struct
 
 fun systemSuccess s = 
-   let val () = print ("Running: `" ^ s ^ "`\n") in
-      if OS.Process.isSuccess (OS.Process.system s) then ()
-      else raise Fail ("System call `" ^ s ^ "` returned failure")
-   end
+let (* val () = print ("Running: `" ^ s ^ "`\n") *) in
+   if OS.Process.isSuccess (OS.Process.system s) then ()
+   else raise Fail ("System call `" ^ s ^ "` returned failure")
+end
 
 (*[ val poll: string -> (string * SemVer.semver) list ]*)
 (* List of X.Y.Z versions provided by a repository *)
 fun poll (gitAddr: string) = 
    let
       fun eq c1 c2 = c1 = c2 
-
-      val tmpName = OS.FileSys.tmpName ()
-      val _ = systemSuccess ("git ls-remote " ^ gitAddr ^ " > " ^ tmpName)
-      val tmp = TextIO.openIn tmpName
-      val input = 
-         String.tokens (eq #"\n")
-            (TextIO.inputAll tmp before TextIO.closeIn tmp)
-         handle exn => (TextIO.closeIn tmp handle _ => (); raise exn)
-       
+      val input = FSUtil.systemLines ("git ls-remote " ^ gitAddr)
       fun process str =
          let exception Skip 
             val (hash, remote) = 
