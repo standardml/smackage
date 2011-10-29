@@ -8,45 +8,14 @@ struct
   type url = string
   type filename = string
 
-  fun retrieveTemp url =
-      let val tmpName = OS.FileSys.tmpName ()
-      in (* XXX: FIXME: security bug if url is untrusted. *)
-          if not (OS.Process.isSuccess (OS.Process.system ("curl " ^ url ^ " > " ^ tmpName)))
-          then raise HttpException "download fail"
-          else tmpName
-      end
+  fun retrieve url outputFile =
+      if (OS.Process.isSuccess o OS.Process.system)
+            ("curl -s " ^ url ^ " > " ^ outputFile)
+      then ()
+      else raise HttpException "download fail (retrieve)"
 
-  fun retrieve url outputFile = 
-      let
-          val tmpName = retrieveTemp url
-      in
-          OS.FileSys.rename {old=tmpName, new=outputFile}
-          handle _ => raise HttpException "failure to rename file"
-      end
-
-  fun handleIOError error = raise HttpException "file IO error"
-
-  (* LIB: This really should be in a library somewhere. *)
-  fun finally f final =
-      (f () handle e => (final (); raise e))
-      before (final ())
-
-  (* Return the contents of a file. Won't work in SML/NJ if the file is
-   * more than 20MB... *)
-  (* LIB: This really should be in a library somewhere. *)
-  fun readFile fname =
-      let val file = TextIO.openIn fname
-      in finally
-             (fn () => TextIO.inputAll file)
-             (fn () => TextIO.closeIn file)
-      end
-
-  fun retrieveText url =
-      let val tmpName = retrieveTemp url
-      in finally
-             (fn () => readFile tmpName handle IO.Io e => handleIOError e)
-             (fn () => OS.FileSys.remove tmpName
-                 handle _ => raise HttpException "failed to remove temp file")
-      end
+  fun retrieveText url = 
+     FSUtil.systemStr ("curl -s " ^ url)
+     handle _ => raise HttpException "download fail (retrieveText)"
 end
 
