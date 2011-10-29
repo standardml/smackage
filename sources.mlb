@@ -1,15 +1,21 @@
-$(SML_LIB)/basis/basis.mlb
-(*src/posix-symlink.sml*)
-(*src/bullshit-symlink.sml*)
 
-src/semver.sml
-src/protocol.sml
-src/spec.sml
-src/install.sml
-src/version-index.sml
-src/get-git.sml
-src/get-http.sml
-src/conductor.sig
-src/conductor.sml
-(*src/smackage-path.sml*)
-(*src/smacklib.sml*)
+   $(SML_LIB)/basis/basis.mlb
+   util/sources.mlb
+
+   (* Smackage data types *)
+   src/protocol.sml
+   src/semver.sml
+   src/spec.sml
+
+   (* Managing local data *)
+   src/fsutil.sml
+   src/version-index.sml
+   src/configure.sml
+   src/install.sml
+
+   (* Obtaining and manipulating code and packages *)
+   src/get-git.sml
+   src/conductor.sig
+   src/conductor.sml
+   src/http-downloader.sig
+   src/curl-lib.sml

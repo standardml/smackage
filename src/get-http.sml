@@ -1,5 +1,0 @@
-structure GetHttp =
-struct
-
-end
-

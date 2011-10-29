@@ -7,5 +7,4 @@ Group is
    src/posix-symlink.sml
    src/smackage-path.sml
    src/smacklib.sml     
-   src/configure.sml
    src/main.sml
