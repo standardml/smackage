@@ -142,7 +142,7 @@ struct
            \compiler mlton\n\
            \compiler smlnj\n\
            \platform " ^ guessPlatform () ^ "\n")
-      ; initFile "packages.installed" "\n"
+      ; initFile "packages.installed" "smackage v0\n"
       ; initFile "versions.smackspec" "\n"
       ; initDir "lib"
       ; initDir "bin"
