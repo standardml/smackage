@@ -76,8 +76,7 @@ fun get basePath projName gitAddr semver =
 
       (* Update the repository *)
       val () = chdirSuccess repoPath
-      val () = systemSuccess ("git fetch --tags --quiet")
-      val () = systemSuccess ("git pull origin master --quiet")
+      val () = systemSuccess ("git fetch origin master --tags --quiet")
       val () = print "Repository is updated\n" 
 
       (* Output via cloning *)
