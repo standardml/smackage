@@ -5,60 +5,102 @@ on the filesystem.
 
 Installation
 ============
-Before installation, it's important to set up your SML compilers to interact
-with smackage correctly. Smackage will live in a directory that we'll refer to
-as `$SMACKAGE_HOME`. This directory is probably `~/.smackage`, but see the 
-section on `$SMACKAGE_HOME` below for more information. 
+Installation takes three steps, and the first is optional.
 
-Setting up SML/NJ
------------------
-To set up Standard ML of New Jersey to interact with Smackage, create a file
-`~/.smlnj-pathconfig` containing the following line:
+1. First, you have to pick the `$SMACKAGE_HOME` files where Smackage will put
+   all of its files. This will be `~/.smackage` by default if you don't do
+   anything; see the section "The $SMACKAGE_HOME directory" below if you'd like
+   Smackage to put its files somewhere else.
+2. Second, you have to configure your SML compilers to find the code that
+   Smackage will put on your system; see the section "Setting up your SML path
+   map" below.
+3. Finally you can actually build Smackage with the following commands:
 
-    SMACKAGE $SMACKAGE_HOME/lib
-
-Don't actually write $SMACKAGE_HOME, though, replace it with the appropriate
-absolute file path; on my machine this file contains the line
-
-    SMACKAGE /Users/rjsimmon/.smackage/lib
-
-Setting up MLton
-----------------
-MLton doesn't currently allow user-specific basis maps, so you'll have to be
-able to edit the [MLBasis Path Map](http://mlton.org/MLBasisPathMap), which
-is found in a place like `/usr/lib/mlton/mlb-path-map` or 
-`/usr/local/lib/mlton/mlb-path-map`, depending on your system. Add the line
-
-    SMACKAGE $SMACKAGE_HOME/lib
-
-with the same caveat as before; after I edited my path map, the file 
-had these contents:
-
-    MLTON_ROOT $(LIB_MLTON_DIR)/sml
-    SML_LIB $(LIB_MLTON_DIR)/sml
-    SMACKAGE /Users/rjsimmon/.smackage/lib
-    
-Make sure it's an absolute path, starting with "/" or whatever your system
-uses to refer to the file system root.
-
-Compiling Smackage
-------------------
-Now, assuming you have downloaded the smackage source on your system, you can
-build and start using smackage like this:
-   
     $ cd smackage
     $ make mlton # (or make smlnj)
-    $ bin/smackage selfupdate
-    $ bin/smackage install cmlib v0
+    $ bin/smackage refresh
+    $ bin/smackage get cmlib
 
 Referring to Smackage packages
 ------------------------------
-If you've run the four lines as described above, you can refer to cmlib as 
-`$SMACKAGE/cmlib/v0/cmlib.cm` (in SML/NJ .cm files) or as 
+If you've performed all the steps described above, you can will be able to 
+refer to cmlib as `$SMACKAGE/cmlib/v0/cmlib.cm` (in SML/NJ .cm files) or as 
 `$(SMACKAGE)/cmlib/v0/cmlib.mlb` (in MLton .mlb files).
 
 You might want to add `$SMACKAGE_HOME/bin` to your path if you want to use 
 applications compiled through smackage.
+
+Building Smackage with Smackage
+-------------------------------
+Smackage doesn't have a uniform build process, at least not yet. Instead, we
+support a simple `smackage make` command. If you type 
+`smackage make package blah blah blah`, smackage will try to run 
+`make blah blah blah` in the directory where `package` lives.
+
+Therefore, if you're on a reasonably Unix-ey system (OSX or Linux), the 
+following the following commands will install smackage into the directory
+`$SMACKAGE_HOME/bin`.
+
+    $ bin/smackage refresh
+    $ bin/smackage make smackage mlton # or smlnj
+    $ bin/smackage make smackage smackage-install
+
+If you have a Windows+Cygwin setup (smackage only works within Cygwin on
+Windows), then you can try replacing the second command with 
+
+    $ bin/smackage make smackage win+smlnj
+
+but your mileage may vary.
+
+Setting up your SML path map
+============================
+Smackage will live in a directory that we'll refer to
+as `$SMACKAGE_HOME` in this section. This directory is probably 
+`~/.smackage`, but see the section on `$SMACKAGE_HOME` below for more 
+information. Whenever you see the string `$SMACKAGE_HOME` in this system, you 
+should replace it with the appropriate absolute file path, for instance I 
+wouldn't actually write
+
+    SMACKAGE $SMACKAGE_HOME/lib
+
+in a pathconfig file for Standard ML of New Jersey; instead, I'd write 
+
+    SMACKAGE /Users/rjsimmon/.smackage/lib
+
+Make sure you use an absolute path - starting with "/", or whatever your system
+uses to refer to the file system root.
+
+Setting up SML/NJ (system-wide)
+-------------------------------
+Find the file `lib/pathconfig` in the installation directory for SML/NJ, and 
+add the following line:
+  
+    SMACKAGE $SMACKAGE_HOME/lib
+
+Setting up SML/NJ (user-only)
+-----------------------------
+Create a file `~/.smlnj-pathconfig` containing the following line (or add
+the following line to `~/.smlnj-pathconfig` if it exists already):
+
+    SMACKAGE $SMACKAGE_HOME/lib
+
+Setting up MLton (system-wide)
+------------------------------
+Find the [MLBasis Path Map](http://mlton.org/MLBasisPathMap), stored
+in a file called `mlb-path-map`, usually somewhere like 
+`/usr/lib/mlton/mlb-path-map` or 
+`/usr/local/lib/mlton/mlb-path-map`, depending on your system. Add the line
+
+    SMACKAGE $SMACKAGE_HOME/lib
+
+Setting up MLton (user-only)
+------------------------
+MLton doesn't currently allow user-specific basis maps like SML/NJ does,
+but there is a workaround if you put the following shell script, called, 
+`mlton` on your search path so that your operating system will find it before 
+it finds the regular MLton binary:
+
+    XXX sully how did you do this?
 
 The $SMACKAGE_HOME directory
 ============================
