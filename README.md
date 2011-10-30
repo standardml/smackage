@@ -32,13 +32,45 @@ refer to cmlib as `$SMACKAGE/cmlib/v0/cmlib.cm` (in SML/NJ .cm files) or as
 You might want to add `$SMACKAGE_HOME/bin` to your path if you want to use 
 applications compiled through smackage.
 
-Building Smackage with Smackage
--------------------------------
+Building things with Smackage
+-----------------------------
 Smackage doesn't have a uniform build process, at least not yet. Instead, we
 support a simple `smackage make` command. If you type 
 `smackage make package blah blah blah`, smackage will try to run 
-`make blah blah blah` in the directory where `package` lives.
+`make blah blah blah` in the directory where `package` lives. We suggest that
+if your tool compiles, you add a makefile option `smackage-install` that 
+places copies a created binary to the directory `../../../bin` relative to
+the repository's directory. For instance, the following commands get and
+install [Twelf](http://twelf.org).
 
+    $ bin/smackage refresh
+    Selected `smackage 0.6.0'.
+    Package `smackage 0.6.0' already installed.
+    $ bin/smackage get twelf
+    No major version specified, picked v1.
+    Selected `twelf 1.7.1'.
+    Repository is updated
+    Package `twelf 1.7.1' downloaded.
+    $ bin/smackage make twelf smlnj
+    In directory: `/Users/rjsimmon/.smackage/lib/twelf/v1.7.0'
+    smackage is preparing to run `make smlnj'
+    <...snip...>
+    $ bin/smackage make twelf smackage-install
+    In directory: `/Users/rjsimmon/.smackage/lib/twelf/v1.7.1'
+    smackage is preparing to run `make smackage-install'
+    cp bin/twelf-server ../../../bin/twelf-server
+
+If `$SMACKAGE_HOME/bin` is on your search path, you can then refer to the
+`twelf-server` binary.
+
+    $ which twelf-server
+    /Users/rjsimmon/.smackage/bin/twelf-server
+    $ twelf-server
+    Twelf 1.7.1+ (built 10/30/11 at 00:37:12 on concordia.wv.cc.cmu.edu)
+    %% OK %%
+
+Building Smackage with Smackage
+-------------------------------
 Therefore, if you're on a reasonably Unix-ey system (OSX or Linux), the 
 following the following commands will install smackage into the directory
 `$SMACKAGE_HOME/bin`.
@@ -46,6 +78,15 @@ following the following commands will install smackage into the directory
     $ bin/smackage refresh
     $ bin/smackage make smackage mlton # or smlnj
     $ bin/smackage make smackage smackage-install
+
+Then, if `$SMACKAGE_HOME/bin`, you can refer directly to `smackage` on
+the command line:
+
+    $ smackage list
+    Package smackage:
+       Version: 0.6.0
+    Package twelf:
+       Version: 1.7.1
 
 If you have a Windows+Cygwin setup (smackage only works within Cygwin on
 Windows), then you can try replacing the second command with 
