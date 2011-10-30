@@ -28,7 +28,7 @@ struct
       fun useThisDir dir = 
          if tryDir (SOME dir) then smackHome := dir
          else ( print ( "NOTICE: dir `"
-                      ^ dir ^ "` doesn't exist, trying to create it.\n")
+                      ^ dir ^ "' doesn't exist, trying to create it.\n")
               ; OS.FileSys.mkDir dir
                 handle _ => raise Fail "Couldn't create home directory"
               ; smackHome := dir)
@@ -54,7 +54,7 @@ struct
          fun create () = 
             let
                val () = 
-                  print ("NOTICE: file `" ^ fileName ^ "` doesn't exist,\
+                  print ("NOTICE: file `" ^ fileName ^ "' doesn't exist,\
                          \ trying to create it.\n")
                val file = TextIO.openOut filePath
             in
@@ -67,10 +67,10 @@ struct
          if not (OS.FileSys.access (filePath, [ OS.FileSys.A_READ
                                               , OS.FileSys.A_WRITE ]))
            then raise Fail ("Can't read/write to `" ^ fileName
-                            ^ "` (run as sudo?)")
+                            ^ "' (run as sudo?)")
          else ()
       end handle exn => 
-             ( print ("Error with `" ^ fileName ^ "` file.\n")
+             ( print ("Error with `" ^ fileName ^ "' file.\n")
              ; raise exn)
 
    fun initDir dirName = 
@@ -80,7 +80,7 @@ struct
          fun create () = 
             let
                val () = 
-                  print ("NOTICE: dir `" ^ dirName ^ "` doesn't exist,\
+                  print ("NOTICE: dir `" ^ dirName ^ "' doesn't exist,\
                          \ trying to create it.\n")
             in
                OS.FileSys.mkDir dirPath
@@ -90,7 +90,7 @@ struct
            then create () else
          if not (OS.FileSys.isDir dirPath)
            then raise Fail ("File `" ^ dirName
-                            ^ "` exists and is not a directory")
+                            ^ "' exists and is not a directory")
          else ()
       end
 
