@@ -1,4 +1,3 @@
-
 structure FSUtil:>
 sig
    (* Write a series of lines to a file. Adds a newline to every string. *)
@@ -79,7 +78,7 @@ struct
       (* val () = print ("Running: `" ^ cmd' ^ "`\n") *)
       val () = 
          if OS.Process.isSuccess (OS.Process.system cmd')
-         then () else raise Fail ("System call failed: `" ^ cmd' ^ "`")
+         then () else raise Fail ("System call failed: `" ^ cmd' ^ "'")
       val cleanup = fn () => OS.FileSys.remove tmpName
    in         
       (reader (TextIO.openIn tmpName) before cleanup ())
