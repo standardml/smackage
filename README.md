@@ -32,8 +32,8 @@ refer to cmlib as `$SMACKAGE/cmlib/v0/cmlib.cm` (in SML/NJ .cm files) or as
 You might want to add `$SMACKAGE_HOME/bin` to your path if you want to use 
 applications compiled through smackage.
 
-Building things with Smackage
------------------------------
+Building Smackage packages
+--------------------------
 Smackage doesn't have a uniform build process, at least not yet. Instead, we
 support a simple `smackage make` command. If you type 
 `smackage make package blah blah blah`, smackage will try to run 
