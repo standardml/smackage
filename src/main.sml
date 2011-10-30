@@ -126,7 +126,6 @@ struct
      ; OS.Process.success)
     end   
 
-
     (** List the packages currently installed. *)
     fun listInstalled () = 
        let
@@ -239,6 +238,31 @@ struct
     end
 
 
+    fun make pkg spec args = 
+    let
+       val oldDir = OS.FileSys.getDir ()
+       val spec = 
+          case SemVer.intelligentSelect spec
+                  (SmackLib.versions (!Configure.smackHome) pkg) of
+             NONE => 
+                raise SmackExn 
+                      ("No acceptable version of `" ^ pkg
+                      ^ (case spec of
+                            NONE => "" 
+                          | SOME s => " " ^ SemVer.constrToString s)
+                      ^ "' around, try getting one with `smackage get'?")
+           | SOME (spec, _) => spec
+       val specStr = "v" ^ SemVer.constrToString spec
+       val cmd = "make " ^ String.concatWith " " args 
+    in
+     ( OS.FileSys.chDir (!Configure.smackHome // "lib" // pkg // specStr)
+     ; print ("In directory: `" ^ OS.FileSys.getDir () ^ "'\n")
+     ; print ("smackage is preparing to run `" ^ cmd ^ "'\n")
+     ; OS.Process.system cmd
+     ; OS.FileSys.chDir oldDir
+     ; OS.Process.success)
+    handle exn => (OS.FileSys.chDir oldDir; raise exn)
+    end
 
     (* Referesh the versions.smackspec file based one existing sources. *)
     fun refresh warn = 
@@ -327,45 +351,94 @@ struct
        \\thelp\t\t\t\tDisplay this usage and exit\n\
        \\tinfo <name> [version]\t\tDisplay package information.\n\
        \\tlist\t\t\t\tList installed packages\n\
+       \\tmake <name> [version] [args...]\n\
+       \\t\tRuns `make [args ...]' in the specified package's directory\n\
        \\trefresh\t\t\t\tRefresh the package index\n\
        \\tsearch <name>\t\t\tFind an appropriate package\n\
        \\tsource <name> <protocol> <url>\tAdd a smackage source to sources.local\n\
        \\tupdate <name>\t\t\tUpdate all packages\n\
        \\tunsource <name>\t\t\tRemove a source from sources.local\n"
 
+    exception ArgsError of string
     fun main (name, args) = 
        let
           val () = Configure.init ()
        in
           case args of
-             ("--help"::_) => (print usage; OS.Process.success)
+             [] => (print usage; OS.Process.success)
+           | ("--help"::_) => (print usage; OS.Process.success)
            | ("-h"::_) => (print usage; OS.Process.success)
            | ("help"::_) => (print usage; OS.Process.success)
 
            | ["get",pkg] => get true pkg NONE
            | ["get",pkg,ver] => 
                 get true pkg (SOME (SemVer.constrFromString ver))
-           | ["info",pkg,ver] => (info pkg ver; OS.Process.success)
+           | ("get" :: _) => 
+                raise ArgsError "get expects one or two arguments"
+
            | ["info",pkg] => (info pkg ""; OS.Process.success)
+           | ["info",pkg,ver] => (info pkg ver; OS.Process.success)
+           | ("info" :: _) =>
+                raise ArgsError "refresh does not expect arguments"
+
            | ["list"] => (listInstalled(); OS.Process.success)
+           | ("list" :: _) =>
+                raise ArgsError "list does not expect arguments"
+
+           | ["make"] => raise ArgsError "make requires arguments"
+           | ["make", pkg] => make pkg NONE []
+           | ("make" :: pkg :: maybe_spec :: rest) =>
+             let 
+                val (spec, rest) =
+                   (SOME (SemVer.constrFromString maybe_spec), rest)
+                handle _ => (NONE, maybe_spec :: rest)
+             in
+                make pkg spec rest
+             end
+
            | ["refresh"] => selfupdate ()
+           | ("refresh" :: _) =>
+                raise ArgsError "refresh does not expect arguments"
+
            | ["search",pkg] => (search pkg ""; OS.Process.success)
            | ["search",pkg,ver] => (search pkg ver; OS.Process.success)
+           | ("search" :: _) => 
+                raise ArgsError "search expects one or two arguments"
+
            | ["source",pkg,prot,url] => 
                 source pkg (Protocol.fromString (prot ^ " " ^ url))
+           | ("source" :: _) =>
+                raise ArgsError "source expectes exactly three arguments"
+
            | ["update"] => update ()
+           | ("update" :: _) =>
+                raise ArgsError "update does not expect arguments"
+
            | ["unsource",pkg] => unsource pkg 
-           | _ => (print usage; OS.Process.failure)
-       end handle (SmackExn s) => 
-           (TextIO.output (TextIO.stdErr, s ^ "\n"); OS.Process.failure)
-                | (Fail s) => 
-           (TextIO.output (TextIO.stdErr, s ^ "\n"); OS.Process.failure)
-                | (Spec.SpecError s) => 
-           (TextIO.output (TextIO.stdErr, s ^ "\n"); OS.Process.failure)
-                | exn =>
-           (TextIO.output (TextIO.stdErr, "UNEXPECTED ERROR: " 
+           | ("unsource" :: _) =>
+                raise ArgsError "unsource expectes exactly one argument"
+
+           | (str :: _) => raise ArgsError (str ^ " is an unknown command")
+       end handle 
+              (SmackExn s) => 
+                ( TextIO.output (TextIO.stdErr, "ERROR: " ^ s ^ "\n")
+                ; OS.Process.failure)
+            | (Fail s) => 
+                ( TextIO.output (TextIO.stdErr, "ERROR: " ^ s ^ "\n")
+                ; OS.Process.failure)
+            | (Spec.SpecError s) => 
+                ( TextIO.output (TextIO.stdErr, "ERROR: " ^ s ^ "\n")
+                ; OS.Process.failure)
+            | (ArgsError s) => 
+                ( TextIO.output (TextIO.stdErr, "ERROR: " 
+                                          ^ CommandLine.name () 
+                                          ^ " " ^ s ^ "\n")
+                ; print usage
+                ; OS.Process.failure)
+            | exn =>
+                ( TextIO.output (TextIO.stdErr, "UNEXPECTED ERROR: " 
                                           ^ exnMessage exn ^ "\n")
-           ; OS.Process.failure)
+                ; OS.Process.failure)
 end
 
 
