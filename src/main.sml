@@ -287,7 +287,7 @@ struct
        end
        handle exn => 
           print ("WARNING: When trying to pull source `" ^ line
-                ^ "`, got the following error \n\t\""
+                ^ "', got the following error \n\t\""
                 ^ exnMessage exn 
                 ^ "\"\nIf this line is in sources.local, you may need to run\n\
                 \`smackage unsource' to remove it.\n")
