@@ -8,6 +8,8 @@ sig
 
     val constrFromString : string -> constraint
     val constrToString : constraint -> string
+    val compareConstr : constraint * constraint -> order
+
     val fromString : string -> semver
     val major : semver -> constraint
     val minor : semver -> constraint
@@ -26,10 +28,10 @@ sig
      * version which makes sense to Rob at the time.
      *
      * It will prefer tags with special versions over tags with 
-     * no versions (so `intelligentSelect NONE [ v2.0.0beta, v1.9.3 ]` will 
-     * return `SOME (v1.9.3, "1")`) but will prefer nothing to something (so 
-     * `intelligentSelect (SOME v2) [ 2.0.0beta, 1.9.3 ]` will return 
-     * `SOME (2.0.0beta, "2")` 
+     * no versions (so `intelligentSelect NONE [ v2.0.0beta, v1.9.3 ]' will 
+     * return `SOME (v1.9.3, "1")') but will prefer nothing to something (so 
+     * `intelligentSelect (SOME v2) [ 2.0.0beta, 1.9.3 ]' will return 
+     * `SOME (2.0.0beta, "2")')
      *
      * The returned constraint is equal to the given constraint if an initial
      * constraint was given, and is the major version of the returned semvar
@@ -45,6 +47,30 @@ struct
     type constraint = int * int option * int option * string option
 
     exception InvalidVersion
+
+    fun compareConstr ((maj1, min1, pat1, s1), (maj2, min2, pat2, s2)) = 
+       case (Int.compare (maj1, maj2), min1, min2) of
+          (LESS, _, _) => LESS
+        | (GREATER, _, _) => GREATER
+        | (EQUAL, NONE, NONE) => EQUAL
+        | (EQUAL, NONE, SOME _) => LESS
+        | (EQUAL, SOME _, NONE) => GREATER
+        | (EQUAL, SOME min1, SOME min2) => 
+            (case (Int.compare (min1, min2), pat1, pat2) of
+                (LESS, _, _) => LESS
+              | (GREATER, _, _) => GREATER
+              | (EQUAL, NONE, NONE) => EQUAL
+              | (EQUAL, NONE, SOME _) => LESS
+              | (EQUAL, SOME _, NONE) => GREATER
+              | (EQUAL, SOME pat1, SOME pat2) => 
+                  (case (Int.compare (pat1, pat2), s1, s2) of
+                      (LESS, _, _) => LESS
+                    | (GREATER, _, _) => GREATER
+                    | (EQUAL, NONE, NONE) => EQUAL
+                    | (EQUAL, NONE, SOME _) => GREATER
+                    | (EQUAL, SOME _, NONE) => LESS
+                    | (EQUAL, SOME s1, SOME s2) => String.compare (s1, s2)))
+
 
     fun eq (x: semver, y) = x = y
 

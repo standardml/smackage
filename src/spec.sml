@@ -35,6 +35,13 @@
 *)
 
 structure SemVerDict = ListDict (structure Key = SemVer)
+structure SemConstrDict = 
+   ListDict 
+      (structure Key = 
+       struct
+          type t = SemVer.constraint 
+          val compare = SemVer.compareConstr
+       end)
 structure StringDict =
    ListDict 
       (structure Key = struct type t = string val compare = String.compare end)
