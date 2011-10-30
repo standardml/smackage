@@ -71,16 +71,15 @@ If `$SMACKAGE_HOME/bin` is on your search path, you can then refer to the
 
 Building Smackage with Smackage
 -------------------------------
-Therefore, if you're on a reasonably Unix-ey system (OSX or Linux), the 
-following the following commands will install smackage into the directory
-`$SMACKAGE_HOME/bin`.
+If you're on a reasonably Unix-ey system (OSX or Linux), the following 
+commands will install smackage into the directory `$SMACKAGE_HOME/bin`.
 
     $ bin/smackage refresh
     $ bin/smackage make smackage mlton # or smlnj
     $ bin/smackage make smackage smackage-install
 
-Then, if `$SMACKAGE_HOME/bin`, you can refer directly to `smackage` on
-the command line:
+Then, if `$SMACKAGE_HOME/bin` is on your search path, you can refer 
+directly to `smackage` on the command line:
 
     $ smackage list
     Package smackage:
