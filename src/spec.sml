@@ -205,7 +205,7 @@ struct
          val provides = 
             List.mapPartial (fn (Provides v) => SOME v | _ => NONE) spec
       in
-         List.foldr 
+         List.foldr
             (fn ((pkg, semver), dict) => 
                 StringDict.insertMerge dict pkg 
                    (SemVerDict.singleton semver remote)
@@ -214,7 +214,7 @@ struct
             provides
       end
    in
-      List.foldr folder StringDict.empty spec
+      List.foldl folder StringDict.empty spec
    end
 end
 
