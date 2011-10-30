@@ -9,8 +9,8 @@ sig
     *    It assumes this directory exists. *)
    val get: string -> string -> SemVer.semver -> Protocol.protocol -> unit
 
-   (* poll prot
+   (* poll name prot
     *    Query the remote store for which tags are available. *)
-   val poll: Protocol.protocol -> SemVer.semver list 
+   val poll: string -> Protocol.protocol -> Spec.spec list
 end
 

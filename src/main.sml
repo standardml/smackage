@@ -5,15 +5,7 @@ struct
     infix 5 //
     fun (dir // file) = OS.Path.joinDirFile { dir = dir, file = file }
 
-    (** Resolve the dependencies of a particular, newly-downloaded package.
-        XXX this should eventually be factored into another module that
-        does more intelligent checking to see if existing versions (that aren't 
-        the most recent but that have the virtue of being installed) will do.
-        
-        XXX should dependency resolution happen in 'download' mode?  If so,
-        do we run hooks or not?  At the moment, we run hooks. Might need to
-        change this.
-        *)
+    (** Resolve the dependencies of a particular, newly-downloaded package. *)
     fun resolveDependencies pkg ver = 
     let exception NoDeps in let
        val specFile = 
@@ -29,57 +21,51 @@ struct
          else print ("Resolving " ^ ltoi deps ^ "dependencies\n")
        (* XXX here's the place to shortcut-stop if we have an acceptable
         * version installed (issue #4) *)
-       ; app (fn (pkg, spec, _) => install pkg (SOME spec) true) deps 
-       ; print ("Done resolving dependencies for `" ^ pkg ^ "`\n"))
+       ; app (fn (pkg, spec, _) => ignore (get pkg (SOME spec))) deps 
+       ; print ("Done resolving dependencies for `" ^ pkg ^ "'\n"))
     end handle NoDeps => () end
 
-    (** Install a package with a given name and version specification.
-        NONE means "the latest version", and specifications are handled by
+    (** Obtain a package with a given name and version specification.
+        NONE means "the latest version." Specifications are handled by
         SemVer.intelligentSelect.
-        raises SmackExn in the event that the package is already installed or
-        if no such package or version is found.
-        
-        'runHooks' controls whether to run 'build' and 'install' targets
-        after downloading. This is probably nasty, but it's the easiest
-        way to avoid dumb code duplication or large scale refactoring
-        right now.  I'll add a giant FIXME here. -- gian, 20111028
-        *)
-    and install pkg specStr runHooks =
+
+        Raises SmackExn in the event that no acceptable version of the package
+        is available. *)
+    and get pkg specStr =
     let
         val () =
            if VersionIndex.isKnown pkg then ()
            else raise SmackExn 
                          ( "I don't know about the package `" ^ pkg
-                         ^ "`, run 'smackage selfupdate'?")
+                         ^ "', run `smackage refresh'?")
 
         val (spec, ver) = 
            VersionIndex.getBest pkg specStr
            handle _ => 
            raise SmackExn 
-                 ("No acceptable version of `" ^ pkg
-                 ^ (case specStr of
-                       NONE => "" 
-                     | SOME s => " " ^ SemVer.constrToString s)
-                 ^ "` found, try 'smackage refresh'?")
+                   ("No acceptable version of `" ^ pkg
+                   ^ (case specStr of
+                         NONE => "" 
+                       | SOME s => " " ^ SemVer.constrToString s)
+                   ^ "' found, try `smackage refresh'?")
 
         val name = pkg ^ " " ^ SemVer.toString ver
-        val _ = 
-           if not (Option.isSome specStr)
-           then print ( "No major version specified, picked v" 
-                      ^ SemVer.constrToString spec ^ ".\n"
-                      ^ "Selected `" ^ name ^ "`.\n")
-           else print ( "Selected `" ^ name ^ "`\n")
+        val () = 
+           if Option.isSome specStr then ()
+           else print ( "No major version specified, picked v" 
+                      ^ SemVer.constrToString spec ^ ".\n")
+        val () = print ( "Selected `" ^ name ^ "'.\n")
        
         val proto = 
             case VersionIndex.getProtocol pkg ver of
                 SOME p => p
               | NONE => raise SmackExn 
-                ("Installation method for `" ^ name ^ "` not found")
+                ("Installation method for `" ^ name ^ "' not found")
     in
-        if SmackLib.download (!Configure.smackHome) (pkg,ver,proto)
-        then print ( "Package `" ^ name ^ "` already installed.\n") 
-        else ( print ( "Package `" ^ name ^ "` downloaded.\n")
-             ; resolveDependencies pkg ver (*
+     ( if SmackLib.download (!Configure.smackHome) (pkg,ver,proto)
+       then print ( "Package `" ^ name ^ "' already installed.\n") 
+       else ( print ( "Package `" ^ name ^ "' downloaded.\n")
+            ; resolveDependencies pkg ver (*
              ; (if runHooks then
                 (SmackLib.build 
                 (!Configure.smackHome) 
@@ -90,18 +76,9 @@ struct
                 (!Configure.platform,!Configure.compilers)
                 (pkg,ver)) else ())
              *))
+     ; OS.Process.success)
     end
 
-    (** Uninstall a package with a given name and version.
-        An empty version string means "all versions".
-        raises SmackExn in the event that the package is already installed or
-        if no such package or version is found. *)
-    fun uninstall name version =
-    let
-        val _ = ()
-    in
-        raise SmackExn "Not implemented"
-    end
 
     (** List the packages currently installed. *)
     fun listInstalled () = 
@@ -169,173 +146,160 @@ struct
         ()
     end
 
+
     (* Hey, what does update do? *)
     fun update () = raise SmackExn "Not implemented"
 
-    (* utility function - read a line from a file and get the source spec *)
-    fun getLine file = 
-       case Option.map 
-              (String.tokens Char.isSpace) 
-              (TextIO.inputLine file) of              
-          NONE => NONE
-        | SOME [] => getLine file
-        | SOME [ pkg', prot', uri' ] =>
-             SOME (pkg', Protocol.fromString (prot' ^ " " ^ uri'))
-        | SOME s => raise Fail ( "Bad source line: " 
-                               ^ String.concatWith " " s)
 
-    (* Referesh the versions.smackspec file *)
-    (* XXX this should notice when there is a redundant source in different
-     * (or the same) sources file, issue a warning, and then pick only the
-     * latter source definition, but we'll want string maps for that *)
-    fun refresh () = 
-       let val oldDir = OS.FileSys.getDir () in
-       let 
-          val () = OS.FileSys.chDir (!Configure.smackHome) 
 
-          val versionSpackspec = "versions.smackspec"
-          val output = TextIO.openOut versionSpackspec
+    fun readSourcesLocal () = 
+    let 
+       val sourcesLocal = 
+          OS.Path.joinDirFile { dir = !Configure.smackHome
+                              , file = "sources.local"}
+       fun folder (line, dict) = 
+          case String.tokens Char.isSpace line of 
+             [] => dict
+           | [ pkg', prot', uri' ] => 
+                StringDict.insert dict pkg'
+                   (Protocol.fromString (prot' ^ " " ^ uri'))
+           | _ => raise Fail ( "Bad source line: `" ^ line ^ "'")
+    in
+       List.foldr folder StringDict.empty
+          (FSUtil.getCleanLines (TextIO.openIn sourcesLocal))
+    end
+
+    fun writeSourcesLocal dict = 
+    let
+       val sourcesLocal = 
+          OS.Path.joinDirFile { dir = !Configure.smackHome
+                              , file = "sources.local"}
+    in
+       FSUtil.putLines sourcesLocal
+          (  "# This file was automatically generated by smackage."
+          :: "# You can edit it directly or edit it with the smackage tool:"
+          :: "# `smackage source <sourcename> <protocol>' adds a source, and"
+          :: "# `smackage unsource <sourcename>' removes a source."
+          :: ""
+          :: map (fn (source, prot) => source ^ " " ^ Protocol.toString prot)
+                (StringDict.toList dict))
+    end
+
+
+
+    (* Referesh the versions.smackspec file based one existing sources. *)
+    fun refresh warn = 
+    let val oldDir = OS.FileSys.getDir () in
+    let 
+       val () = OS.FileSys.chDir (!Configure.smackHome) 
+
+       val versionSpackspec = "versions.smackspec"
+       val output = TextIO.openOut versionSpackspec
       
-          fun emit s = TextIO.output (output, s)
-          fun emitSpec pkg prot ver =
-             ( emit ("provides: " ^ pkg ^ " " ^ SemVer.toString ver ^ "\n")
-             ; emit ("remote: " ^ Protocol.toString prot ^ "\n\n"))
+       fun emit s = TextIO.output (output, s)
 
-          fun poll fileName (pkg, prot) =
-             app (emitSpec pkg prot) (Conductor.poll prot)
-             handle exn => (* Why is this not getting called? *)
-                print ("WARNING: When trying to poll `" ^ pkg
-                      ^ "`, got the following error \n\t\""
-                      ^ exnMessage exn 
-                      ^ "\"\nYou may need to run 'smackage unsource " 
-                      ^ pkg ^ "'\n")
+       fun poll line =
+       let in 
+          case String.tokens Char.isSpace line of 
+             [] => ()
+           | [ pkg', prot', uri' ] => 
+                app (fn spec => emit (Spec.toString spec ^ "\n\n"))
+                   (Conductor.poll pkg' 
+                     (Protocol.fromString (prot' ^ " " ^ uri')))
+           | _ => raise Fail ( "Bad source line: `" ^ line ^ "'")
+       end
+       handle exn => 
+          print ("WARNING: When trying to pull source `" ^ line
+                ^ "`, got the following error \n\t\""
+                ^ exnMessage exn 
+                ^ "\"\nIf this line is in sources.local, you may need to run\n\
+                \`smackage unsource' to remove it.\n")
 
-          fun read fileName file = 
-             case getLine file of
-                NONE => TextIO.closeIn file
-              | SOME s => (poll fileName s; read fileName file)
+       fun dofile fileName = 
+          app poll (FSUtil.getCleanLines (TextIO.openIn fileName))
+       handle _ => if not warn then ()
+                   else print ("WARNING: error reading " ^ fileName ^ "\n")
+    in
+     ( app dofile (!Configure.smackSources @ [ "sources.local" ])
+     ; TextIO.closeOut output
+     ; OS.FileSys.chDir oldDir
+     ; VersionIndex.init (!Configure.smackHome))
+    end handle exn => (OS.FileSys.chDir oldDir; raise exn) end
 
-          fun dofile fileName = 
-             read fileName (TextIO.openIn fileName) 
-             handle _ => print ("WARNING: error reading " ^ fileName ^ "\n")
-       in
-          ( app dofile (!Configure.smackSources @ [ "sources.local" ])
-          ; TextIO.closeOut output
-          ; OS.FileSys.chDir oldDir
-          ; VersionIndex.init (!Configure.smackHome))
-       end handle exn => (OS.FileSys.chDir oldDir; raise exn) end
-
+    (* We should think about whether there's a better way to distributed
+       the "blessed" sources list to separate "selfupdate" from 
+       "refresh." As it is, I can't really figure out a less-wasteful way
+       to do a "total" refresh than to re-download smackage's sources. *)
     fun selfupdate () = 
-       ( refresh ()
-       ; install "smackage" (SOME (SemVer.constrFromString "v0")) true
-       ; refresh ())
+       ( refresh false
+       ; ignore (get "smackage" (SOME (SemVer.constrFromString "v0")))
+       ; refresh true
+       ; OS.Process.success)
+
 
     (* Manipulate the sources.local source spec file *)
-    fun modsource pkg maybe_prot =  
-       let 
-          val sourcesLocal = 
-             OS.Path.joinDirFile { dir = !Configure.smackHome
-                                 , file = "sources.local"}
-          val file = TextIO.openIn sourcesLocal
+    fun source pkg prot =  
+    let 
+       val dict = readSourcesLocal ()
+       val dict' = StringDict.insert dict pkg prot
+    in
+     ( case StringDict.find dict pkg of
+          NONE => ()
+        | SOME prot' => 
+             if EQUAL = Protocol.compare (prot, prot') then ()
+             else print ( "WARNING: overwriting source spec\nOLD: "
+                        ^ pkg ^ " " ^ Protocol.toString prot' ^ "\nNEW: "
+                        ^ pkg ^ " " ^ Protocol.toString prot ^ "\n")
+     ; writeSourcesLocal dict'
+     ; OS.Process.success)
+    end
 
-          fun notfound () =
-             raise SmackExn ( "WARNING: Package `" ^ pkg 
-                            ^ "` not in sources.local.")
+    (* Manipulate the sources.local source spec file *)
+    fun unsource pkg =  
+    let 
+       val dict = readSourcesLocal ()
+       val dict' = StringDict.remove dict pkg
+    in
+     ( case StringDict.find dict pkg of
+          NONE => print ("WARNING: Package `" ^ pkg ^ "' not in sources.local.")
+        | SOME prot' => ()
+     ; writeSourcesLocal dict'
+     ; OS.Process.success)
+    end
 
-          fun read_big accum = 
-             case getLine file of 
-                NONE => List.rev accum 
-              | SOME line => read_big (line :: accum)
-
-          fun read_small accum = 
-             case getLine file of
-                NONE => 
-                (case maybe_prot of 
-                    NONE => notfound ()
-                  | SOME prot => List.rev ((pkg, prot) :: accum))
-              | SOME (pkg', prot') => 
-                (case String.compare (pkg, pkg') of
-                    LESS => 
-                    (case maybe_prot of 
-                        NONE => notfound ()
-                      | SOME prot => 
-                           read_big ((pkg', prot') :: (pkg, prot) :: accum))
-                  | EQUAL => 
-                    (case maybe_prot of 
-                        NONE =>  
-                         ( print ("Deleting source spec " ^ pkg ^ "...\n")
-                         ; read_big accum)
-                      | SOME prot => 
-                         ( print
-                            ( "WARNING: overwriting source spec\nOLD: "
-                            ^ pkg' ^ " " ^ Protocol.toString prot' ^ "\nNEW: "
-                            ^ pkg ^ " " ^ Protocol.toString prot ^ "\n")
-                         ; read_big ((pkg, prot) :: accum)))
-                  | GREATER => read_small ((pkg', prot') :: accum))
-
-          val sources = read_small [] before TextIO.closeIn file
-
-          val file = TextIO.openOut sourcesLocal
-
-          fun write [] = TextIO.closeOut file
-            | write ((pkg, prot) :: sources) = 
-              ( TextIO.output (file, pkg ^ " " ^ Protocol.toString prot ^ "\n")
-              ; write sources)
-       in
-          ( write sources
-          ; print "Done rewriting sources.local.\n\
-                  \You probably want to run 'smackage refresh' now.\n")
-       end
-
-    fun printUsage () =
-        (print "Usage: smackage <command> [args]\n";
-         print " Commands:\n";
-         print "\tdownload <name> [version]\tDownload a package without installing.\n";
-         print "\thelp\t\t\t\tDisplay this usage and exit\n";
-         print "\tinfo <name> [version]\t\tDisplay package information.\n";
-         print "\tinstall <name> [version]\tInstall the named package\n";
-         print "\tlist\t\t\t\tList installed packages\n";
-         print "\trefresh\t\t\t\tRefresh the package index\n";
-         print "\tsearch <name>\t\t\tFind an appropriate package\n";
-         print "\tselfupdate\t\t\tUpdate smackage\n";
-         print "\tsource <name> <protocol> <url>\tAdd a smackage source to sources.local\n";
-         print "\tunsource <name>\t\t\tRemove a source from sources.local\n";
-         print "\tuninstall <name> [version]\tRemove a package\n"
-         )
+    val usage =
+       "Usage: smackage <command> [args]\n\
+       \ Commands:\n\
+       \\tget <name> [version]\t\tObtain the named package\n\
+       \\thelp\t\t\t\tDisplay this usage and exit\n\
+       \\tinfo <name> [version]\t\tDisplay package information.\n\
+       \\tlist\t\t\t\tList installed packages\n\
+       \\trefresh\t\t\t\tRefresh the package index\n\
+       \\tsearch <name>\t\t\tFind an appropriate package\n\
+       \\tsource <name> <protocol> <url>\tAdd a smackage source to sources.local\n\
+       \\tunsource <name>\t\t\tRemove a source from sources.local\n"
 
     fun main (name, args) = 
        let
           val () = Configure.init ()
        in
           case args of
-             ("--help"::_) => (printUsage(); OS.Process.success)
-           | ("-h"::_) => (printUsage(); OS.Process.success)
-           | ("help"::_) => (printUsage(); OS.Process.success)
+             ("--help"::_) => (print usage; OS.Process.success)
+           | ("-h"::_) => (print usage; OS.Process.success)
+           | ("help"::_) => (print usage; OS.Process.success)
+
+           | ["get",pkg] => get pkg NONE
+           | ["get",pkg,ver] => get pkg (SOME (SemVer.constrFromString ver))
            | ["info",pkg,ver] => (info pkg ver; OS.Process.success)
            | ["info",pkg] => (info pkg ""; OS.Process.success)
-           | ["update"] => (update (); OS.Process.success)
+           | ["list"] => (listInstalled(); OS.Process.success)
+           | ["refresh"] => selfupdate ()
            | ["search",pkg] => (search pkg ""; OS.Process.success)
            | ["search",pkg,ver] => (search pkg ver; OS.Process.success)
            | ["source",pkg,prot,url] => 
-                ( modsource pkg (SOME (Protocol.fromString (prot ^ " " ^ url)))
-                ; OS.Process.success)
-           | ["unsource",pkg] => 
-                ( modsource pkg NONE
-                ; OS.Process.success)
-           | ["selfupdate"] => (selfupdate (); OS.Process.success)
-           | ["refresh"] => (refresh (); OS.Process.success)
-           | ["install",pkg,ver] => 
-                ( install pkg (SOME (SemVer.constrFromString ver)) true
-                ; OS.Process.success)
-           | ["install",pkg] => (install pkg NONE true; OS.Process.success)
-           | ["download",pkg,ver] => 
-                ( install pkg (SOME (SemVer.constrFromString ver)) false
-                ; OS.Process.success)
-           | ["download",pkg] => (install pkg NONE false; OS.Process.success)
-           | ["uninstall",pkg,ver] => (uninstall pkg ver; OS.Process.success)
-           | ["uninstall",pkg] => (uninstall pkg ""; OS.Process.success)
-           | ["list"] => (listInstalled(); OS.Process.success)
-           | _ => (printUsage(); OS.Process.failure)
+                source pkg (Protocol.fromString (prot ^ " " ^ url))
+           | ["unsource",pkg] => unsource pkg 
+           | _ => (print usage; OS.Process.failure)
        end handle (SmackExn s) => 
            (TextIO.output (TextIO.stdErr, s ^ "\n"); OS.Process.failure)
                 | (Fail s) => 

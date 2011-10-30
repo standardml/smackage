@@ -136,13 +136,12 @@ struct
    fun init () =
       ( initSmackHome ()
       ; initFile "sources.local" 
-           "cmlib git git://github.com/standardml/cmlib.git\n\
-           \smackage git git://github.com/standardml/smackage.git\n"
+           "smackage git git://github.com/standardml/smackage.git\n"
       ; initFile "config" 
-            ("source " ^ ("lib" // "smackage" // "v0" // "sources") ^ "\n" ^ 
-             "compiler mlton\n" ^
-             "compiler smlnj\n" ^
-             "platform " ^ guessPlatform () ^ "\n")
+          ("source " ^ ("lib" // "smackage" // "v0" // "sources") ^ "\n\ 
+           \compiler mlton\n\
+           \compiler smlnj\n\
+           \platform " ^ guessPlatform () ^ "\n")
       ; initFile "packages.installed" "\n"
       ; initFile "versions.smackspec" "\n"
       ; initDir "lib"

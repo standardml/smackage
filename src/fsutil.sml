@@ -28,7 +28,7 @@ struct
           | line :: lines => 
                (TextIO.output (file, line ^ "\n"); loop lines) 
    in 
-      loop []
+      loop lines
    handle exn => (TextIO.closeOut file handle _ => (); raise exn)
    end
 

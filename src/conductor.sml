@@ -5,9 +5,13 @@ struct
       case prot of 
          Protocol.Git { uri } => GetGit.get smackagePath packageName uri ver
 
-   fun poll prot = 
+   fun poll name prot = 
       case prot of 
-         Protocol.Git { uri } => map #2 (GetGit.poll uri)
+         Protocol.Git { uri } =>
+         let fun prov (_, semver) = Spec.Provides (name, semver)
+         in
+            [ Spec.Remote prot :: map prov (GetGit.poll uri) ]
+         end
 end
 
 

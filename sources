@@ -1,4 +1,5 @@
 celf git git://github.com/clf/celf.git
+cmlib git git://github.com/standardml/cmlib.git
 llf git git://github.com/clf/llf.git
 lollimon git git://github.com/clf/lollimon.git
 ollibot git git://github.com/clf/ollibot.git

@@ -2,6 +2,7 @@
 structure Protocol = 
 struct
    datatype protocol = Git of { uri: string }
+   type t = protocol
 
    fun toString prot = 
       case prot of 
@@ -11,4 +12,7 @@ struct
       case String.tokens Char.isSpace s of
          [ "git", s ] => Git { uri = s }
        | _ => raise Fail ("Unknown protocol: `" ^ s ^ "`")
+
+   fun compare (Git {uri}, Git {uri = uri'}) = String.compare (uri, uri') 
 end
+
