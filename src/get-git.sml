@@ -45,14 +45,14 @@ fun poll (gitAddr: string) =
    end handle _ => raise Fail "I/O error trying to access temporary file"
 
 fun chdirSuccess s = 
-   let val () = print ("Changing directory: `" ^ s ^ "`\n") in
+   let (* val () = print ("Changing directory: `" ^ s ^ "`\n") *) in
       OS.FileSys.chDir s
    end
 
 fun download gitAddr = 
-   ( OS.FileSys.mkDir ("git-repo")
-   ; chdirSuccess ("git-repo")
-   ; systemSuccess ("git init")
+   ( OS.FileSys.mkDir ("unstable")
+   ; chdirSuccess ("unstable")
+   ; systemSuccess ("git init --quiet")
    ; systemSuccess ("git remote add origin " ^ gitAddr))
 
 (*[ val get: string -> string -> SemVer.semver -> unit ]*)
@@ -67,25 +67,25 @@ fun get basePath projName gitAddr semver =
       val () = chdirSuccess projPath
 
       (* Get the repository in place if it's not there *)
-      val repoPath = OS.Path.joinDirFile { dir = projPath, file = "git-repo" }
+      val repoPath = OS.Path.joinDirFile { dir = projPath, file = "unstable" }
       val () = if OS.FileSys.access (repoPath, []) 
                then (if OS.FileSys.isDir repoPath then ()
-                     else raise Fail "file `git-repo` exists and isn't\
+                     else raise Fail "file `unstable` exists and isn't\
                                      \ a directory")
                else download gitAddr 
 
       (* Update the repository *)
       val () = chdirSuccess repoPath
-      val () = systemSuccess ("git fetch --tags")
-      val () = systemSuccess ("git pull origin master")
+      val () = systemSuccess ("git fetch --tags --quiet")
+      val () = systemSuccess ("git pull origin master --quiet")
       val () = print "Repository is updated\n" 
 
       (* Output via cloning *)
       val ver = "v" ^ SemVer.toString semver
       val verPath = OS.Path.joinDirFile { dir = projPath, file = ver }
       val () = chdirSuccess verPath
-      val () = systemSuccess ("git init")
-      val () = systemSuccess ("git remote add origin " ^ (OS.Path.joinDirFile { dir = "..", file = "git-repo" }))
+      val () = systemSuccess ("git init --quiet")
+      val () = systemSuccess ("git remote add origin " ^ (OS.Path.joinDirFile { dir = "..", file = "unstable" }))
       val () = systemSuccess ("git fetch --tags --quiet")
       val () = systemSuccess ("git checkout " ^ ver ^ " --quiet")
 
