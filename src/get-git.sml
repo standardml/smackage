@@ -5,9 +5,9 @@
 structure GetGit = struct
 
 fun systemSuccess s = 
-let (* val () = print ("Running: `" ^ s ^ "`\n") *) in
+let (* val () = print ("Running: `" ^ s ^ "'\n") *) in
    if OS.Process.isSuccess (OS.Process.system s) then ()
-   else raise Fail ("System call `" ^ s ^ "` returned failure")
+   else raise Fail ("System call `" ^ s ^ "' returned failure")
 end
 
 (*[ val poll: string -> (string * SemVer.semver) list ]*)
@@ -27,7 +27,7 @@ fun poll (gitAddr: string) =
                        then raise Skip (* Proposed bugfix for git tag -m "" 
                                           - Oct 24 2011 RJS *)
                        else (hash, String.tokens (eq #"/") remote) 
-                 | _ => raise Fail "Unexpected output from `git ls-remote`"
+                 | _ => raise Fail "Unexpected output from `git ls-remote'"
 
             val tag =       
                case remote of
@@ -45,7 +45,7 @@ fun poll (gitAddr: string) =
    end handle _ => raise Fail "I/O error trying to access temporary file"
 
 fun chdirSuccess s = 
-   let (* val () = print ("Changing directory: `" ^ s ^ "`\n") *) in
+   let (* val () = print ("Changing directory: `" ^ s ^ "'\n") *) in
       OS.FileSys.chDir s
    end
 
@@ -63,14 +63,14 @@ fun get basePath projName gitAddr semver =
       val projPath = OS.Path.joinDirFile { dir = projPath', file = projName } 
       val () = if OS.FileSys.isDir projPath then () 
                else raise Fail ("file `" ^ projName 
-                                ^ "` exists and isn't a directory")
+                                ^ "' exists and isn't a directory")
       val () = chdirSuccess projPath
 
       (* Get the repository in place if it's not there *)
       val repoPath = OS.Path.joinDirFile { dir = projPath, file = "unstable" }
       val () = if OS.FileSys.access (repoPath, []) 
                then (if OS.FileSys.isDir repoPath then ()
-                     else raise Fail "file `unstable` exists and isn't\
+                     else raise Fail "file `unstable' exists and isn't\
                                      \ a directory")
                else download gitAddr 
 
