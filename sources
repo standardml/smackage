@@ -9,3 +9,4 @@ smackage git git://github.com/standardml/smackage.git
 sml-json git git://github.com/standardml/SML-JSON.git
 tom7-lib git git://github.com/robsimmons/sml-lib.git
 twelf git git://github.com/standardml/twelf.git
+preml git git://github.com/mortenbp/PreML.git
