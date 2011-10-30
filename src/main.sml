@@ -238,7 +238,7 @@ struct
     end
 
 
-    fun make pkg spec args = 
+    fun runCmd pkg spec args = 
     let
        val oldDir = OS.FileSys.getDir ()
        val spec = 
@@ -253,7 +253,7 @@ struct
                       ^ "' around, try getting one with `smackage get'?")
            | SOME (spec, _) => spec
        val specStr = "v" ^ SemVer.constrToString spec
-       val cmd = "make " ^ String.concatWith " " args 
+       val cmd = String.concatWith " " args 
     in
      ( OS.FileSys.chDir (!Configure.smackHome // "lib" // pkg // specStr)
      ; print ("In directory: `" ^ OS.FileSys.getDir () ^ "'\n")
@@ -346,7 +346,10 @@ struct
 
     val usage =
        "Usage: smackage <command> [args]\n\
-       \ Commands:\n\
+       \Commands, where <SPEC> is a name (`cmlib') + optional version \
+       \(`cmlib v1'):\n\
+       \\texec <name> [version] cmd ...\tRuns `cmd ...' in the specified\n\
+       \\t\t\t\t\tpackage's directory\n\
        \\tget <name> [version]\t\tObtain the named package\n\
        \\thelp\t\t\t\tDisplay this usage and exit\n\
        \\tinfo <name> [version]\t\tDisplay package information.\n\
@@ -370,6 +373,18 @@ struct
            | ("-h"::_) => (print usage; OS.Process.success)
            | ("help"::_) => (print usage; OS.Process.success)
 
+           | ["exec", pkg, cmd] => runCmd pkg NONE [ cmd ]
+           | ("exec" :: pkg :: maybe_spec :: rest) =>
+             let 
+                val (spec, rest) =
+                   (SOME (SemVer.constrFromString maybe_spec), rest)
+                handle _ => (NONE, maybe_spec :: rest)
+             in
+                runCmd pkg spec rest
+             end
+           | ("exec" :: _) =>
+                raise ArgsError "exec requires at least two arguments"
+
            | ["get",pkg] => get true pkg NONE
            | ["get",pkg,ver] => 
                 get true pkg (SOME (SemVer.constrFromString ver))
@@ -386,14 +401,14 @@ struct
                 raise ArgsError "list does not expect arguments"
 
            | ["make"] => raise ArgsError "make requires arguments"
-           | ["make", pkg] => make pkg NONE []
+           | ["make", pkg] => runCmd pkg NONE [ "make" ]
            | ("make" :: pkg :: maybe_spec :: rest) =>
              let 
                 val (spec, rest) =
                    (SOME (SemVer.constrFromString maybe_spec), rest)
                 handle _ => (NONE, maybe_spec :: rest)
              in
-                make pkg spec rest
+                runCmd pkg spec ("make" :: rest)
              end
 
            | ["refresh"] => selfupdate ()
