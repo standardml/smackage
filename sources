@@ -4,6 +4,7 @@ llf git git://github.com/clf/llf.git
 lollimon git git://github.com/clf/lollimon.git
 ollibot git git://github.com/clf/ollibot.git
 parcom git git://github.com/standardml/parcom.git
+preml git git://github.com/mortenbp/PreML.git
 qcheck git git://github.com/standardml/qcheck.git
 smackage git git://github.com/standardml/smackage.git
 sml-json git git://github.com/standardml/SML-JSON.git
