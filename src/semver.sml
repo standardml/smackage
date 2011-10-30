@@ -31,7 +31,7 @@ sig
      * no versions (so `intelligentSelect NONE [ v2.0.0beta, v1.9.3 ]' will 
      * return `SOME (v1.9.3, "1")') but will prefer nothing to something (so 
      * `intelligentSelect (SOME v2) [ 2.0.0beta, 1.9.3 ]' will return 
-     * `SOME (2.0.0beta, "2")')
+     * `SOME (2.0.0beta, 2)')
      *
      * The returned constraint is equal to the given constraint if an initial
      * constraint was given, and is the major version of the returned semvar

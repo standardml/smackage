@@ -351,8 +351,8 @@ struct
        \\thelp\t\t\t\tDisplay this usage and exit\n\
        \\tinfo <name> [version]\t\tDisplay package information.\n\
        \\tlist\t\t\t\tList installed packages\n\
-       \\tmake <name> [version] [args...]\n\
-       \\t\tRuns `make [args ...]' in the specified package's directory\n\
+       \\tmake <name> [version] [args...]\tRuns `make [args ...]' in the\n\
+       \\t\t\t\t\tspecified package's directory\n\
        \\trefresh\t\t\t\tRefresh the package index\n\
        \\tsearch <name>\t\t\tFind an appropriate package\n\
        \\tsource <name> <protocol> <url>\tAdd a smackage source to sources.local\n\
