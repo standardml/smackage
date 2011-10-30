@@ -5,21 +5,23 @@ on the filesystem.
 
 Installation
 ============
-Installation takes three steps, and the first is optional.
+Installation takes three steps, and the first step is optional.
 
-1. First, you have to pick the `$SMACKAGE_HOME` files where Smackage will put
-   all of its files. This will be `~/.smackage` by default if you don't do
-   anything; see the section "The $SMACKAGE_HOME directory" below if you'd like
-   Smackage to put its files somewhere else.
-2. Second, you have to configure your SML compilers to find the code that
-   Smackage will put on your system; see the section "Setting up your SML path
-   map" below.
-3. Finally you can actually build Smackage with the following commands:
+First, you have to pick the `$SMACKAGE_HOME` files where Smackage will put
+all of its files. This will be `~/.smackage` by default if you don't do
+anything; see the section "The $SMACKAGE_HOME directory" below if you'd like
+Smackage to put its files somewhere else.
 
-    $ cd smackage
-    $ make mlton # (or make smlnj)
-    $ bin/smackage refresh
-    $ bin/smackage get cmlib
+Second, you have to configure your SML compilers to find the code that
+Smackage will put on your system; see the section "Setting up your SML path
+map" below.
+
+Finally, you can actually build Smackage with the following commands:
+
+     $ cd smackage
+     $ make mlton # (or make smlnj)
+     $ bin/smackage refresh
+     $ bin/smackage get cmlib
 
 Referring to Smackage packages
 ------------------------------
