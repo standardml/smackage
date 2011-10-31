@@ -38,10 +38,10 @@ Smackage doesn't have a uniform build process, at least not yet. Instead, we
 support a simple `smackage make` command. If you type 
 `smackage make package blah blah blah`, smackage will try to run 
 `make blah blah blah` in the directory where `package` lives. We suggest that
-if your tool compiles, you add a makefile option `smackage-install` that 
-places copies a created binary to the directory `../../../bin` relative to
-the repository's directory. For instance, the following commands get and
-install [Twelf](http://twelf.org).
+if your tool compiles, you add a makefile option `install` that copies a 
+created binary to the directory `$(DESTDIR)/bin`, in the style
+described [here](http://www.gnu.org/prep/standards/html_node/DESTDIR.html). 
+For instance, the following commands get and install [Twelf](http://twelf.org).
 
     $ bin/smackage refresh
     Selected `smackage 0.6.0'.
@@ -52,13 +52,14 @@ install [Twelf](http://twelf.org).
     Repository is updated
     Package `twelf 1.7.1' downloaded.
     $ bin/smackage make twelf smlnj
-    In directory: `/Users/rjsimmon/.smackage/lib/twelf/v1.7.0'
-    smackage is preparing to run `make smlnj'
-    <...snip...>
-    $ bin/smackage make twelf smackage-install
     In directory: `/Users/rjsimmon/.smackage/lib/twelf/v1.7.1'
-    smackage is preparing to run `make smackage-install'
-    cp bin/twelf-server ../../../bin/twelf-server
+    smackage is preparing to run `make DESTDIR=/Users/rjsimmon/.smackage smlnj'
+    <...snip...>
+    $ smackage make twelf install
+    In directory: `/Users/rjsimmon/.smackage/lib/twelf/v1.7.1'
+    smackage is preparing to run `make DESTDIR=/Users/rjsimmon/.smackage install'
+    cp bin/twelf-server /Users/rjsimmon/.smackage/bin/twelf-server.new
+    mv /Users/rjsimmon/.smackage/bin/twelf-server.new /Users/rjsimmon/.smackage/bin/twelf-server
 
 If `$SMACKAGE_HOME/bin` is on your search path, you can then refer to the
 `twelf-server` binary.
@@ -76,7 +77,7 @@ commands will install smackage into the directory `$SMACKAGE_HOME/bin`.
 
     $ bin/smackage refresh
     $ bin/smackage make smackage mlton # or smlnj
-    $ bin/smackage make smackage smackage-install
+    $ bin/smackage make smackage install
 
 Then, if `$SMACKAGE_HOME/bin` is on your search path, you can refer 
 directly to `smackage` on the command line:
