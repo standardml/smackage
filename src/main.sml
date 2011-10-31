@@ -401,14 +401,16 @@ struct
                 raise ArgsError "list does not expect arguments"
 
            | ["make"] => raise ArgsError "make requires arguments"
-           | ["make", pkg] => runCmd pkg NONE [ "make" ]
+           | ["make", pkg] => 
+                runCmd pkg NONE [ "make", "DESTDIR=" ^ !Configure.smackHome]
            | ("make" :: pkg :: maybe_spec :: rest) =>
              let 
                 val (spec, rest) =
                    (SOME (SemVer.constrFromString maybe_spec), rest)
                 handle _ => (NONE, maybe_spec :: rest)
              in
-                runCmd pkg spec ("make" :: rest)
+                runCmd pkg spec
+                   ("make" :: "DESTDIR=" ^ !Configure.smackHome :: rest)
              end
 
            | ["refresh"] => selfupdate ()

@@ -25,8 +25,9 @@ polyml:
 clean:
 	rm -f $(BIN)/smackage
 
-smackage-install:
-	rm -f ../../../bin/smackage
-	cp bin/smackage ../../../bin/smackage
+install:
+	rm -f $(DESTDIR)/bin/smackage.new
+	cp $(BIN)/smackage $(DESTDIR)/bin/smackage.new
+	mv $(DESTDIR)/bin/smackage.new $(DESTDIR)/bin/smackage
 
 .PHONY: clean mlton smlnj polyml
