@@ -3,7 +3,7 @@ Group is
    $/smlnj-lib.cm
    sources.cm
 
-   src/posix-symlink.sml
+   src/bullshit-symlink.sml
    src/smackage-path.sml
    src/smacklib.sml     
    src/main.sml
