@@ -25,6 +25,12 @@ polyml:
 clean:
 	rm -f $(BIN)/smackage
 
+smackage-install:
+	echo "NOTICE: in the future, just use 'install', not 'smackage-install'"
+	rm -f ../../../bin/smackage.new
+	cp $(BIN)/smackage ../../../bin/smackage.new
+	mv ../../../bin/smackage.new ../../../bin/smackage
+
 install:
 	rm -f $(DESTDIR)/bin/smackage.new
 	cp $(BIN)/smackage $(DESTDIR)/bin/smackage.new
