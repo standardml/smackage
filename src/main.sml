@@ -359,7 +359,7 @@ struct
        \\trefresh\t\t\t\tRefresh the package index\n\
        \\tsearch <name>\t\t\tFind an appropriate package\n\
        \\tsource <name> <protocol> <url>\tAdd a smackage source to sources.local\n\
-       \\tupdate <name>\t\t\tUpdate all packages\n\
+       \\tupdate \t\t\t\tUpdate all packages\n\
        \\tunsource <name>\t\t\tRemove a source from sources.local\n"
 
     exception ArgsError of string * string
@@ -394,7 +394,7 @@ struct
            | ["info",pkg] => (info pkg ""; OS.Process.success)
            | ["info",pkg,ver] => (info pkg ver; OS.Process.success)
            | ("info" :: _) =>
-                raise ArgsError ("refresh", "does not expect arguments")
+                raise ArgsError ("info", "requires one or two arguments")
 
            | ["list"] => (listInstalled(); OS.Process.success)
            | ("list" :: _) =>
@@ -428,8 +428,10 @@ struct
                 raise ArgsError ("source", "expectes exactly three arguments")
 
            | ["update"] => update ()
-           | ("update" :: _) =>
-                raise ArgsError ("update", "does not expect arguments")
+           | ("update" :: args) =>
+                raise ArgsError ("update", "does not expect arguments\n\
+                   \Did you want to run want `" ^ CommandLine.name () ^ " get "
+                   ^ String.concatWith " " args ^ "'?")
 
            | ["unsource",pkg] => unsource pkg 
            | ("unsource" :: _) =>
