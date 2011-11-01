@@ -362,7 +362,7 @@ struct
        \\tupdate <name>\t\t\tUpdate all packages\n\
        \\tunsource <name>\t\t\tRemove a source from sources.local\n"
 
-    exception ArgsError of string
+    exception ArgsError of string * string
     fun main (name, args) = 
        let
           val () = Configure.init ()
@@ -383,24 +383,24 @@ struct
                 runCmd pkg spec rest
              end
            | ("exec" :: _) =>
-                raise ArgsError "exec requires at least two arguments"
+                raise ArgsError ("exec", "requires at least two arguments")
 
            | ["get",pkg] => get true pkg NONE
            | ["get",pkg,ver] => 
                 get true pkg (SOME (SemVer.constrFromString ver))
            | ("get" :: _) => 
-                raise ArgsError "get expects one or two arguments"
+                raise ArgsError ("get", "requires one or two arguments")
 
            | ["info",pkg] => (info pkg ""; OS.Process.success)
            | ["info",pkg,ver] => (info pkg ver; OS.Process.success)
            | ("info" :: _) =>
-                raise ArgsError "refresh does not expect arguments"
+                raise ArgsError ("refresh", "does not expect arguments")
 
            | ["list"] => (listInstalled(); OS.Process.success)
            | ("list" :: _) =>
-                raise ArgsError "list does not expect arguments"
+                raise ArgsError ("list", "does not expect arguments")
 
-           | ["make"] => raise ArgsError "make requires arguments"
+           | ["make"] => raise ArgsError ("make", "requires arguments")
            | ["make", pkg] => 
                 runCmd pkg NONE [ "make", "DESTDIR=" ^ !Configure.smackHome]
            | ("make" :: pkg :: maybe_spec :: rest) =>
@@ -415,27 +415,27 @@ struct
 
            | ["refresh"] => selfupdate ()
            | ("refresh" :: _) =>
-                raise ArgsError "refresh does not expect arguments"
+                raise ArgsError ("refresh", "does not expect arguments")
 
            | ["search",pkg] => (search pkg ""; OS.Process.success)
            | ["search",pkg,ver] => (search pkg ver; OS.Process.success)
            | ("search" :: _) => 
-                raise ArgsError "search expects one or two arguments"
+                raise ArgsError ("search", "expects one or two arguments")
 
            | ["source",pkg,prot,url] => 
                 source pkg (Protocol.fromString (prot ^ " " ^ url))
            | ("source" :: _) =>
-                raise ArgsError "source expectes exactly three arguments"
+                raise ArgsError ("source", "expectes exactly three arguments")
 
            | ["update"] => update ()
            | ("update" :: _) =>
-                raise ArgsError "update does not expect arguments"
+                raise ArgsError ("update", "does not expect arguments")
 
            | ["unsource",pkg] => unsource pkg 
            | ("unsource" :: _) =>
-                raise ArgsError "unsource expectes exactly one argument"
+                raise ArgsError ("unsource", "expectes exactly one argument")
 
-           | (str :: _) => raise ArgsError (str ^ " is an unknown command")
+           | (str :: _) => raise ArgsError (str, "is an unknown command")
        end handle 
               (SmackExn s) => 
                 ( TextIO.output (TextIO.stdErr, "ERROR: " ^ s ^ "\n")
@@ -446,10 +446,10 @@ struct
             | (Spec.SpecError s) => 
                 ( TextIO.output (TextIO.stdErr, "ERROR: " ^ s ^ "\n")
                 ; OS.Process.failure)
-            | (ArgsError s) => 
-                ( TextIO.output (TextIO.stdErr, "ERROR: " 
+            | (ArgsError (cmd, s)) => 
+                ( TextIO.output (TextIO.stdErr, "ERROR: `" 
                                           ^ CommandLine.name () 
-                                          ^ " " ^ s ^ "\n")
+                                          ^ " " ^ cmd ^ "' " ^ s ^ "\n")
                 ; print usage
                 ; OS.Process.failure)
             | exn =>
