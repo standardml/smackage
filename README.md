@@ -19,7 +19,7 @@ map" below.
 Finally, you can actually build Smackage with the following commands:
 
     $ cd smackage
-    $ make mlton # (or make smlnj)
+    $ make mlton # (or `smlnj', or `win+smlnj' if you're in Cygwin)
     $ bin/smackage refresh
     $ bin/smackage get cmlib
 
