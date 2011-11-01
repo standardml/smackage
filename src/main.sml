@@ -346,9 +346,8 @@ struct
 
     val usage =
        "Usage: smackage <command> [args]\n\
-       \Commands, where <SPEC> is a name (`cmlib') + optional version \
-       \(`cmlib v1'):\n\
-       \\texec <name> [version] cmd ...\tRuns `cmd ...' in the specified\n\
+       \Commands, with <required> and [optional] arguments:\n\
+       \\texec <name> [version] <cmd ...>\tRuns `cmd ...' in the specified\n\
        \\t\t\t\t\tpackage's directory\n\
        \\tget <name> [version]\t\tObtain the named package\n\
        \\thelp\t\t\t\tDisplay this usage and exit\n\
