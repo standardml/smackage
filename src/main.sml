@@ -241,7 +241,7 @@ struct
     fun runCmd pkg spec args = 
     let
        val oldDir = OS.FileSys.getDir ()
-       val spec = 
+       val (spec, semver) = 
           case SemVer.intelligentSelect spec
                   (SmackLib.versions (!Configure.smackHome) pkg) of
              NONE => 
@@ -251,8 +251,8 @@ struct
                             NONE => "" 
                           | SOME s => " " ^ SemVer.constrToString s)
                       ^ "' around, try getting one with `smackage get'?")
-           | SOME (spec, _) => spec
-       val specStr = "v" ^ SemVer.constrToString spec
+           | SOME (spec, semver) => (spec, semver)
+       val specStr = "v" ^ SemVer.toString semver
        val cmd = String.concatWith " " args 
     in
      ( OS.FileSys.chDir (!Configure.smackHome // "lib" // pkg // specStr)
