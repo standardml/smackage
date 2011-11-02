@@ -4,6 +4,9 @@ sig
      ** was already there *)
     val download : string -> string * SemVer.semver * Protocol.protocol -> bool
 
+    (** Checks for a package's existance without modifying anything. *)
+    val exists : string -> string * SemVer.semver -> bool
+
 (*
     (** Build a previously downloaded package by invoking a command
         specified as 'build:' in the spec file. *)
