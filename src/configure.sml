@@ -138,11 +138,11 @@ struct
       ; initFile "sources.local" 
            "smackage git git://github.com/standardml/smackage.git\n"
       ; initFile "config" 
-          ("source " ^ ("lib" // "smackage" // "v0" // "sources") ^ "\n\ 
+          ("source " ^ ("lib" // "smackage" // "v1" // "sources") ^ "\n\ 
            \compiler mlton\n\
            \compiler smlnj\n\
            \platform " ^ guessPlatform () ^ "\n")
-      ; initFile "packages.installed" "smackage v0\n"
+      ; initFile "packages.installed" "smackage v1\n"
       ; initFile "versions.smackspec" "\n"
       ; initDir "lib"
       ; initDir "bin"

@@ -334,7 +334,7 @@ struct
        to do a "total" refresh than to re-download smackage's sources. *)
     fun selfupdate () = 
        ( refresh false
-       ; ignore (get true false "smackage" (SOME (SemVer.constrFromString "v0")))
+       ; ignore (get true false "smackage" (SOME (SemVer.constrFromString "v1")))
        ; refresh true
        ; OS.Process.success)
 
@@ -370,6 +370,7 @@ struct
     end
 
     val usage =
+       "Smackage " ^ Version.version ^ "\n" ^
        "Usage: smackage <command> [args]\n\
        \Commands, with <required> and [optional] arguments:\n\
        \\texec <name> [version] <cmd ...>\tRuns `cmd ...' in the specified\n\
