@@ -26,7 +26,14 @@ clean:
 	rm -f $(BIN)/smackage
 
 smackage-install:
-	echo "NOTICE: in the future, just use 'install', not 'smackage-install'"
+	@echo "NOTICE: This is probably not the command you meant to run."
+	@echo "If you are invoking this makefile by through smackage by"
+	@echo "running `smackage make smackage smackage-install', then in the"
+	@echo "future you should run `smackage make smackage install' instead."
+	@echo ""
+	@echo "This version still works if you want to run `make' directly"
+	@echo "instead of invoking it indirectly (`smackage make smackage')."
+	@echo "However, the latter option is suggested."
 	rm -f ../../../bin/smackage.new
 	cp $(BIN)/smackage ../../../bin/smackage.new
 	mv ../../../bin/smackage.new ../../../bin/smackage
