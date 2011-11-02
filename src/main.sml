@@ -194,15 +194,31 @@ struct
 
 
     fun update () = 
-     ( StringDict.app
-          (fn (pkg, vers) => 
-             SemConstrDict.app
-                (fn (semconst, _) => 
-                   ignore (get false pkg (SOME semconst)))
-                vers)
-          (readPackagesInstalled ())
-     ; OS.Process.success)
+    let 
+       val pkgs = readPackagesInstalled ()
 
+       fun update1 (pkg, vers) =
+          SemConstrDict.app
+             (fn (semconst, _) => ignore (get false pkg (SOME semconst)))
+             vers
+
+       fun reportBest (pkg, _) =
+       let 
+          val (_, semver) = VersionIndex.getBest pkg NONE
+       in
+          if SmackLib.exists (!Configure.smackHome) (pkg, semver) then ()
+          else print ("NOTICE: `" ^ pkg ^ " v" ^ SemVer.toString semver
+                      ^ "' is available, run `smackage get " 
+                      ^ pkg ^ "' to get it.\n")
+       end
+    in
+     ( if not (StringDict.isEmpty pkgs) then ()
+       else print "Nothing to update!\nPerhaps you should use\
+                  \ `smackage get <package>' to get something first?\n"
+     ; StringDict.app update1 pkgs
+     ; StringDict.app reportBest pkgs
+     ; OS.Process.success)
+    end
 
     fun readSourcesLocal () = 
     let 
