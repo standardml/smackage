@@ -63,7 +63,8 @@ struct
          else print ("Resolving " ^ ltoi deps ^ "dependencies\n")
        (* XXX here's the place to shortcut-stop if we have an acceptable
         * version installed (issue #4) *)
-       ; app (fn (pkg, spec, _) => ignore (get false pkg (SOME spec))) deps 
+       ; app (fn (pkg, spec, _) => 
+            ignore (get false false pkg (SOME spec))) deps
        ; print ("Done resolving dependencies for `" ^ pkg ^ "'\n"))
     end handle NoDeps => () end
 
@@ -72,9 +73,17 @@ struct
         SemVer.intelligentSelect.
 
         Raises SmackExn in the event that no acceptable version of the package
-        is available. *)
-    and get isTopLevel pkg specStr =
+        is available. 
+        
+        silentMode tells 'get' to not report what it is doing assuming
+        everything is going well. This allows us to have 'refresh'
+        not output confusing messages about selecting smackage versions.
+
+        *)
+    and get silentMode isTopLevel pkg specStr =
     let
+        fun maybePrint s = if silentMode then () else print s
+
         val () =
            if VersionIndex.isKnown pkg then ()
            else raise SmackExn 
@@ -101,7 +110,7 @@ struct
            if Option.isSome specStr then ()
            else print ( "No major version specified, picked v" 
                       ^ SemVer.constrToString spec ^ ".\n")
-        val () = print ( "Selected `" ^ name ^ "'.\n")
+        val () = maybePrint ( "Selected `" ^ name ^ "'.\n")
        
         val proto = 
             case VersionIndex.getProtocol pkg ver of
@@ -110,8 +119,8 @@ struct
                 ("Installation method for `" ^ name ^ "' not found")
     in
      ( if SmackLib.download (!Configure.smackHome) (pkg,ver,proto)
-       then print ( "Package `" ^ name ^ "' already installed.\n") 
-       else ( print ( "Package `" ^ name ^ "' downloaded.\n")
+       then maybePrint ( "Package `" ^ name ^ "' already installed.\n") 
+       else ( maybePrint ( "Package `" ^ name ^ "' downloaded.\n")
             ; resolveDependencies pkg ver (*
              ; (if runHooks then
                 (SmackLib.build 
@@ -198,7 +207,7 @@ struct
           (fn (pkg, vers) => 
              SemConstrDict.app
                 (fn (semconst, _) => 
-                   ignore (get false pkg (SOME semconst)))
+                   ignore (get false false pkg (SOME semconst)))
                 vers)
           (readPackagesInstalled ())
      ; OS.Process.success)
@@ -309,7 +318,7 @@ struct
        to do a "total" refresh than to re-download smackage's sources. *)
     fun selfupdate () = 
        ( refresh false
-       ; ignore (get false "smackage" (SOME (SemVer.constrFromString "v0")))
+       ; ignore (get true false "smackage" (SOME (SemVer.constrFromString "v0")))
        ; refresh true
        ; OS.Process.success)
 
@@ -384,9 +393,9 @@ struct
            | ("exec" :: _) =>
                 raise ArgsError ("exec", "requires at least two arguments")
 
-           | ["get",pkg] => get true pkg NONE
+           | ["get",pkg] => get false true pkg NONE
            | ["get",pkg,ver] => 
-                get true pkg (SOME (SemVer.constrFromString ver))
+                get false true pkg (SOME (SemVer.constrFromString ver))
            | ("get" :: _) => 
                 raise ArgsError ("get", "requires one or two arguments")
 
