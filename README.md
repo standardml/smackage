@@ -19,7 +19,7 @@ map" below.
 Finally, you can actually build Smackage with the following commands:
 
     $ cd smackage
-    $ make mlton # (or make smlnj)
+    $ make mlton # (or `smlnj', or `win+smlnj' if you're in Cygwin)
     $ bin/smackage refresh
     $ bin/smackage get cmlib
 
@@ -138,12 +138,22 @@ in a file called `mlb-path-map`, usually somewhere like
 
 Setting up MLton (user-only)
 ------------------------
-MLton doesn't currently allow user-specific basis maps like SML/NJ does,
-but there is a workaround if you put the following shell script, called, 
-`mlton` on your search path so that your operating system will find it before 
-it finds the regular MLton binary:
+MLton allows mlb path variables to be set on the mlton command
+line. If you don't want to edite the global mlb-path-map file, you
+can pass the SMACKAGE path as a command line argument to mlton. Since
+doing this all the time is tedious and would break build scripts, you
+probably want to set up a wrapper script somewhere in your path that
+looks like:
 
-    XXX sully how did you do this?
+    #!/bin/sh
+    $MLTON_PATH -mlb-path-var 'SMACKAGE $SMACKAGE_HOME/lib' "$@"
+
+where $MLTON_PATH and $SMACKAGE_HOME are replaced with the appropriate
+paths. For example, on my system, I have a file /home/sully/bin/mlton
+that contains:
+
+    #!/bin/sh
+    /usr/bin/mlton -mlb-path-var 'SMACKAGE /home/sully/.smackage/lib' "$@"
 
 The $SMACKAGE_HOME directory
 ============================
