@@ -21,5 +21,5 @@ struct\n\
 end\n" > src/version.sml
 
 echo "Generated files."
-echo "Now run 'git tag $1'"
+echo "Now run 'git tag v$1'"
 
