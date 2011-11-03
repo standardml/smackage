@@ -164,11 +164,14 @@ struct
             (#1 ver = major)
        | (major, SOME minor, NONE, _) =>
             (#1 ver = major andalso #2 ver = minor)
-       | (major, SOME minor, SOME patch, special) => 
+       | (major, SOME minor, SOME patch, NONE) => 
+            (#1 ver = major andalso #2 ver = minor andalso #3 ver = patch)
+       | (major, SOME minor, SOME patch, SOME special) => 
             (#1 ver = major
              andalso #2 ver = minor
              andalso #3 ver = patch
-             andalso #4 ver = special)
+             andalso isSome (#4 ver) 
+             andalso String.isPrefix special (valOf (#4 ver)))
 
     (** Enumerate the various paths that this version could give rise to.
         e.g., for version 1.6.2beta1, we could potentially have these paths:
