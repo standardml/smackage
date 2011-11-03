@@ -30,8 +30,8 @@ you can just delete `$SMACKAGE_HOME/config`.)
 Referring to Smackage packages
 ------------------------------
 If you've performed all the steps described above, you can will be able to 
-refer to cmlib as `$SMACKAGE/cmlib/v0/cmlib.cm` (in SML/NJ .cm files) or as 
-`$(SMACKAGE)/cmlib/v0/cmlib.mlb` (in MLton .mlb files).
+refer to cmlib as `$SMACKAGE/cmlib/v1/cmlib.cm` (in SML/NJ .cm files) or as 
+`$(SMACKAGE)/cmlib/v1/cmlib.mlb` (in MLton .mlb files).
 
 You might want to add `$SMACKAGE_HOME/bin` to your path if you want to use 
 applications compiled through smackage.
@@ -143,7 +143,7 @@ in a file called `mlb-path-map`, usually somewhere like
 Setting up MLton (user-only)
 ------------------------
 MLton allows mlb path variables to be set on the mlton command
-line. If you don't want to edite the global mlb-path-map file, you
+line. If you don't want to edit the global mlb-path-map file, you
 can pass the SMACKAGE path as a command line argument to mlton. Since
 doing this all the time is tedious and would break build scripts, you
 probably want to set up a wrapper script somewhere in your path that
@@ -152,7 +152,7 @@ looks like:
     #!/bin/sh
     $MLTON_PATH -mlb-path-var 'SMACKAGE $SMACKAGE_HOME/lib' "$@"
 
-where $MLTON_PATH and $SMACKAGE_HOME are replaced with the appropriate
+where `$MLTON_PATH` and `$SMACKAGE_HOME` are replaced with the appropriate
 paths. For example, on my system, I have a file /home/sully/bin/mlton
 that contains:
 
