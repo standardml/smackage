@@ -8,7 +8,7 @@
 
 if [ $# -ne 1 ]
 then
-  echo "Usage: version.sh vX.Y.Z"
+  echo "Usage: version.sh X.Y.Z"
   exit 1
 fi
 
@@ -21,5 +21,5 @@ struct\n\
 end\n" > src/version.sml
 
 echo "Generated files."
-echo "Now run 'git tag v$1'"
+echo "Now run 'git commit -a -m \"bump to v$1\"; git tag v$1'"
 
