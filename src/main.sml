@@ -391,6 +391,36 @@ struct
     fun main (name, args) = 
        let
           val () = Configure.init ()
+          fun runCmdNotMake pkg spec rest =
+          let
+             fun confirm () =
+             let 
+                val () = print ("Are you sure you want to proceed? [Y/n]: ")
+                val () = TextIO.flushOut TextIO.stdOut
+             in case String.tokens Char.isSpace
+                        (valOf (TextIO.inputLine TextIO.stdIn)) of
+                   [] => ()
+                 | (str :: _) => 
+                      if String.isPrefix "y" str 
+                         orelse String.isPrefix "Y" str
+                      then ()
+                      else if String.isPrefix "n" str 
+                           orelse String.isPrefix "N" str
+                      then raise SmackExn "User cancelled command"
+                      else (print "I don't understand that.\n"; confirm ())
+             end
+          in
+           ( if "make" = hd rest
+             then ( print ("WARNING: It is suggested that you run\n\
+                          \`" ^ CommandLine.name () ^ " make " 
+                          ^ String.concatWith " " (pkg :: tl rest)
+                          ^ "'\nrather than invoking make with `" 
+                          ^ CommandLine.name () ^ " exec'.\n")
+                  ; confirm ())
+             else () 
+           ; runCmd pkg spec rest)
+          handle Option => raise SmackExn "User cancelled command"
+          end 
        in
           case args of
              [] => (print usage; OS.Process.success)
@@ -398,41 +428,14 @@ struct
            | ("-h"::_) => (print usage; OS.Process.success)
            | ("help"::_) => (print usage; OS.Process.success)
 
-           | ["exec", pkg, cmd] => runCmd pkg NONE [ cmd ]
+           | ["exec", pkg, cmd] => runCmdNotMake pkg NONE [ cmd ]
            | ("exec" :: pkg :: maybe_spec :: rest) =>
              let 
                 val (spec, rest) =
                    (SOME (SemVer.constrFromString maybe_spec), rest)
                 handle _ => (NONE, maybe_spec :: rest)
-
-                fun confirm () =
-                let 
-                   val () = print ("Are you sure you want to proceed? [Y/n]: ")
-                   val () = TextIO.flushOut TextIO.stdOut
-                in case String.tokens Char.isSpace
-                           (valOf (TextIO.inputLine TextIO.stdIn)) of
-                      [] => ()
-                    | (str :: _) => 
-                         if String.isPrefix "y" str 
-                            orelse String.isPrefix "Y" str
-                         then ()
-                         else if String.isPrefix "n" str 
-                              orelse String.isPrefix "N" str
-                         then raise SmackExn "User cancelled command"
-                         else (print "I don't understand that.\n"; confirm ())
-                end
-             in
-              ( if "make" = hd rest
-                then ( print ("WARNING: It is suggested that you run\n\
-                             \`" ^ CommandLine.name () ^ " make " 
-                             ^ String.concatWith " " (pkg :: tl rest)
-                             ^ "'\nrather than invoking make with `" 
-                             ^ CommandLine.name () ^ " exec'.\n")
-                     ; confirm ())
-                else () 
-              ; runCmd pkg spec rest)
-             handle Option => raise SmackExn "User cancelled command"
-             end 
+              in runCmdNotMake pkg spec rest
+              end
            | ("exec" :: _) =>
                 raise ArgsError ("exec", "requires at least two arguments")
 
