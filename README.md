@@ -23,6 +23,10 @@ Finally, you can actually build Smackage with the following commands:
     $ bin/smackage refresh
     $ bin/smackage get cmlib
 
+(NOTE ON UPDATING: If you previously used smackage v0, you will want to edit
+the `$SMACKAGE_HOME/config` file to change the `v0` to `v1`. Alternatively,
+you can just delete `$SMACKAGE_HOME/config`.)
+
 Referring to Smackage packages
 ------------------------------
 If you've performed all the steps described above, you can will be able to 
