@@ -404,9 +404,35 @@ struct
                 val (spec, rest) =
                    (SOME (SemVer.constrFromString maybe_spec), rest)
                 handle _ => (NONE, maybe_spec :: rest)
+
+                fun confirm () =
+                let 
+                   val () = print ("Are you sure you want to proceed? [Y/n]: ")
+                   val () = TextIO.flushOut TextIO.stdOut
+                in case String.tokens Char.isSpace
+                           (valOf (TextIO.inputLine TextIO.stdIn)) of
+                      [] => ()
+                    | (str :: _) => 
+                         if String.isPrefix "y" str 
+                            orelse String.isPrefix "Y" str
+                         then ()
+                         else if String.isPrefix "n" str 
+                              orelse String.isPrefix "N" str
+                         then raise SmackExn "User cancelled command"
+                         else (print "I don't understand that.\n"; confirm ())
+                end
              in
-                runCmd pkg spec rest
-             end
+              ( if "make" = hd rest
+                then ( print ("WARNING: It is suggested that you run\n\
+                             \`" ^ CommandLine.name () ^ " make " 
+                             ^ String.concatWith " " (pkg :: tl rest)
+                             ^ "'\nrather than invoking make with `" 
+                             ^ CommandLine.name () ^ " exec'.\n")
+                     ; confirm ())
+                else () 
+              ; runCmd pkg spec rest)
+             handle Option => raise SmackExn "User cancelled command"
+             end 
            | ("exec" :: _) =>
                 raise ArgsError ("exec", "requires at least two arguments")
 
@@ -420,6 +446,11 @@ struct
            | ["info",pkg,ver] => (info pkg ver; OS.Process.success)
            | ("info" :: _) =>
                 raise ArgsError ("info", "requires one or two arguments")
+
+           | ("install" :: args) =>
+                raise ArgsError ("install", "not a command\n\
+                   \Did you want to run `" ^ CommandLine.name () ^ " get "
+                   ^ String.concatWith " " args ^ "'?")
 
            | ["list"] => (listInstalled(); OS.Process.success)
            | ("list" :: _) =>
@@ -455,7 +486,7 @@ struct
            | ["update"] => update ()
            | ("update" :: args) =>
                 raise ArgsError ("update", "does not expect arguments\n\
-                   \Did you want to run want `" ^ CommandLine.name () ^ " get "
+                   \Did you want to run `" ^ CommandLine.name () ^ " get "
                    ^ String.concatWith " " args ^ "'?")
 
            | ["unsource",pkg] => unsource pkg 
@@ -465,23 +496,23 @@ struct
            | (str :: _) => raise ArgsError (str, "is an unknown command")
        end handle 
               (SmackExn s) => 
-                ( TextIO.output (TextIO.stdErr, "ERROR: " ^ s ^ "\n")
+                ( TextIO.output (TextIO.stdErr, "\nERROR: " ^ s ^ "\n\n")
                 ; OS.Process.failure)
             | (Fail s) => 
-                ( TextIO.output (TextIO.stdErr, "ERROR: " ^ s ^ "\n")
+                ( TextIO.output (TextIO.stdErr, "\nERROR: " ^ s ^ "\n\n")
                 ; OS.Process.failure)
             | (Spec.SpecError s) => 
-                ( TextIO.output (TextIO.stdErr, "ERROR: " ^ s ^ "\n")
+                ( TextIO.output (TextIO.stdErr, "\nERROR: " ^ s ^ "\n\n")
                 ; OS.Process.failure)
             | (ArgsError (cmd, s)) => 
-                ( TextIO.output (TextIO.stdErr, "ERROR: `" 
+                ( TextIO.output (TextIO.stdErr, "\nERROR: `" 
                                           ^ CommandLine.name () 
-                                          ^ " " ^ cmd ^ "' " ^ s ^ "\n")
+                                          ^ " " ^ cmd ^ "' " ^ s ^ "\n\n")
                 ; print usage
                 ; OS.Process.failure)
             | exn =>
-                ( TextIO.output (TextIO.stdErr, "UNEXPECTED ERROR: " 
-                                          ^ exnMessage exn ^ "\n")
+                ( TextIO.output (TextIO.stdErr, "\nUNEXPECTED ERROR: " 
+                                          ^ exnMessage exn ^ "\n\n")
                 ; OS.Process.failure)
 end
 
