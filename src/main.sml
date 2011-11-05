@@ -484,7 +484,7 @@ struct
            | ["source",pkg,prot,url] => 
                 source pkg (Protocol.fromString (prot ^ " " ^ url))
            | ("source" :: _) =>
-                raise ArgsError ("source", "expectes exactly three arguments")
+                raise ArgsError ("source", "expects exactly three arguments")
 
            | ["update"] => update ()
            | ("update" :: args) =>
