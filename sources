@@ -9,6 +9,8 @@ parcom git git://github.com/standardml/parcom.git
 preml git git://github.com/mortenbp/PreML.git
 qcheck git git://github.com/standardml/qcheck.git
 smackage git git://github.com/standardml/smackage.git
+smlcgi git git://github.com/standardml/smlcgi.git
+smlpeg git git://github.com/standardml/SMLPEG.git
 sml-json git git://github.com/standardml/SML-JSON.git
 tom7-lib git git://github.com/robsimmons/sml-lib.git
 twelf git git://github.com/standardml/twelf.git
