@@ -33,8 +33,9 @@ directory.
     $ git clone git://github.com/standardml/smackage.git # or something
     $ cd smackage
     $ make mlton # (or `smlnj', or `win+smlnj' if you're in Cygwin)
+    $ bin/smackage
 
-Smackage now lives in the current directory as `bin/smackage`. 
+Smackage now lives in the `bin` subdirectory of the current directory.
 
 **Step 4: Bootstrap (optional).**
 
