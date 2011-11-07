@@ -39,8 +39,9 @@ Smackage now lives in the current directory as `bin/smackage`.
 **Step 4: Bootstrap (optional).**
 
 Smackage-aware applications (including Smackage itself) have a makefile
-option `install` that places a binary in `$SMACKAGE_HOME/bin`. If you add
-that directory to your search path, then you can run the following:
+option `install` that places a binary in `$SMACKAGE_HOME/bin` *IF* the
+makefile is invoked through `smackage make`. If you add `$SMACKAGE_HOME/bin`
+to your search path, then you can run the following:
 
     $ bin/smackage refresh
     $ bin/smackage make smackage mlton # or smlnj, or win+smlnj
