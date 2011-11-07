@@ -16,17 +16,21 @@ Second, you have to configure your SML compilers to find the code that
 Smackage will put on your system; see the section "Setting up your SML path
 map" below.
 
-Finally, you can actually build Smackage with the following commands:
+Finally, you can actually build Smackage with the following commands; the 
+first `git clone...` command is just one of the ways you can get smackage
+onto your hard drive; an alternative would be to download one of the
+[tarred or zipped releases](https://github.com/standardml/smackage/tags). 
+Note: the directory `smackage` that you use to initially download smackage
+should *not* be the same as the `$SMACKAGE_HOME` directory.
 
     $ git clone git://github.com/standardml/smackage.git # or something
     $ cd smackage
     $ make mlton # (or `smlnj', or `win+smlnj' if you're in Cygwin)
     $ bin/smackage refresh
     $ bin/smackage get cmlib
-
-(NOTE ON UPDATING: If you previously used smackage v0, you will want to edit
-the `$SMACKAGE_HOME/config` file to change the `v0` to `v1`. Alternatively,
-you can just delete `$SMACKAGE_HOME/config`.)
+    
+If all you want to do is use Smackage to get SML code onto your hard drive,
+then you're done! You probably want to 
 
 Referring to Smackage packages
 ------------------------------
@@ -49,25 +53,12 @@ described [here](http://www.gnu.org/prep/standards/html_node/DESTDIR.html).
 For instance, the following commands get and install [Twelf](http://twelf.org).
 
     $ bin/smackage refresh
-    Selected `smackage 0.6.0'.
-    Package `smackage 0.6.0' already installed.
     $ bin/smackage get twelf
-    No major version specified, picked v1.
-    Selected `twelf 1.7.1'.
-    Repository is updated
-    Package `twelf 1.7.1' downloaded.
     $ bin/smackage make twelf smlnj
-    In directory: `/Users/rjsimmon/.smackage/lib/twelf/v1.7.1'
-    smackage is preparing to run `make DESTDIR=/Users/rjsimmon/.smackage smlnj'
-    <...snip...>
-    $ smackage make twelf install
-    In directory: `/Users/rjsimmon/.smackage/lib/twelf/v1.7.1'
-    smackage is preparing to run `make DESTDIR=/Users/rjsimmon/.smackage install'
-    cp bin/twelf-server /Users/rjsimmon/.smackage/bin/twelf-server.new
-    mv /Users/rjsimmon/.smackage/bin/twelf-server.new /Users/rjsimmon/.smackage/bin/twelf-server
+    $ bin/smackage make twelf install
 
 If `$SMACKAGE_HOME/bin` is on your search path, you can then refer to the
-`twelf-server` binary.
+`twelf-server` binary like this:
 
     $ which twelf-server
     /Users/rjsimmon/.smackage/bin/twelf-server
