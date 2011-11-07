@@ -9,7 +9,7 @@ Installation takes four steps, and the first and last steps are optional.
 
 **Step 1: Pick a `SMACKAGE_HOME` directory (optional).**
 
-The `$SMACKAGE_HOME` directory where Smackage will put all of its files. 
+The `$SMACKAGE_HOME` directory is where Smackage will put all of its files. 
 This will be `~/.smackage` by default if you don't do anything; see the 
 section "The $SMACKAGE_HOME directory" towards the bottom if you'd like 
 Smackage to put its files somewhere else.
