@@ -77,10 +77,10 @@ created binary to the directory `$(DESTDIR)/bin`, in the style
 described [here](http://www.gnu.org/prep/standards/html_node/DESTDIR.html). 
 For instance, the following commands get and install [Twelf](http://twelf.org).
 
-    $ bin/smackage refresh
-    $ bin/smackage get twelf
-    $ bin/smackage make twelf smlnj # or mlton, ...
-    $ bin/smackage make twelf install
+    $ smackage refresh
+    $ smackage get twelf
+    $ smackage make twelf smlnj # or mlton, ...
+    $ smackage make twelf install
 
 If `$SMACKAGE_HOME/bin` is on your search path, you can then refer to the
 `twelf-server` binary like this:
