@@ -63,7 +63,7 @@ If you've performed all the steps described above, you can will be able to
 refer to cmlib as `$SMACKAGE/cmlib/v1/cmlib.cm` (in SML/NJ .cm files) or as 
 `$(SMACKAGE)/cmlib/v1/cmlib.mlb` (in MLton .mlb files).
 
-You might want to add `$SMACKAGE_HOME/bin` to your path if you want to use 
+You want to add `$SMACKAGE_HOME/bin` to your path if you want to use 
 applications compiled through smackage.
 
 Building Smackage packages
