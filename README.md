@@ -18,6 +18,7 @@ map" below.
 
 Finally, you can actually build Smackage with the following commands:
 
+    $ git clone git://github.com/standardml/smackage.git # or something
     $ cd smackage
     $ make mlton # (or `smlnj', or `win+smlnj' if you're in Cygwin)
     $ bin/smackage refresh
