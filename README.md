@@ -29,9 +29,6 @@ should *not* be the same as the `$SMACKAGE_HOME` directory.
     $ bin/smackage refresh
     $ bin/smackage get cmlib
     
-If all you want to do is use Smackage to get SML code onto your hard drive,
-then you're done! You probably want to 
-
 Referring to Smackage packages
 ------------------------------
 If you've performed all the steps described above, you can will be able to 
