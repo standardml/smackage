@@ -17,7 +17,7 @@ Smackage to put its files somewhere else.
 **Step 2: Set up your SML compilers to use Smackage.**
 
 You have to configure your SML compilers to find the code that Smackage 
-will put on your system. This is a bit system-dependent see the section 
+will put on your system. This is a bit system-dependent; see the section 
 "Setting up your SML path map" below for details.
 
 **Step 3: Download.**
