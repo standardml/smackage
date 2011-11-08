@@ -1,7 +1,7 @@
 BIN=bin
 
 all:
-	echo "Run 'make mlton', 'make smlnj' or 'make polyml'"
+	@echo "Run 'make <platform>', where <platform> is one of 'mlton', 'smlnj', 'win+mlton', 'win+smlnj' or 'polyml'"
 	false
 
 mlton:
