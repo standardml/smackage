@@ -15,6 +15,7 @@
 
    (* Obtaining and manipulating code and packages *)
    src/get-git.sml
+   src/get-hg.sml
    src/conductor.sig
    src/conductor.sml
    src/http-downloader.sig
