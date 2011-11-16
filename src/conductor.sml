@@ -15,7 +15,7 @@ struct
    in
       case prot of 
          Protocol.Git { uri } => poll' GetGit.poll uri
-       | Protocol.Hg { uri } => poll' GetHg.poll uri
+       | Protocol.Hg { uri } => poll' (GetHg.poll name) uri
    end
 end
 
