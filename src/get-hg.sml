@@ -69,6 +69,7 @@ structure GetHg = struct
       val unstablePath = !Configure.smackHome </> "lib" </> name </> "unstable"
    in
       maybeCloneRepository address unstablePath
+    ; Hg.pull {remoteOption=NONE, localPath=unstablePath}
     ; Hg.update unstablePath
     ; Hg.checkout {revision="tip", localPath=unstablePath}
     ; List.mapPartial split (readTags unstablePath)
