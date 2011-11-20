@@ -86,9 +86,7 @@ structure GetHg = struct
          val clone = base </> "lib" </> name </> version
       in
          (Hg.clone {remote=origin, localPath=clone}
-        ; Hg.checkout {revision=version, localPath=clone}
-          (* FIXME: what about windows, or !*nix? *)
-        ; run ("rm -Rf " ^ (clone </> ".hg")))
+        ; Hg.checkout {revision=version, localPath=clone})
       end
       val unstablePath = base </> "lib" </> name </> "unstable"
    in
