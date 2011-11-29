@@ -11,6 +11,7 @@ preml git git://github.com/mortenbp/PreML.git
 qcheck git git://github.com/standardml/qcheck.git
 smackage git git://github.com/standardml/smackage.git
 smlcgi git git://github.com/standardml/smlcgi.git
+smlnj git git://github.com/standardml/smlnj-installer.git
 smlpeg git git://github.com/standardml/SMLPEG.git
 sml-json git git://github.com/standardml/SML-JSON.git
 tom7-lib git git://github.com/robsimmons/sml-lib.git
