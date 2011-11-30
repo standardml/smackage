@@ -1,4 +1,4 @@
-bpltool git git@github.com:standardml/bpltool.git
+bpltool git git://github.com/standardml/bpltool.git
 celf git git://github.com/clf/celf.git
 cmlex git git://github.com/standardml/cmlex.git
 cmlib git git://github.com/standardml/cmlib.git
