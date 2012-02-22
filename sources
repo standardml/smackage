@@ -1,3 +1,4 @@
+bpltool git git://github.com/standardml/bpltool.git
 celf git git://github.com/clf/celf.git
 cmlex git git://github.com/standardml/cmlex.git
 cmlib git git://github.com/standardml/cmlib.git
@@ -10,6 +11,10 @@ parcom git git://github.com/standardml/parcom.git
 preml git git://github.com/mortenbp/PreML.git
 qcheck git git://github.com/standardml/qcheck.git
 smackage git git://github.com/standardml/smackage.git
+smlcgi git git://github.com/standardml/smlcgi.git
+smlnj git git://github.com/standardml/smlnj-installer.git
+smlpeg git git://github.com/standardml/SMLPEG.git
 sml-json git git://github.com/standardml/SML-JSON.git
 tom7-lib git git://github.com/robsimmons/sml-lib.git
 twelf git git://github.com/standardml/twelf.git
+uri git https://github.com/finrod/uri.git

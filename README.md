@@ -5,27 +5,57 @@ on the filesystem.
 
 Installation
 ============
-Installation takes three steps, and the first step is optional.
+Installation takes four steps, and the first and last steps are optional.
 
-First, you have to pick the `$SMACKAGE_HOME` directory where Smackage will put
-all of its files. This will be `~/.smackage` by default if you don't do
-anything; see the section "The $SMACKAGE_HOME directory" below if you'd like
+**Step 1: Pick a `SMACKAGE_HOME` directory (optional).**
+
+The `$SMACKAGE_HOME` directory is where Smackage will put all of its files. 
+This will be `~/.smackage` by default if you don't do anything; see the 
+section "The $SMACKAGE_HOME directory" towards the bottom if you'd like 
 Smackage to put its files somewhere else.
 
-Second, you have to configure your SML compilers to find the code that
-Smackage will put on your system; see the section "Setting up your SML path
-map" below.
+**Step 2: Set up your SML compilers to use Smackage.**
 
-Finally, you can actually build Smackage with the following commands:
+You have to configure your SML compilers to find the code that Smackage 
+will put on your system. This is a bit system-dependent; see the section 
+"Setting up your SML path map" below for details.
 
+**Step 3: Download.**
+
+Finally, you can actually build Smackage with the following commands; the 
+first `git clone...` command is just one of the ways you can get smackage
+onto your hard drive; an alternative would be to download one of the
+[tarred or zipped releases](https://github.com/standardml/smackage/tags). 
+Note: the directory (probably named `smackage`) that you put the initial 
+Smackage code into should *not* be the same as the `$SMACKAGE_HOME` 
+directory.
+
+    $ git clone git://github.com/standardml/smackage.git # or something
     $ cd smackage
     $ make mlton # (or `smlnj', or `win+smlnj' if you're in Cygwin)
-    $ bin/smackage refresh
-    $ bin/smackage get cmlib
+    $ bin/smackage
 
-(NOTE ON UPDATING: If you previously used smackage v0, you will want to edit
-the `$SMACKAGE_HOME/config` file to change the `v0` to `v1`. Alternatively,
-you can just delete `$SMACKAGE_HOME/config`.)
+Smackage now lives in the `bin` subdirectory of the current directory.
+
+**Step 4: Bootstrap (optional).**
+
+Smackage-aware applications (including Smackage itself) have a makefile
+option `install` that places a binary in `$SMACKAGE_HOME/bin` *IF* the
+makefile is invoked through `smackage make`. If you add `$SMACKAGE_HOME/bin`
+to your search path, then you can run the following:
+
+    $ bin/smackage refresh
+    $ bin/smackage make smackage mlton # or smlnj, or win+smlnj
+    $ bin/smackage make smackage install
+    $ which smackage 
+
+(Type `bin/smackage make smackage` to see all the possible installation 
+options: polyml, win+mlton, etc...)
+
+The last command, `which smackage`, should report that Smackage can be found
+at `$SMACKAGE_HOME/bin/smackage`. Now you've bootstrapped Smackage: you no 
+longer need the current directory where you downloaded Smackage, you just 
+need the `$SMACKAGE_HOME` directory.
 
 Referring to Smackage packages
 ------------------------------
@@ -33,7 +63,7 @@ If you've performed all the steps described above, you can will be able to
 refer to cmlib as `$SMACKAGE/cmlib/v1/cmlib.cm` (in SML/NJ .cm files) or as 
 `$(SMACKAGE)/cmlib/v1/cmlib.mlb` (in MLton .mlb files).
 
-You might want to add `$SMACKAGE_HOME/bin` to your path if you want to use 
+You want to add `$SMACKAGE_HOME/bin` to your path if you want to use 
 applications compiled through smackage.
 
 Building Smackage packages
@@ -47,57 +77,19 @@ created binary to the directory `$(DESTDIR)/bin`, in the style
 described [here](http://www.gnu.org/prep/standards/html_node/DESTDIR.html). 
 For instance, the following commands get and install [Twelf](http://twelf.org).
 
-    $ bin/smackage refresh
-    Selected `smackage 0.6.0'.
-    Package `smackage 0.6.0' already installed.
-    $ bin/smackage get twelf
-    No major version specified, picked v1.
-    Selected `twelf 1.7.1'.
-    Repository is updated
-    Package `twelf 1.7.1' downloaded.
-    $ bin/smackage make twelf smlnj
-    In directory: `/Users/rjsimmon/.smackage/lib/twelf/v1.7.1'
-    smackage is preparing to run `make DESTDIR=/Users/rjsimmon/.smackage smlnj'
-    <...snip...>
+    $ smackage refresh
+    $ smackage get twelf
+    $ smackage make twelf smlnj # or mlton, ...
     $ smackage make twelf install
-    In directory: `/Users/rjsimmon/.smackage/lib/twelf/v1.7.1'
-    smackage is preparing to run `make DESTDIR=/Users/rjsimmon/.smackage install'
-    cp bin/twelf-server /Users/rjsimmon/.smackage/bin/twelf-server.new
-    mv /Users/rjsimmon/.smackage/bin/twelf-server.new /Users/rjsimmon/.smackage/bin/twelf-server
 
 If `$SMACKAGE_HOME/bin` is on your search path, you can then refer to the
-`twelf-server` binary.
+`twelf-server` binary like this:
 
     $ which twelf-server
     /Users/rjsimmon/.smackage/bin/twelf-server
     $ twelf-server
     Twelf 1.7.1+ (built 10/30/11 at 00:37:12 on concordia.wv.cc.cmu.edu)
     %% OK %%
-
-Building Smackage with Smackage
--------------------------------
-If you're on a reasonably Unix-ey system (OSX or Linux), the following 
-commands will install smackage into the directory `$SMACKAGE_HOME/bin`.
-
-    $ bin/smackage refresh
-    $ bin/smackage make smackage mlton # or smlnj
-    $ bin/smackage make smackage install
-
-Then, if `$SMACKAGE_HOME/bin` is on your search path, you can refer 
-directly to `smackage` on the command line:
-
-    $ smackage list
-    Package smackage:
-       Version: 0.6.0
-    Package twelf:
-       Version: 1.7.1
-
-If you have a Windows+Cygwin setup (smackage only works within Cygwin on
-Windows), then you can try replacing the second command with 
-
-    $ bin/smackage make smackage win+smlnj
-
-but your mileage may vary.
 
 Setting up your SML path map
 ============================
