@@ -1,7 +1,10 @@
 BIN=bin
 
 all:
-	echo "Run 'make mlton', 'make smlnj' or 'make polyml'"
+	@echo "== Smackage Installation =="
+	@echo "Run 'make mlton', 'make smlnj' or 'make polyml' on Linux/Unix/OSX."
+	@echo "Run 'make win+smlnj' or 'make win+mlton' on Windows."
+	@echo "In Smackage, then run 'make install' to install."
 	false
 
 mlton:
