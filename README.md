@@ -4,7 +4,7 @@ Standard ML code that understands where other Standard ML code might be found
 on the filesystem.
 
 Installation
-============
+------------
 Installation takes four steps, and the first and last steps are optional.
 
 **Step 1: Pick a `SMACKAGE_HOME` directory (optional).**
@@ -92,7 +92,7 @@ If `$SMACKAGE_HOME/bin` is on your search path, you can then refer to the
     %% OK %%
 
 Setting up your SML path map
-============================
+----------------------------
 Smackage will live in a directory that we'll refer to
 as `$SMACKAGE_HOME` in this section. This directory is probably 
 `~/.smackage`, but see the section on `$SMACKAGE_HOME` below for more 
@@ -152,7 +152,7 @@ that contains:
     /usr/bin/mlton -mlb-path-var 'SMACKAGE /home/sully/.smackage/lib' "$@"
 
 The $SMACKAGE_HOME directory
-============================
+----------------------------
 Smackage has to figure out where it lives on the file system whenever it
 starts up; the installation instructions referred to the directory where
 smackage lives as `$SMACKAGE_HOME`. Smackage goes through the following process
