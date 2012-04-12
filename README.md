@@ -57,8 +57,8 @@ at `$SMACKAGE_HOME/bin/smackage`. Now you've bootstrapped Smackage: you no
 longer need the current directory where you downloaded Smackage, you just 
 need the `$SMACKAGE_HOME` directory.
 
-Referring to Smackage packages
-------------------------------
+### Referring to Smackage packages
+
 If you've performed all the steps described above, you can will be able to 
 refer to cmlib as `$SMACKAGE/cmlib/v1/cmlib.cm` (in SML/NJ .cm files) or as 
 `$(SMACKAGE)/cmlib/v1/cmlib.mlb` (in MLton .mlb files).
@@ -66,8 +66,8 @@ refer to cmlib as `$SMACKAGE/cmlib/v1/cmlib.cm` (in SML/NJ .cm files) or as
 You want to add `$SMACKAGE_HOME/bin` to your path if you want to use 
 applications compiled through smackage.
 
-Building Smackage packages
---------------------------
+### Building Smackage packages
+
 Smackage doesn't have a uniform build process, at least not yet. Instead, we
 support a simple `smackage make` command. If you type 
 `smackage make package blah blah blah`, smackage will try to run 
@@ -109,22 +109,22 @@ in a pathconfig file for Standard ML of New Jersey; instead, I'd write
 Make sure you use an absolute path - starting with "/", or whatever your system
 uses to refer to the file system root.
 
-Setting up SML/NJ (system-wide)
--------------------------------
+### Setting up SML/NJ (system-wide)
+
 Find the file `lib/pathconfig` in the installation directory for SML/NJ, and 
 add the following line:
   
     SMACKAGE $SMACKAGE_HOME/lib
 
-Setting up SML/NJ (user-only)
------------------------------
+### Setting up SML/NJ (user-only)
+
 Create a file `~/.smlnj-pathconfig` containing the following line (or add
 the following line to `~/.smlnj-pathconfig` if it exists already):
 
     SMACKAGE $SMACKAGE_HOME/lib
 
-Setting up MLton (system-wide)
-------------------------------
+### Setting up MLton (system-wide)
+
 Find the [MLBasis Path Map](http://mlton.org/MLBasisPathMap), stored
 in a file called `mlb-path-map`, usually somewhere like 
 `/usr/lib/mlton/mlb-path-map` or 
@@ -132,8 +132,8 @@ in a file called `mlb-path-map`, usually somewhere like
 
     SMACKAGE $SMACKAGE_HOME/lib
 
-Setting up MLton (user-only)
-------------------------
+### Setting up MLton (user-only)
+
 MLton allows mlb path variables to be set on the mlton command
 line. If you don't want to edit the global mlb-path-map file, you
 can pass the SMACKAGE path as a command line argument to mlton. Since
