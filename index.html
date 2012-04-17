@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Smackage : Smackage Package Manager for Standard ML" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Smackage</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/standardml/smackage">Fork Me on GitHub</a>
+
+          <h1 id="project_title">Smackage</h1>
+          <h2 id="project_tagline">Smackage Package Manager for Standard ML</h2>
+
+          <section id="downloads">
+            <a class="zip_download_link" href="https://github.com/standardml/smackage/zipball/master">Download this project as a .zip file</a>
+            <a class="tar_download_link" href="https://github.com/standardml/smackage/tarball/master">Download this project as a tar.gz file</a>
+          </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <p>Smackage is a prototype package manager for Standard ML libraries. Right now 
+it does only minimal installation; it is mainly designed to provide a 
+standard way of getting Standard ML code that understands where other 
+Standard ML code might be found on the filesystem.</p>
+
+<h2>Installation</h2>
+
+<p>Installation takes five steps, and the first and last two steps are 
+optional.</p>
+
+<p><strong>Step 1: Pick a <code>SMACKAGE_HOME</code> directory (optional).</strong></p>
+
+<p>The <code>$SMACKAGE_HOME</code> directory is where Smackage will put all of its files. 
+This will be <code>~/.smackage</code> by default if you don't do anything; see the 
+section "The $SMACKAGE_HOME directory" towards the bottom if you'd like 
+Smackage to put its files somewhere else.</p>
+
+<p><strong>Step 2: Set up your SML compilers to use Smackage.</strong></p>
+
+<p>You have to configure your SML compilers to find the code that Smackage 
+will put on your system. This is a bit system-dependent; see the section 
+"Setting up your SML path map" below for details.</p>
+
+<p><strong>Step 3: Download.</strong></p>
+
+<p>Finally, you can actually build Smackage with the following commands; the 
+first <code>git clone...</code> command is just one of the ways you can get smackage
+onto your hard drive; an alternative would be to download one of the
+<a href="https://github.com/standardml/smackage/tags">tarred or zipped releases</a>. 
+Note: the directory (probably named <code>smackage</code>) that you put the initial 
+Smackage code into should <em>not</em> be the same as the <code>$SMACKAGE_HOME</code> 
+directory.</p>
+
+<pre><code>$ git clone git://github.com/standardml/smackage.git # or something
+$ cd smackage
+$ make mlton # (or `smlnj', or `win+smlnj' if you're in Cygwin)
+$ bin/smackage
+</code></pre>
+
+<p>Smackage now lives in the <code>bin</code> subdirectory of the current directory.</p>
+
+<p><strong>Step 4: Update your PATH (optional).</strong></p>
+
+<p>Smackage-aware applications have a makefile option <code>install</code> that places 
+a binary in <code>$SMACKAGE_HOME/bin</code> <em>IF</em> the makefile is invoked through 
+<code>smackage make</code>. If you want to use Smackage to install applications,
+you should add <code>$SMACKAGE_HOME/bin</code> to your <code>PATH</code> environment variable.</p>
+
+<p>(Remember: don't literally add <code>$SMACKAGE_HOME/bin</code>, replace 
+<code>$SMACKAGE_HOME</code> with the absolute path of whatever directory you picked
+in Step 1. So you'll really add something like 
+<code>/Users/myusername/.smackage/bin</code> to your path.)</p>
+
+<p><strong>Step 5: Bootstrap (optional).</strong></p>
+
+<p>Smackage is a smackage-aware application! If you added 
+<code>$SMACKAGE_HOME/bin</code> to your search path, then you can run the following:</p>
+
+<pre><code>$ bin/smackage refresh
+$ bin/smackage make smackage mlton # or smlnj, or win+smlnj
+$ bin/smackage make smackage install
+$ which smackage 
+</code></pre>
+
+<p>(Type <code>bin/smackage make smackage</code> to see all the possible installation 
+options: polyml, win+mlton, etc...)</p>
+
+<p>The last command, <code>which smackage</code>, should report that Smackage can be found
+at <code>$SMACKAGE_HOME/bin/smackage</code>. Now you've bootstrapped Smackage: you no 
+longer need the current directory where you downloaded Smackage, you just 
+need the <code>$SMACKAGE_HOME</code> directory.</p>
+
+<h3>Referring to Smackage packages</h3>
+
+<p>If you've performed all the steps described above, you can will be able to 
+refer to cmlib as <code>$SMACKAGE/cmlib/v1/cmlib.cm</code> (in SML/NJ .cm files) or as 
+<code>$(SMACKAGE)/cmlib/v1/cmlib.mlb</code> (in MLton .mlb files).</p>
+
+<p>You want to add <code>$SMACKAGE_HOME/bin</code> to your path if you want to use 
+applications compiled through smackage.</p>
+
+<h3>Building Smackage packages</h3>
+
+<p>Smackage doesn't have a uniform build process, at least not yet. Instead, we
+support a simple <code>smackage make</code> command. If you type 
+<code>smackage make package blah blah blah</code>, smackage will try to run 
+<code>make blah blah blah</code> in the directory where <code>package</code> lives. We suggest that
+if your tool compiles, you add a makefile option <code>install</code> that copies a 
+created binary to the directory <code>$(DESTDIR)/bin</code>, in the style
+described <a href="http://www.gnu.org/prep/standards/html_node/DESTDIR.html">here</a>. 
+For instance, the following commands get and install <a href="http://twelf.org">Twelf</a>.</p>
+
+<pre><code>$ smackage refresh
+$ smackage get twelf
+$ smackage make twelf smlnj # or mlton, ...
+$ smackage make twelf install
+</code></pre>
+
+<p>If <code>$SMACKAGE_HOME/bin</code> is on your search path, you can then refer to the
+<code>twelf-server</code> binary like this:</p>
+
+<pre><code>$ which twelf-server
+/Users/rjsimmon/.smackage/bin/twelf-server
+$ twelf-server
+Twelf 1.7.1+ (built 10/30/11 at 00:37:12 on concordia.wv.cc.cmu.edu)
+%% OK %%
+</code></pre>
+
+<h2>Setting up your SML path map</h2>
+
+<p>Smackage will live in a directory that we'll refer to
+as <code>$SMACKAGE_HOME</code> in this section. This directory is probably 
+<code>~/.smackage</code>, but see the section on <code>$SMACKAGE_HOME</code> below for more 
+information. Whenever you see the string <code>$SMACKAGE_HOME</code> in this system, you 
+should replace it with the appropriate absolute file path, for instance I 
+wouldn't actually write</p>
+
+<pre><code>SMACKAGE $SMACKAGE_HOME/lib
+</code></pre>
+
+<p>in a pathconfig file for Standard ML of New Jersey; instead, I'd write </p>
+
+<pre><code>SMACKAGE /Users/rjsimmon/.smackage/lib
+</code></pre>
+
+<p>Make sure you use an absolute path - starting with "/", or whatever your system
+uses to refer to the file system root.</p>
+
+<h3>Setting up SML/NJ (system-wide)</h3>
+
+<p>Find the file <code>lib/pathconfig</code> in the installation directory for SML/NJ, and 
+add the following line:</p>
+
+<pre><code>SMACKAGE $SMACKAGE_HOME/lib
+</code></pre>
+
+<h3>Setting up SML/NJ (user-only)</h3>
+
+<p>Create a file <code>~/.smlnj-pathconfig</code> containing the following line (or add
+the following line to <code>~/.smlnj-pathconfig</code> if it exists already):</p>
+
+<pre><code>SMACKAGE $SMACKAGE_HOME/lib
+</code></pre>
+
+<h3>Setting up MLton (system-wide)</h3>
+
+<p>Find the <a href="http://mlton.org/MLBasisPathMap">MLBasis Path Map</a>, stored
+in a file called <code>mlb-path-map</code>, usually somewhere like 
+<code>/usr/lib/mlton/mlb-path-map</code> or 
+<code>/usr/local/lib/mlton/mlb-path-map</code>, depending on your system. Add the line</p>
+
+<pre><code>SMACKAGE $SMACKAGE_HOME/lib
+</code></pre>
+
+<h3>Setting up MLton (user-only)</h3>
+
+<p>MLton allows mlb path variables to be set on the mlton command
+line. If you don't want to edit the global mlb-path-map file, you
+can pass the SMACKAGE path as a command line argument to mlton. Since
+doing this all the time is tedious and would break build scripts, you
+probably want to set up a wrapper script somewhere in your path that
+looks like:</p>
+
+<pre><code>#!/bin/sh
+$MLTON_PATH -mlb-path-var 'SMACKAGE $SMACKAGE_HOME/lib' "$@"
+</code></pre>
+
+<p>where <code>$MLTON_PATH</code> and <code>$SMACKAGE_HOME</code> are replaced with the appropriate
+paths. For example, on my system, I have a file /home/sully/bin/mlton
+that contains:</p>
+
+<pre><code>#!/bin/sh
+/usr/bin/mlton -mlb-path-var 'SMACKAGE /home/sully/.smackage/lib' "$@"
+</code></pre>
+
+<h2>The $SMACKAGE_HOME directory</h2>
+
+<p>Smackage has to figure out where it lives on the file system whenever it
+starts up; the installation instructions referred to the directory where
+smackage lives as <code>$SMACKAGE_HOME</code>. Smackage goes through the following process
+to try and determine <code>$SMACKAGE_HOME</code>:</p>
+
+<ol>
+<li>If the <code>SMACKAGE_HOME</code> environment variable is defined, then smackage will
+always use that as <code>$SMACKAGE_HOME</code>. If this directory does not 
+exist, smackage will try to create it. Otherwise,</li>
+<li>If <code>/usr/local/smackage</code> exists, smackage will use that as
+<code>$SMACKAGE_HOME</code>. Otherwise,</li>
+<li>If <code>/opt/smackage/</code> exists, smackage will use that as
+<code>$SMACKAGE_HOME</code>. Otherwise,</li>
+<li>As a last resort, smackage will try to use <code>~/.smackage</code>, where <code>~</code> is 
+defined by the <code>HOME</code> environment variable. If this directory does not 
+exist, smackage will try to create it. </li>
+</ol>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Smackage maintained by <a href="https://github.com/standardml">standardml</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
