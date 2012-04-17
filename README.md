@@ -1,11 +1,12 @@
 Smackage is a prototype package manager for Standard ML libraries. Right now 
-it does not do any installation, it just provides a standard way of getting
-Standard ML code that understands where other Standard ML code might be found
-on the filesystem.
+it does only minimal installation; it is mainly designed to provide a 
+standard way of getting Standard ML code that understands where other 
+Standard ML code might be found on the filesystem.
 
 Installation
 ------------
-Installation takes four steps, and the first and last steps are optional.
+Installation takes five steps, and the first and last two steps are 
+optional.
 
 **Step 1: Pick a `SMACKAGE_HOME` directory (optional).**
 
@@ -37,12 +38,22 @@ directory.
 
 Smackage now lives in the `bin` subdirectory of the current directory.
 
-**Step 4: Bootstrap (optional).**
+**Step 4: Update your PATH (optional).**
 
-Smackage-aware applications (including Smackage itself) have a makefile
-option `install` that places a binary in `$SMACKAGE_HOME/bin` *IF* the
-makefile is invoked through `smackage make`. If you add `$SMACKAGE_HOME/bin`
-to your search path, then you can run the following:
+Smackage-aware applications have a makefile option `install` that places 
+a binary in `$SMACKAGE_HOME/bin` *IF* the makefile is invoked through 
+`smackage make`. If you want to use Smackage to install applications,
+you should add `$SMACKAGE_HOME/bin` to your `PATH` environment variable.
+
+(Remember: don't literally add `$SMACKAGE_HOME/bin`, replace 
+`$SMACKAGE_HOME` with the absolute path of whatever directory you picked
+in Step 1. So you'll really add something like 
+`/Users/myusername/.smackage/bin` to your path.)
+
+**Step 5: Bootstrap (optional).**
+
+Smackage is a smackage-aware application! If you added 
+`$SMACKAGE_HOME/bin` to your search path, then you can run the following:
 
     $ bin/smackage refresh
     $ bin/smackage make smackage mlton # or smlnj, or win+smlnj
