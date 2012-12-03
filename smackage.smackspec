@@ -1,4 +1,4 @@
-provides: smackage 1.2.0
+provides: smackage 1.2.1
 description: Smackage, a simple Standard ML package manager
 maintainer: Gian Perrone <gdpe at itu dot dk>
 maintainer: Robert J. Simmons <robsimmons at gmail dot com>
