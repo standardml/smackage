@@ -201,6 +201,33 @@ struct
         ()
     end
 
+    (** Ouput a path for a given package, for integration with smbt.
+        It is important for smbt's purposes that indicative status
+        codes are returned, so we return OS.Process.success 
+        or OS.Process.failure here. **)
+    fun pathinfo pkg spec =
+    let
+        val ver = SemVer.constrFromString spec
+        val (spec, semver) = 
+          case SemVer.intelligentSelect (SOME ver)
+                  (SmackLib.versions (!Configure.smackHome) pkg) of
+                NONE => 
+                    raise SmackExn 
+                      ("No acceptable version of `" ^ pkg
+                      ^ (SemVer.constrToString ver)
+                      ^ "' around, try getting one with `smackage get'?")
+              | SOME (spec, semver) => (spec, semver)
+
+        val specStr = "v" ^ SemVer.toString semver
+
+        val path = (!Configure.smackHome // "lib" // pkg // specStr)
+
+    in
+        if OS.FileSys.access (path, []) then 
+            (print (path ^ "\n"); OS.Process.success)
+        else
+            (print ("Smackage: No acceptable version of `" ^ pkg ^ "\n"); OS.Process.failure)
+    end
 
     fun update () = 
     let 
@@ -381,6 +408,7 @@ struct
        \\tlist\t\t\t\tList installed packages\n\
        \\tmake <name> [version] [args...]\tRuns `make [args ...]' in the\n\
        \\t\t\t\t\tspecified package's directory\n\
+       \\tpathinfo <name> <version>\tOutputs <name>'s filesystem path\n\
        \\trefresh\t\t\t\tRefresh the package index\n\
        \\tsearch <name>\t\t\tFind an appropriate package\n\
        \\tsource <name> <protocol> <url>\tAdd a smackage source to sources.local\n\
@@ -458,6 +486,10 @@ struct
            | ["list"] => (listInstalled(); OS.Process.success)
            | ("list" :: _) =>
                 raise ArgsError ("list", "does not expect arguments")
+
+           | ["pathinfo"] => 
+                raise ArgsError ("pathinfo", "requires two arguments")
+           | ["pathinfo",pkg,ver] => pathinfo pkg ver
 
            | ["make"] => raise ArgsError ("make", "requires arguments")
            | ["make", pkg] => 
