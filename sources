@@ -13,7 +13,7 @@ preml git git://github.com/mortenbp/PreML.git
 qcheck git git://github.com/standardml/qcheck.git
 readline git git://github.com/standardml/readline.git
 smackage git git://github.com/standardml/smackage.git
-smbt git git@github.com:finrod/smbt.git
+smbt git git://github.com/finrod/smbt.git
 smlcgi git git://github.com/standardml/smlcgi.git
 smldoc git git://github.com/standardml/SMLDoc.git
 smlnj git git://github.com/standardml/smlnj-installer.git
