@@ -145,9 +145,9 @@ in a file called `mlb-path-map`, usually somewhere like
 
 ### Setting up MLton (user-only)
 
-MLton allows mlb path variables to be set on the mlton command
+MLton allows mlb path variables to be set on the `mlton` command
 line. If you don't want to edit the global mlb-path-map file, you
-can pass the SMACKAGE path as a command line argument to mlton. Since
+can pass the SMACKAGE path as a command line argument to `mlton`. Since
 doing this all the time is tedious and would break build scripts, you
 probably want to set up a wrapper script somewhere in your path that
 looks like:
@@ -156,7 +156,7 @@ looks like:
     $MLTON_PATH -mlb-path-var 'SMACKAGE $SMACKAGE_HOME/lib' "$@"
 
 where `$MLTON_PATH` and `$SMACKAGE_HOME` are replaced with the appropriate
-paths. For example, on my system, I have a file /home/sully/bin/mlton
+paths. For example, on my system, I have a file `/home/sully/bin/mlton`
 that contains:
 
     #!/bin/sh
@@ -170,17 +170,17 @@ that contains:
 MLton. The only limitation is that MLKit and SMLtoJs do not support
 export filtering through the use of explicit MLB module bindings. 
 
-To allow for MLKit or SMLtoJs to find a definition for the $SMACKAGE
+To allow for MLKit or SMLtoJs to find a definition for the `$SMACKAGE`
 MLB path variable, add a line to the appropriate mlb-path-map file
-found in ~/.mlkit/, ~/.smltojs/, /usr/local/mlkit/, or
-/usr/local/smltojs:
+found in `~/.mlkit/`, `~/.smltojs/`, `/usr/local/mlkit/`, or
+`/usr/local/smltojs`:
 
     SMACKAGE $SMACKAGE_HOME/lib
 
 Be aware that when MLKit (or SMLtoJs) is compiling a package, it will
-write files within MLB/ subfolders of the package's folder. This
+write files within `MLB/` subfolders of the package's folder. This
 behavior may cause problems if you don't have write access to the
-$SMACKAGE_HOME/lib folder.
+`$SMACKAGE_HOME/lib` folder.
 
 The $SMACKAGE_HOME directory
 ----------------------------
