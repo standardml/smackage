@@ -166,7 +166,7 @@ that contains:
 
 [MLKit](http://melsman.github.io/mlkit) and
 [SMLtoJs](http://www.smlserver.org/smltojs) support
-[.mlb-files](http://www.elsman.com/mlkit/mlbasisfiles.html) much as
+[.mlb-files](http://www.elsman.com/mlkit/mlbasisfiles.html) much like
 MLton. The only limitation is that MLKit and SMLtoJs do not support
 export filtering through the use of explicit MLB module bindings. 
 
