@@ -56,12 +56,12 @@ Smackage is a smackage-aware application! If you added
 `$SMACKAGE_HOME/bin` to your search path, then you can run the following:
 
     $ bin/smackage refresh
-    $ bin/smackage make smackage mlton # or smlnj, or win+smlnj
+    $ bin/smackage make smackage mlton # or smlnj, or win+smlnj, etc
     $ bin/smackage make smackage install
     $ which smackage 
 
 (Type `bin/smackage make smackage` to see all the possible installation 
-options: polyml, win+mlton, etc...)
+options: polyml, win+mlton, mlkit, etc...)
 
 The last command, `which smackage`, should report that Smackage can be found
 at `$SMACKAGE_HOME/bin/smackage`. Now you've bootstrapped Smackage: you no 
