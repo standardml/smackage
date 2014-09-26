@@ -146,7 +146,7 @@ in a file called `mlb-path-map`, usually somewhere like
 ### Setting up MLton (user-only)
 
 MLton allows mlb path variables to be set on the `mlton` command
-line. If you don't want to edit the global mlb-path-map file, you
+line. If you don't want to edit the global `mlb-path-map` file, you
 can pass the SMACKAGE path as a command line argument to `mlton`. Since
 doing this all the time is tedious and would break build scripts, you
 probably want to set up a wrapper script somewhere in your path that
@@ -171,7 +171,7 @@ MLton. The only limitation is that MLKit and SMLtoJs do not support
 export filtering through the use of explicit MLB module bindings. 
 
 To allow for MLKit or SMLtoJs to find a definition for the `$SMACKAGE`
-MLB path variable, add a line to the appropriate mlb-path-map file
+MLB path variable, add a line to the appropriate `mlb-path-map` file
 found in `~/.mlkit/`, `~/.smltojs/`, `/usr/local/mlkit/`, or
 `/usr/local/smltojs`:
 
