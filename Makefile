@@ -30,7 +30,7 @@ clean:
 
 smackage-install:
 	@echo "NOTICE: This is probably not the command you meant to run."
-	@echo "If you are invoking this makefile by through smackage by"
+	@echo "If you are invoking this makefile through smackage by"
 	@echo "running `smackage make smackage smackage-install', then in the"
 	@echo "future you should run `smackage make smackage install' instead."
 	@echo ""

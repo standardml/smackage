@@ -70,12 +70,12 @@ need the `$SMACKAGE_HOME` directory.
 
 ### Referring to Smackage packages
 
-If you've performed all the steps described above, you can will be able to 
+If you've performed all the steps described above, you will be able to 
 refer to cmlib as `$SMACKAGE/cmlib/v1/cmlib.cm` (in SML/NJ .cm files) or as 
-`$(SMACKAGE)/cmlib/v1/cmlib.mlb` (in MLton .mlb files).
+`$(SMACKAGE)/cmlib/v1/cmlib.mlb` (in .mlb files).
 
 You want to add `$SMACKAGE_HOME/bin` to your path if you want to use 
-applications compiled through smackage.
+applications compiled through Smackage.
 
 ### Building Smackage packages
 
@@ -83,8 +83,8 @@ Smackage doesn't have a uniform build process, at least not yet. Instead, we
 support a simple `smackage make` command. If you type 
 `smackage make package blah blah blah`, smackage will try to run 
 `make blah blah blah` in the directory where `package` lives. We suggest that
-if your tool compiles, you add a makefile option `install` that copies a 
-created binary to the directory `$(DESTDIR)/bin`, in the style
+if your tool compiles into binaries, say, you add a makefile option `install` that copies the 
+created binaries to the directory `$(DESTDIR)/bin`, in the style
 described [here](http://www.gnu.org/prep/standards/html_node/DESTDIR.html). 
 For instance, the following commands get and install [Twelf](http://twelf.org).
 
@@ -107,13 +107,13 @@ Setting up your SML path map
 Smackage will live in a directory that we'll refer to
 as `$SMACKAGE_HOME` in this section. This directory is probably 
 `~/.smackage`, but see the section on `$SMACKAGE_HOME` below for more 
-information. Whenever you see the string `$SMACKAGE_HOME` in this system, you 
+information. Whenever you see the string `$SMACKAGE_HOME` in the text below, you 
 should replace it with the appropriate absolute file path, for instance I 
 wouldn't actually write
 
     SMACKAGE $SMACKAGE_HOME/lib
 
-in a pathconfig file for Standard ML of New Jersey; instead, I'd write 
+in a pathconfig file for Standard ML of New Jersey; instead, I'd write
 
     SMACKAGE /Users/rjsimmon/.smackage/lib
 
@@ -145,9 +145,9 @@ in a file called `mlb-path-map`, usually somewhere like
 
 ### Setting up MLton (user-only)
 
-MLton allows mlb path variables to be set on the mlton command
-line. If you don't want to edit the global mlb-path-map file, you
-can pass the SMACKAGE path as a command line argument to mlton. Since
+MLton allows mlb path variables to be set on the `mlton` command
+line. If you don't want to edit the global `mlb-path-map` file, you
+can pass the SMACKAGE path as a command line argument to `mlton`. Since
 doing this all the time is tedious and would break build scripts, you
 probably want to set up a wrapper script somewhere in your path that
 looks like:
@@ -156,11 +156,31 @@ looks like:
     $MLTON_PATH -mlb-path-var 'SMACKAGE $SMACKAGE_HOME/lib' "$@"
 
 where `$MLTON_PATH` and `$SMACKAGE_HOME` are replaced with the appropriate
-paths. For example, on my system, I have a file /home/sully/bin/mlton
+paths. For example, on my system, I have a file `/home/sully/bin/mlton`
 that contains:
 
     #!/bin/sh
     /usr/bin/mlton -mlb-path-var 'SMACKAGE /home/sully/.smackage/lib' "$@"
+
+### Setting up MLKit or SMLtoJs
+
+[MLKit](http://melsman.github.io/mlkit) and
+[SMLtoJs](http://www.smlserver.org/smltojs) support
+[.mlb-files](http://www.elsman.com/mlkit/mlbasisfiles.html) much like
+MLton. The only limitation is that MLKit and SMLtoJs do not support
+export filtering through the use of explicit MLB module bindings. 
+
+To allow for MLKit or SMLtoJs to find a definition for the `$SMACKAGE`
+MLB path variable, add a line to the appropriate `mlb-path-map` file
+found in `~/.mlkit/`, `~/.smltojs/`, `/usr/local/mlkit/`, or
+`/usr/local/smltojs`:
+
+    SMACKAGE $SMACKAGE_HOME/lib
+
+Be aware that when MLKit (or SMLtoJs) is compiling a package, it will
+write files within `MLB/` subfolders of the package's folder. This
+behavior may cause problems if you don't have write access to the
+`$SMACKAGE_HOME/lib` folder.
 
 The $SMACKAGE_HOME directory
 ----------------------------

@@ -21,4 +21,5 @@ smlpeg git git://github.com/standardml/SMLPEG.git
 sml-json git git://github.com/standardml/SML-JSON.git
 tom7-lib git git://github.com/robsimmons/sml-lib.git
 twelf git git://github.com/standardml/twelf.git
+unicode git git://github.com/melsman/unicode.git
 uri git https://github.com/finrod/uri.git
