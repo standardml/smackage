@@ -28,7 +28,7 @@ struct
         val values = untilNone () 
         val _ = OS.FileSys.closeDir dh
     in
-        ListMergeSort.sort SemVer.<
+        InsertionSort.sort SemVer.compare
             (List.mapPartial 
                 (fn x => SOME (SemVer.fromString x) handle _ => NONE) values)
     end

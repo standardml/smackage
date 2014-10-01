@@ -2,7 +2,7 @@ BIN=bin
 
 all:
 	@echo "== Smackage Installation =="
-	@echo "Run 'make mlton', 'make smlnj' or 'make polyml' on Linux/Unix/OSX."
+	@echo "Run 'make mlton', 'make smlnj', 'make polyml', or 'make mlkit' on Linux/Unix/OSX."
 	@echo "Run 'make win+smlnj' or 'make win+mlton' on Windows."
 	@echo "In Smackage, then run 'make install' to install."
 	false
@@ -25,6 +25,9 @@ polyml:
 	polyml < src/poly_build.sml
 	gcc -o $(BIN)/smackage $(BIN)/polyml-smackage.o -lpolymain -lpolyml
 
+mlkit:
+	mlkit -o $(BIN)/smackage smack.mlb
+
 clean:
 	rm -f $(BIN)/smackage
 
@@ -46,4 +49,4 @@ install:
 	cp $(BIN)/smackage $(DESTDIR)/bin/smackage.new
 	mv $(DESTDIR)/bin/smackage.new $(DESTDIR)/bin/smackage
 
-.PHONY: clean mlton smlnj polyml
+.PHONY: clean mlton smlnj polyml mlkit
