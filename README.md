@@ -38,6 +38,12 @@ directory.
 
 Smackage now lives in the `bin` subdirectory of the current directory.
 
+To install smackage in $SMACKAGE_HOME,
+
+    $ DESTDIR=$SMACKAGE_HOME make install
+
+Now you can proceed to update your path and use smackage without having the build repository available.
+
 **Step 4: Update your PATH (optional).**
 
 Smackage-aware applications have a makefile option `install` that places 
