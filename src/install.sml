@@ -84,7 +84,6 @@ struct
                  $(LIB) -> smackage library path?
                  etc etc.
               *)
-              val () = List.app print cmd
               val cmd' = String.concat cmd
               val _ = print ("NOTICE: selected platform `" ^ platform ^ "'\n")
               val _ = print (key ^ ": " ^ cmd' ^ "\n")
