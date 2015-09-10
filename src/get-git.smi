@@ -1,0 +1,13 @@
+_require "basis.smi"
+_require "semver.smi"
+_require "fsutil.smi"
+
+structure GetGit =
+struct
+    val systemSuccess: string -> unit
+    val poll: string -> (string * SemVer.semver) list
+    val chdirSuccess: string -> unit
+    val download: string -> unit
+    val get:string -> string -> string -> SemVer.semver -> unit
+end
+

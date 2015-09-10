@@ -1,0 +1,21 @@
+_require "basis.smi"
+_require "conductor.sig"
+_require "protocol.smi"
+_require "semver.smi"
+_require "get-git.smi"
+_require "spec.smi"
+
+structure Conductor =
+struct
+   (* get smackagePath packageName ver prot 
+    *    Makes semantic version ver available within
+    *    the package directory ($smackagePath)/lib/($packageName)/v($ver).
+    *    It assumes this directory exists. *)
+   val get: string -> string -> SemVer.semver -> Protocol.protocol -> unit
+
+   (* poll name prot
+    *    Query the remote store for which tags are available. *)
+   val poll: string -> Protocol.protocol -> Spec.spec list
+end
+
+

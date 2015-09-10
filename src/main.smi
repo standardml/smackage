@@ -1,0 +1,20 @@
+_require "basis.smi"
+_require "spec.smi"
+_require "protocol.smi"
+_require "version.smi"
+_require "semver.smi"
+_require "fsutil.smi"
+_require "version-index.smi"
+_require "smacklib.smi"
+_require "conductor.smi"
+_require "smackage-path.smi"
+_require "configure.smi"
+
+structure Smack =
+struct
+    exception SmackExn of string
+    exception ArgsError of string * string
+    val main: string * string list -> int
+end
+
+

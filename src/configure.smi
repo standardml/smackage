@@ -1,0 +1,21 @@
+_require "basis.smi"
+_require "fsutil.smi"
+_require "version-index.smi"
+
+structure Configure =
+struct
+   val smackHome: string ref
+
+   val smackSources: string list ref
+
+   val platform : string ref
+
+   val compilers : string list ref
+
+   val initSmackHome: unit -> unit
+   val initFile: string -> string -> unit
+   val initDir: string -> unit
+   val readConfigFile: unit -> unit
+   val guessPlatform: unit -> string
+   val init: unit -> unit
+end

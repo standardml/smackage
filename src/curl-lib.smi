@@ -1,0 +1,15 @@
+_require "basis.smi"
+_require "http-downloader.sig"
+_require "fsutil.smi"
+
+structure CurlDownloader =
+struct
+  exception HttpException of string
+  type url = string
+  type filename = string
+
+  val retrieve : url -> filename -> unit
+  val retrieveLines : url -> string list
+  val retrieveCleanLines : url -> string list
+end
+

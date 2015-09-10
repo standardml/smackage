@@ -1,4 +1,12 @@
 BIN=bin
+MODULES_ = $(wildcard src/*.smi)  $(wildcard util/*.smi)
+MODULES  = $(MODULES_:.smi=.sml)
+SMLSHARP = smlsharp
+SMLSHARP_CFLAGS = -O2
+SMLSHARP_LDFLAGS =
+TARGET=$(BIN)/smackage
+sources := $(MODULES)
+objects := $(sources:.sml=.o)
 
 all:
 	@echo "== Smackage Installation =="
@@ -28,8 +36,17 @@ polyml:
 mlkit:
 	mlkit -o $(BIN)/smackage smack.mlb
 
+smlsharp: $(TARGET)
+
+$(TARGET): $(objects)
+	$(SMLSHARP) $(SMLSHARP_LDFLAGS) $(SMLSHARP_FLAGS) -o $@ src/go.smi
+
+%.o: %.sml
+	$(SMLSHARP) $(SMLSHARP_CFLAGS) $(SMLSHARP_FLAGS) -c -o $@ $<
+
 clean:
 	rm -f $(BIN)/smackage
+	rm -f $(objects)
 
 smackage-install:
 	@echo "NOTICE: This is probably not the command you meant to run."
