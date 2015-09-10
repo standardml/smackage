@@ -1,5 +1,23 @@
-provides: smackage 1.3.0
+provides: smackage 1.4.0
 description: Smackage, a simple Standard ML package manager
 maintainer: Gian Perrone <gian dot perrone at gmail dot com>
 maintainer: Robert J. Simmons <robsimmons at gmail dot com>
 maintainer: Michael Sullivan 
+keywords: package manager
+bug-url: https://github.com/standardml/smackage/issues
+platform: mlton
+   build: make mlton
+   install: mv bin/smackage ../../../bin/smackage
+platform: win+smlnj
+   build: make win+smlnj
+   install: mv bin/smackage ../../../bin/smackage
+platform: smlnj
+   build: make smlnj
+   install: mv bin/smackage ../../../bin/smackage
+platform: smlsharp
+   build: make smlsharp
+   install: mv bin/smackage ../../../bin/smackage
+platform: polyml
+   build: make polyml
+   install: mv bin/smackage ../../../bin/smackage
+   
