@@ -84,10 +84,10 @@ struct
                  $(LIB) -> smackage library path?
                  etc etc.
               *)
-              val cmd' = cmd
-
+              val () = List.app print cmd
+              val cmd' = String.concat cmd
               val _ = print ("NOTICE: selected platform `" ^ platform ^ "'\n")
-              val _ = print (key ^ ": " ^ cmd ^ "\n")
+              val _ = print (key ^ ": " ^ cmd' ^ "\n")
           in
               if OS.Process.isSuccess (OS.Process.system cmd') then ()
               else raise InstallError ("Hook `"^key^"' failed.")
