@@ -1,0 +1,12 @@
+_require "basis.smi"
+
+structure Protocol = 
+struct
+   datatype protocol = Git of { uri: string }
+   type t = protocol
+
+   val toString: t -> string
+   val fromString: string -> t
+   val compare: t * t -> General.order
+end
+

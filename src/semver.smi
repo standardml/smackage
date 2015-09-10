@@ -1,0 +1,85 @@
+_require "basis.smi"
+
+(* signature SEMVER = *)
+(* sig *)
+(*     eqtype semver     (* v0.2.4beta, v1.2.3, etc... *) *)
+(*     type t = semver *)
+(*     type constraint (* v1, v1.2, v2.3.6, v3.1.6, etc... *) *)
+
+(*     exception InvalidVersion *)
+
+(*     val constrFromString : string -> constraint *)
+(*     val constrToString : constraint -> string *)
+(*     val compareConstr : constraint * constraint -> order *)
+
+(*     val fromString : string -> semver *)
+(*     val major : semver -> constraint *)
+(*     val minor : semver -> constraint *)
+(*     val exact : semver -> constraint *)
+(*     val toString : semver -> string *)
+(*     val eq : semver * semver -> bool *)
+(*     val compare : semver * semver -> order *)
+(*     val satisfies : constraint -> semver -> bool *)
+(*     val < : semver * semver -> bool *)
+(*     val <= : semver * semver -> bool *)
+(*     val >= : semver * semver -> bool *)
+(*     val > : semver * semver -> bool *)
+(*     val allPaths : semver -> string list *)
+
+(*     (* intelligentSelect is a way of resolving a partially-specified semantic *)
+(*      * version which makes sense to Rob at the time. *)
+(*      * *)
+(*      * It will prefer tags with special versions over tags with  *)
+(*      * no versions (so `intelligentSelect NONE [ v2.0.0beta, v1.9.3 ]' will  *)
+(*      * return `SOME (v1.9.3, "1")') but will prefer nothing to something (so  *)
+(*      * `intelligentSelect (SOME v2) [ 2.0.0beta, 1.9.3 ]' will return  *)
+(*      * `SOME (2.0.0beta, 2)') *)
+(*      * *)
+(*      * The returned constraint is equal to the given constraint if an initial *)
+(*      * constraint was given, and is the major version of the returned semvar *)
+(*      * if no initial constraint was given. *) *)
+(*     val intelligentSelect : *)
+(*        constraint option -> semver list -> (constraint * semver) option *)
+(* end *)
+
+structure SemVer =
+struct
+    type semver(=boxed)     (* v0.2.4beta, v1.2.3, etc... *)
+    type t = semver
+    type constraint(=boxed) (* v1, v1.2, v2.3.6, v3.1.6, etc... *)
+
+    exception InvalidVersion
+
+    val constrFromString : string -> constraint
+    val constrToString : constraint -> string
+    val compareConstr : constraint * constraint -> order
+
+    val fromString : string -> semver
+    val major : semver -> constraint
+    val minor : semver -> constraint
+    val exact : semver -> constraint
+    val toString : semver -> string
+    val eq : semver * semver -> bool
+    val compare : semver * semver -> order
+    val satisfies : constraint -> semver -> bool
+    val < : semver * semver -> bool
+    val <= : semver * semver -> bool
+    val >= : semver * semver -> bool
+    val > : semver * semver -> bool
+    val allPaths : semver -> string list
+
+    (* intelligentSelect is a way of resolving a partially-specified semantic
+     * version which makes sense to Rob at the time.
+     *
+     * It will prefer tags with special versions over tags with 
+     * no versions (so `intelligentSelect NONE [ v2.0.0beta, v1.9.3 ]' will 
+     * return `SOME (v1.9.3, "1")') but will prefer nothing to something (so 
+     * `intelligentSelect (SOME v2) [ 2.0.0beta, 1.9.3 ]' will return 
+     * `SOME (2.0.0beta, 2)')
+     *
+     * The returned constraint is equal to the given constraint if an initial
+     * constraint was given, and is the major version of the returned semvar
+     * if no initial constraint was given. *)
+    val intelligentSelect :
+       constraint option -> semver list -> (constraint * semver) option
+end

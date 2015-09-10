@@ -1,0 +1,35 @@
+_require "basis.smi"
+_require "semver.smi"
+_require "protocol.smi"
+_require "spec.smi"
+_require "smackage-path.smi"
+_require "conductor.smi"
+
+structure SmackLib =
+struct
+    (** Ensure that a package is present in the library; returns true if it
+     ** was already there *)
+    val download : string -> string * SemVer.semver * Protocol.protocol -> bool
+
+    (** Checks for a package's existance without modifying anything. *)
+    val exists : string -> string * SemVer.semver -> bool
+
+(*
+    (** Build a previously downloaded package by invoking a command
+        specified as 'build:' in the spec file. *)
+    val build : string -> (string * string list) -> 
+                        (string * SemVer.semver) -> unit;
+
+    (** Install a previously downloaded package by invoking a command
+        specified as 'install:' in the spec file. *)
+    val install : string -> (string * string list) -> 
+                        (string * SemVer.semver) -> unit;
+*)
+
+    (** Returns a list of installed versions *)
+    (* XXX should probably be sorted, relies on the filesystem for this now *)
+    val versions : string -> string -> SemVer.semver list
+
+    (** Returns the smackspec for a particular smackage package *)
+    val info : string -> string * SemVer.semver -> Spec.spec
+end

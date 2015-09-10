@@ -1,0 +1,30 @@
+_require "basis.smi"
+_require "protocol.smi"
+_require "semver.smi"
+_require "spec.smi"
+_require "fsutil.smi"
+
+structure VersionIndex = 
+struct
+   (* Initialization, expects the value of $SMACKAGE_HOME, where the
+    * file versions.smackspec already exists. *)
+   val init: string -> unit
+
+   (* Do we know anything about this package? *)
+   val isKnown: string -> bool
+
+   (* How do we obtain this (version of this) package? *)
+   val getProtocol: string -> SemVer.semver -> Protocol.protocol option
+ 
+   (* Query for versions of packages (straightforwardly and heuristicly) *)
+   val getAll:
+      string -> SemVer.constraint option -> SemVer.semver list
+   val getLatest: 
+      string -> SemVer.constraint option -> SemVer.constraint * SemVer.semver
+   val getBest: 
+      string -> SemVer.constraint option -> SemVer.constraint * SemVer.semver
+
+   (* Rough search for a package name *)
+   val search : string -> (string * Protocol.protocol SemVerDict.dict) list
+end
+

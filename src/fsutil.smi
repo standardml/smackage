@@ -1,0 +1,20 @@
+_require "basis.smi"
+structure FSUtil = 
+struct
+   (* Write a series of lines to a file. Adds a newline to every string. *)
+   val putLines: string -> string list -> unit
+
+   (* ...Lines: Get the raw list of lines. *)
+   (* ...CleanLines: Also trim leading whitespace, newlines, #comments. *)
+   (* ...Stanzas: Also split up into empty-line separated segments. *)
+
+   (* Read from a TextIO stream. *)
+   val getLines: TextIO.instream -> string list
+   val getCleanLines: TextIO.instream -> string list
+   val getStanzas: TextIO.instream -> string list list
+
+   (* Read from a system call. *)
+   val systemLines: string -> string list
+   val systemCleanLines: string -> string list
+   val systemStanzas: string -> string list list
+end

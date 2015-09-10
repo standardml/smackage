@@ -1,0 +1,8 @@
+_require "basis.smi"
+structure Symlink =
+struct
+  (* This scares me a lot. *)
+val remove: string -> unit
+val copyDir: string -> string -> unit
+val replaceOrCreateSymlink: string -> string -> unit
+end

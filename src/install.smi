@@ -1,0 +1,12 @@
+_require "basis.smi"
+_require "spec.smi"
+
+structure Install =
+struct
+    exception InstallError of string
+
+    (* These will fail silently if the package is not buildable
+       or not installable, so it is safe to always call them.  *)
+    val build : (string * string list) -> Spec.spec -> unit
+    val install : (string * string list) -> Spec.spec -> unit
+end

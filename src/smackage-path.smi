@@ -1,0 +1,16 @@
+_require "basis.smi"
+_require "semver.smi"
+_require "spec.smi"
+_require "../util/sort.smi"
+_require "bullshit-symlink.smi"
+
+structure SmackagePath =
+struct
+    exception Metadata of string
+    val installedVersions: string -> string -> SemVer.t list
+    val installedSatisfying: string -> string -> SemVer.constraint -> SemVer.t list
+    val packageMetadata: string -> string * SemVer.t -> Spec.spec
+    val createPackagePaths: string -> string * SemVer.t -> unit
+    val createVersionLinks: string -> string * SemVer.t -> string list
+end
+

@@ -115,7 +115,7 @@ struct
             OS.Path.joinDirFile {dir = pkg, file = x}) 
                 (SemVer.allPaths ver)
         val existing = 
-            List.filter (fn x => x <> ver) (installedVersions smackage_root pkg)
+            List.filter (fn x => not (SemVer.eq(x, ver))) (installedVersions smackage_root pkg)
 
         val majorPrefix = SemVer.constrToString (SemVer.major ver)
         val majors = 

@@ -3,3 +3,4 @@
 /smack
 /bin/smackage
 /bin/.heap*
+*.o
