@@ -70,6 +70,7 @@ smackage-install:
 	mv ../../../bin/smackage.new ../../../bin/smackage
 
 install:
+	mkdir -p $(DESTDIR)/bin
 	rm -f $(DESTDIR)/bin/smackage.new
 	cp $(BIN)/smackage $(DESTDIR)/bin/smackage.new
 	mv $(DESTDIR)/bin/smackage.new $(DESTDIR)/bin/smackage
