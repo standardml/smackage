@@ -5,8 +5,8 @@ MLTON=mlton
 
 SMLNJ=sml
 
-POLYML=polyml
-POLYML_LDFLAGS= -lpolymain -lpolyml
+POLYML=poly
+POLYML_LDFLAGS= -lpolymain -lpolyml -lgmp -lstdc++ -lm -pthread -ldl
 
 MLKIT=mlkit
 
