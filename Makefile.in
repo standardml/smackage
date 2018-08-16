@@ -5,8 +5,8 @@ MLTON=mlton
 
 SMLNJ=sml
 
-POLYML=poly
-POLYML_LDFLAGS= -lpolymain -lpolyml -lgmp -lstdc++ -lm -pthread -ldl
+POLYML=@POLYML@
+POLYML_LDFLAGS = $(shell pkg-config --libs polyml)
 
 MLKIT=mlkit
 
