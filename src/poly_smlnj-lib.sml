@@ -6,6 +6,11 @@ structure Unsafe = struct
           structure CharVector = CharVector
           structure Array = Array
 	  structure Vector = Vector
+	  structure Word8Array = 
+	  struct
+	       open Word8Array
+	       fun create length = array(length, 0w0)
+	  end
       end;
 local
 val root = "/usr/local/lib/mlton/sml"
