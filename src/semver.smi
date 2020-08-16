@@ -71,10 +71,10 @@ struct
     (* intelligentSelect is a way of resolving a partially-specified semantic
      * version which makes sense to Rob at the time.
      *
-     * It will prefer tags with special versions over tags with 
-     * no versions (so `intelligentSelect NONE [ v2.0.0beta, v1.9.3 ]' will 
-     * return `SOME (v1.9.3, "1")') but will prefer nothing to something (so 
-     * `intelligentSelect (SOME v2) [ 2.0.0beta, 1.9.3 ]' will return 
+     * It will prefer tags with special versions over tags with
+     * no versions (so `intelligentSelect NONE [ v2.0.0beta, v1.9.3 ]' will
+     * return `SOME (v1.9.3, "1")') but will prefer nothing to something (so
+     * `intelligentSelect (SOME v2) [ 2.0.0beta, 1.9.3 ]' will return
      * `SOME (2.0.0beta, 2)')
      *
      * The returned constraint is equal to the given constraint if an initial

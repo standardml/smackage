@@ -14,11 +14,11 @@ struct
       then ()
       else raise HttpException "download fail (retrieve)"
 
-  fun retrieveLines url = 
+  fun retrieveLines url =
      FSUtil.systemLines ("curl -s " ^ url)
      handle _ => raise HttpException "download fail (retrieveText)"
 
-  fun retrieveCleanLines url = 
+  fun retrieveCleanLines url =
      FSUtil.systemLines ("curl -s " ^ url)
      handle _ => raise HttpException "download fail (retrieveText)"
 end

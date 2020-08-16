@@ -3,7 +3,7 @@
 
 signature CONDUCTOR =
 sig
-   (* get smackagePath packageName ver prot 
+   (* get smackagePath packageName ver prot
     *    Makes semantic version ver available within
     *    the package directory ($smackagePath)/lib/($packageName)/v($ver).
     *    It assumes this directory exists. *)

@@ -16,17 +16,17 @@ sig
    val systemLines: string -> string list
    val systemCleanLines: string -> string list
    val systemStanzas: string -> string list list
-end = 
+end =
 struct
-   fun putLines fileName lines = 
-   let 
+   fun putLines fileName lines =
+   let
       val file = TextIO.openOut fileName
       fun loop lines =
-         case lines of 
+         case lines of
             [] => TextIO.closeOut file
-          | line :: lines => 
-               (TextIO.output (file, line ^ "\n"); loop lines) 
-   in 
+          | line :: lines =>
+               (TextIO.output (file, line ^ "\n"); loop lines)
+   in
       loop lines
    handle exn => (TextIO.closeOut file handle _ => (); raise exn)
    end
@@ -45,16 +45,16 @@ struct
        String.implode (trimEnd (trimStart (String.explode s)) [])
    end
 
-   fun getLines' trimmer splitter file = 
-   let 
-      fun loop accum stanzas = 
-         case TextIO.inputLine file of 
-            NONE => 
+   fun getLines' trimmer splitter file =
+   let
+      fun loop accum stanzas =
+         case TextIO.inputLine file of
+            NONE =>
                if null accum
                then (rev stanzas before TextIO.closeIn file)
                else (rev (rev accum :: stanzas) before TextIO.closeIn file)
-          | SOME s => 
-               if splitter s 
+          | SOME s =>
+               if splitter s
                then (if null accum
                      then loop accum stanzas
                      else loop [] (rev accum :: stanzas))
@@ -72,15 +72,15 @@ struct
    val getStanzas = getLines' trim (null o (String.tokens Char.isSpace))
 
    fun systemLines' reader cmd =
-   let 
+   let
       val tmpName = OS.FileSys.tmpName ()
       val cmd' = (cmd ^ " > " ^ tmpName)
       (* val () = print ("Running: `" ^ cmd' ^ "`\n") *)
-      val () = 
+      val () =
          if OS.Process.isSuccess (OS.Process.system cmd')
          then () else raise Fail ("System call failed: `" ^ cmd' ^ "'")
       val cleanup = fn () => OS.FileSys.remove tmpName
-   in         
+   in
       (reader (TextIO.openIn tmpName) before cleanup ())
       handle exn => (cleanup () handle _ => (); raise exn)
    end

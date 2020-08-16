@@ -30,11 +30,11 @@ struct
     let
 
         val f = String.fields (fn #"+" => true | _ => false) platform
-        val (os,comp) = 
+        val (os,comp) =
             case f of ["*"] => (NONE,NONE)
                     | [c] => (NONE,SOME c)
                     | [os,c] => (SOME os, SOME c)
-                    | _ => raise 
+                    | _ => raise
                         Fail ("Invalid platform spec: `" ^ platform ^ "'")
         val os_supp =  os = NONE orelse valOf os = hostos
         val comp_supp = comp = NONE orelse valOf comp = compiler
@@ -43,22 +43,22 @@ struct
     end
 
     (* Which platforms can we use to install/build this package? *)
-    fun selectPlatforms (hostos,compilers) spec = 
+    fun selectPlatforms (hostos,compilers) spec =
     let
-        val platforms = 
-            List.foldr (op @) [] 
+        val platforms =
+            List.foldr (op @) []
                 (List.map (fn x => List.filter (fn (y,_) => isSupported hostos y x)
                                 (Spec.platforms spec))
                                     (compilers))
 
-        val _ = 
-            if length (Spec.platforms spec) > 0 andalso length platforms = 0 
+        val _ =
+            if length (Spec.platforms spec) > 0 andalso length platforms = 0
             then
-                TextIO.output (TextIO.stdErr, 
+                TextIO.output (TextIO.stdErr,
                     "WARNING: the package you are installing does not have " ^
                     "an appropriate `platform:' section for your current " ^
                     "compiler/platform combination. Consider adjusting your " ^
-                    "configuration settings in $SMACKAGE_HOME/config.\n" ^ 
+                    "configuration settings in $SMACKAGE_HOME/config.\n" ^
                     "WARNING: Package will be downloaded but not installed\n")
             else ()
     in
@@ -66,13 +66,13 @@ struct
     end
 
     (* We must already be in the working directory of the package version.
-        
+
         Fails silently if this is not a platform with 'key:'.
     *)
     fun runHook key (hostos,compilers) spec =
         case selectPlatforms (hostos,compilers) spec of
             [] => ()
-          | ((platform,platSpec)::_) => 
+          | ((platform,platSpec)::_) =>
           let
               val cmd = Spec.key platSpec key
               (* TODO: Do some simple macro expansion here.

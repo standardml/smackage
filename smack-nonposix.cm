@@ -5,6 +5,6 @@ Group is
 
    src/bullshit-symlink.sml
    src/smackage-path.sml
-   src/smacklib.sml     
+   src/smacklib.sml
    src/version.sml
    src/main.sml

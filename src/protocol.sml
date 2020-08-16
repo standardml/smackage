@@ -1,11 +1,11 @@
 
-structure Protocol = 
+structure Protocol =
 struct
    datatype protocol = Git of { uri: string }
    type t = protocol
 
-   fun toString prot = 
-      case prot of 
+   fun toString prot =
+      case prot of
          Git { uri } => "git " ^ uri
 
    fun fromString s =
@@ -13,6 +13,6 @@ struct
          [ "git", s ] => Git { uri = s }
        | _ => raise Fail ("Unknown protocol: `" ^ s ^ "`")
 
-   fun compare (Git {uri}, Git {uri = uri'}) = String.compare (uri, uri') 
+   fun compare (Git {uri}, Git {uri = uri'}) = String.compare (uri, uri')
 end
 

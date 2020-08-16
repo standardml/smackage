@@ -1,6 +1,6 @@
 _require "basis.smi"
 
-structure Protocol = 
+structure Protocol =
 struct
    datatype protocol = Git of { uri: string }
    type t = protocol

@@ -4,7 +4,7 @@ struct
       let
           (* Delete the old link if it exists *)
           val e = OS.FileSys.isLink link handle _ => false
-          val _ = 
+          val _ =
               (if e then OS.FileSys.remove link else ())
               handle _ => ()
 
