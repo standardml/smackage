@@ -36,7 +36,7 @@ struct
 end
 structure SemConstrDict =
 struct
-      type key = SemVer.constraint 
+      type key = SemVer.constraint
       type 'a dict(=boxed)
 
       exception Absent
@@ -105,7 +105,7 @@ struct
      | Remote of Protocol.protocol
      | License of string
      | Platform of string
-     | Key of string * string 
+     | Key of string * string
 
    type spec = spec_entry list
 
@@ -120,10 +120,10 @@ struct
    val platforms: spec -> (string * spec) list
    val provides: spec -> string * SemVer.semver
    val remote: spec -> Protocol.protocol
-   val requires: 
+   val requires:
       spec -> (string * SemVer.constraint * SemVer.semver option) list
 
    (* Interprests a series of specs as a versions.smackspec file *)
-   val toVersionIndex: 
+   val toVersionIndex:
       spec list -> Protocol.protocol SemVerDict.dict StringDict.dict
 end

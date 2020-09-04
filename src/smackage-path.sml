@@ -1,4 +1,4 @@
-(** Deal with filesystem elements in a sensible way. 
+(** Deal with filesystem elements in a sensible way.
 
 FIXME: This is heavily dependent on symlinks working. Windows will need some
 deeper thought.
@@ -19,17 +19,17 @@ struct
         val pkgDir' = OS.Path.joinDirFile {dir = smackage_root, file = "lib"}
         val pkgDir = OS.Path.joinDirFile {dir = pkgDir', file = pkg}
         val dh = OS.FileSys.openDir pkgDir
-        fun untilNone () = 
+        fun untilNone () =
         let
             val v = OS.FileSys.readDir dh
         in
             if v = NONE then [] else (valOf v) :: untilNone ()
         end
-        val values = untilNone () 
+        val values = untilNone ()
         val _ = OS.FileSys.closeDir dh
     in
         InsertionSort.sort SemVer.compare
-            (List.mapPartial 
+            (List.mapPartial
                 (fn x => SOME (SemVer.fromString x) handle _ => NONE) values)
     end
 
@@ -47,10 +47,10 @@ struct
     let
         val pkgDir' = OS.Path.joinDirFile {dir = smackage_root, file = "lib"}
         val pkgDir'' = OS.Path.joinDirFile {dir = pkgDir', file = pkg}
-        val pkgDir = OS.Path.joinDirFile 
+        val pkgDir = OS.Path.joinDirFile
                             {dir = pkgDir'', file = "v" ^ SemVer.toString ver}
         val specFile = OS.Path.joinDirFile {dir=pkgDir,file=pkg ^ ".smackspec"}
- 
+
     in
         if not (OS.FileSys.access (specFile, []))
             then raise Metadata ("Spec file not found: " ^ specFile)  else
@@ -66,7 +66,7 @@ struct
 
         Instead, call createVersionLinks *after* you've checked out the
         source.  This will make non-posix platforms behave correctly.
-    
+
 
 
         This will leave the current working directory as the newly created
@@ -86,7 +86,7 @@ struct
         val _ = OS.FileSys.chDir pkgDir
 
         val versionDir = "v" ^ SemVer.toString ver
-        val _ = OS.FileSys.mkDir 
+        val _ = OS.FileSys.mkDir
             (OS.Path.joinDirFile {dir=pkgDir, file=versionDir}) handle _ => ()
 
         val _ = OS.FileSys.chDir versionDir
@@ -98,7 +98,7 @@ struct
 
        The question we face is whether the new package we are installing
        should replace some other as the target of a version symlink.
-        
+
        FIXME: There is very little error handling in here at the moment.
        This is somewhat intentional, as an exception anywhere should bail out
        the whole process.
@@ -111,23 +111,23 @@ struct
 
         val versionDir = "v" ^ SemVer.toString ver
 
-        val newPaths = map (fn x => 
-            OS.Path.joinDirFile {dir = pkg, file = x}) 
+        val newPaths = map (fn x =>
+            OS.Path.joinDirFile {dir = pkg, file = x})
                 (SemVer.allPaths ver)
-        val existing = 
+        val existing =
             List.filter (fn x => not (SemVer.eq(x, ver))) (installedVersions smackage_root pkg)
 
         val majorPrefix = SemVer.constrToString (SemVer.major ver)
-        val majors = 
-            List.filter 
-                (fn x => String.isPrefix majorPrefix (SemVer.toString x)) 
+        val majors =
+            List.filter
+                (fn x => String.isPrefix majorPrefix (SemVer.toString x))
                     existing
-        val symlinks = 
-            if length majors = 0 orelse SemVer.< (hd majors, ver) 
+        val symlinks =
+            if length majors = 0 orelse SemVer.< (hd majors, ver)
                 then ["v" ^ majorPrefix] else []
 
         val minorPrefix = SemVer.constrToString (SemVer.minor ver)
-        val minors = List.filter 
+        val minors = List.filter
             (fn x => String.isPrefix minorPrefix (SemVer.toString x)) existing
 
         val symlinks' = symlinks @

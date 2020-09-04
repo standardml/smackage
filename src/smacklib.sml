@@ -10,12 +10,12 @@ sig
 (*
     (** Build a previously downloaded package by invoking a command
         specified as 'build:' in the spec file. *)
-    val build : string -> (string * string list) -> 
+    val build : string -> (string * string list) ->
                         (string * SemVer.semver) -> unit;
 
     (** Install a previously downloaded package by invoking a command
         specified as 'install:' in the spec file. *)
-    val install : string -> (string * string list) -> 
+    val install : string -> (string * string list) ->
                         (string * SemVer.semver) -> unit;
 *)
 
@@ -32,18 +32,18 @@ struct
     fun // (dir, file) = OS.Path.joinDirFile { dir = dir, file = file }
     infix 5 //
 
-    fun exists smackage_root (pkg, ver) = 
+    fun exists smackage_root (pkg, ver) =
        let
           val pkgRoot = smackage_root // "lib" // pkg
           val verString = "v" ^ SemVer.toString ver
-       in 
+       in
           OS.FileSys.access (pkgRoot, [])
-          andalso 
+          andalso
           OS.FileSys.access (pkgRoot // verString, [])
        end
 
     fun download smackage_root (pkg, ver, prot) =
-       if exists smackage_root (pkg, ver) 
+       if exists smackage_root (pkg, ver)
        then true
        else ( SmackagePath.createPackagePaths smackage_root (pkg,ver)
             ; Conductor.get smackage_root pkg ver prot
@@ -76,29 +76,29 @@ struct
     fun uninstall smackage_root (pkg,ver) = raise Fail "Not implemented"
 *)
 
-    fun versions smackage_root pkg = 
+    fun versions smackage_root pkg =
        let
           val pkgRoot = smackage_root // "lib" // pkg
-          fun read dir accum = 
-             case OS.FileSys.readDir dir of 
+          fun read dir accum =
+             case OS.FileSys.readDir dir of
                 NONE => rev accum before OS.FileSys.closeDir dir
-              | SOME file => 
-                   if String.isPrefix "v" file 
+              | SOME file =>
+                   if String.isPrefix "v" file
                       andalso 3 = length (String.tokens (fn x => x = #".") file)
                    then read dir (SemVer.fromString file :: accum)
                    else read dir accum
-       in 
+       in
           if OS.FileSys.access (pkgRoot, [])
           then read (OS.FileSys.openDir pkgRoot) []
           else []
        end
-    
-    fun info smackage_root (pkg,ver) = 
-    let  
-       val file = 
+
+    fun info smackage_root (pkg,ver) =
+    let
+       val file =
           ( smackage_root
           // "lib"
-          // pkg 
+          // pkg
           // ("v" ^ SemVer.toString ver)
           // (pkg ^ ".smackspec"))
     in

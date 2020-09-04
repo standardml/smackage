@@ -71,7 +71,7 @@ functor ListDict (structure Key : sig type t val compare: t * t -> order end)
 
       fun find l key =
          (case l of
-             [] => 
+             [] =>
                 NONE
            | (key', x) :: rest =>
                 (case Key.compare (key, key') of
@@ -84,7 +84,7 @@ functor ListDict (structure Key : sig type t val compare: t * t -> order end)
 
       fun lookup l key =
          (case l of
-             [] => 
+             [] =>
                 raise Absent
            | (key', x) :: rest =>
                 (case Key.compare (key, key') of
@@ -114,7 +114,7 @@ functor ListDict (structure Key : sig type t val compare: t * t -> order end)
          (case (l1, l2) of
              ([], _) =>
                 l2
-           | (_, []) => 
+           | (_, []) =>
                 l1
            | ((entry1 as (key1, x1)) :: rest1, (entry2 as (key2, x2)) :: rest2) =>
                 (case Key.compare (key1, key2) of

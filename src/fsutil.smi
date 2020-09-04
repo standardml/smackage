@@ -1,5 +1,5 @@
 _require "basis.smi"
-structure FSUtil = 
+structure FSUtil =
 struct
    (* Write a series of lines to a file. Adds a newline to every string. *)
    val putLines: string -> string list -> unit

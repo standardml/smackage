@@ -4,15 +4,15 @@
 structure Symlink =
 struct
   (* This scares me a lot. *)
-  fun remove s = 
+  fun remove s =
       if not (OS.Process.isSuccess (OS.Process.system ("rm -rf " ^ s)))
       then raise Fail "removing old version directory failed" else ()
 
   fun copyDir dst src =
       let
-         val print = fn _ => () (* comment this to debug *) 
+         val print = fn _ => () (* comment this to debug *)
          val () = print ("Current directory: " ^ OS.FileSys.getDir () ^ "\n")
-         val line = "cp -r " ^ src ^ " " ^ dst 
+         val line = "cp -r " ^ src ^ " " ^ dst
          val () = print ("COPY: " ^ line ^ "\n")
       in
          if not (OS.Process.isSuccess (OS.Process.system line))

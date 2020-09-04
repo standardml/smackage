@@ -17,12 +17,12 @@ struct
 (*
     (** Build a previously downloaded package by invoking a command
         specified as 'build:' in the spec file. *)
-    val build : string -> (string * string list) -> 
+    val build : string -> (string * string list) ->
                         (string * SemVer.semver) -> unit;
 
     (** Install a previously downloaded package by invoking a command
         specified as 'install:' in the spec file. *)
-    val install : string -> (string * string list) -> 
+    val install : string -> (string * string list) ->
                         (string * SemVer.semver) -> unit;
 *)
 

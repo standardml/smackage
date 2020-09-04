@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # version.sh
-# 
+#
 # Generates src/version.sml and smackage.smackspec based on the current version
 # Usage: version.sh X.Y.Z
 # gdpe, Nov 2 2011

@@ -14,7 +14,7 @@
         remote: TYPE URL
         requires: PACKAGE_NAME PARTIAL_SEMVER [optional: (MINIMAL_SEMVER)]
         comment: ANY_STRING
-        maintainer: FULL_NAME <EMAIL_ADDRESS>               
+        maintainer: FULL_NAME <EMAIL_ADDRESS>
         keywords: KEYWORD_1 KEYWORD_2 KEYWORD_3
         upstream-version: VERSION
         upstream-url: URL
@@ -28,22 +28,22 @@
         uninstall: COMMAND
         documentation: COMMAND
 
-    See https://github.com/standardml/smackage/wiki/Smackspec for more 
-    information. Please note that the parser is rather lax at the moment; it 
-    will accept url values that aren't really URLs, etc. This will likely 
+    See https://github.com/standardml/smackage/wiki/Smackspec for more
+    information. Please note that the parser is rather lax at the moment; it
+    will accept url values that aren't really URLs, etc. This will likely
     change in the future.
 *)
 
 structure SemVerDict = ListDict (structure Key = SemVer)
-structure SemConstrDict = 
-   ListDict 
-      (structure Key = 
+structure SemConstrDict =
+   ListDict
+      (structure Key =
        struct
-          type t = SemVer.constraint 
+          type t = SemVer.constraint
           val compare = SemVer.compareConstr
        end)
 structure StringDict =
-   ListDict 
+   ListDict
       (structure Key = struct type t = string val compare = String.compare end)
 
 signature SPEC =
@@ -58,7 +58,7 @@ sig
      | Remote of Protocol.protocol
      | License of string
      | Platform of string
-     | Key of string * string 
+     | Key of string * string
 
    type spec = spec_entry list
 
@@ -73,11 +73,11 @@ sig
    val platforms: spec -> (string * spec) list
    val provides: spec -> string * SemVer.semver
    val remote: spec -> Protocol.protocol
-   val requires: 
+   val requires:
       spec -> (string * SemVer.constraint * SemVer.semver option) list
 
    (* Interprests a series of specs as a versions.smackspec file *)
-   val toVersionIndex: 
+   val toVersionIndex:
       spec list -> Protocol.protocol SemVerDict.dict StringDict.dict
 end
 
@@ -102,7 +102,7 @@ struct
    fun splitOnce delim s =
       case CharVector.findi (fn (_, c) => c = delim) s of
          NONE => (s, NONE)
-       | SOME (i, _) => 
+       | SOME (i, _) =>
             (String.extract (s,0,SOME i), SOME (String.extract (s,i+1,NONE)))
 
    fun parsePackage s =
@@ -114,23 +114,23 @@ struct
       case String.tokens Char.isSpace s of
          [pkg, con] => (pkg, SemVer.constrFromString con, NONE)
        | [pkg, con, min] =>
-            if #"(" = String.sub (min, 0) 
+            if #"(" = String.sub (min, 0)
                andalso #")" = String.sub (min, size min - 1)
             then ( pkg
                  , SemVer.constrFromString con
-                 , SOME (SemVer.fromString 
+                 , SOME (SemVer.fromString
                             (String.substring (min, 1, size min - 2))))
             else raise SpecError ("Invalid minimal version: `" ^ min ^ "'")
        | _ => raise SpecError ("Invalid 'requires:' content: `" ^ s ^ "'")
 
    fun parseLine "" = NONE
-     | parseLine line = 
+     | parseLine line =
        let
-          val (key, value) = 
-             case splitOnce #":" line of 
+          val (key, value) =
+             case splitOnce #":" line of
                 (key, SOME value) => (key, value)
               | _ => raise SpecError ("Malformed line in spec: `" ^ line ^ "'")
-          val () = 
+          val () =
              if CharVector.all (fn c => Char.isAlphaNum c orelse c = #"-") key
              then ()
              else raise SpecError ("Invalid key in spec: `"^key^"'")
@@ -149,10 +149,10 @@ struct
 
    val fromFile = parse o FSUtil.getCleanLines o TextIO.openIn
 
-   fun toString' (Provides (s,v)) = 
+   fun toString' (Provides (s,v)) =
           "provides: " ^ s ^ " " ^ SemVer.toString v
      | toString' (Description s) =
-          "description: " ^ s 
+          "description: " ^ s
      | toString' (Requires (p,v,min)) =
           ( "requires: " ^ p ^ " " ^ SemVer.constrToString v
           ^ (case min of NONE => "" | SOME v => "(" ^ SemVer.toString v ^ ")"))
@@ -172,8 +172,8 @@ struct
 
    fun key s key =
    let fun key' (key', v) = if key = key' then SOME v else NONE
-   in 
-      List.mapPartial (fn (Key kv) => key' kv | _ => NONE) s 
+   in
+      List.mapPartial (fn (Key kv) => key' kv | _ => NONE) s
    end
 
    fun provides s =
@@ -186,9 +186,9 @@ struct
      | platforms (Platform p :: t) =
        let
           fun loop [] s accum plats = rev ((s, rev accum) :: plats)
-            | loop (Platform p :: t) s accum plats = 
+            | loop (Platform p :: t) s accum plats =
                  loop t p [] ((s, rev accum) :: plats)
-            | loop (h :: t) s accum plats = 
+            | loop (h :: t) s accum plats =
                  loop t s (h :: accum) plats
        in
            loop t p [] []
@@ -201,20 +201,20 @@ struct
        | [ v ] => v
        | _ => raise SpecError "Multiple `remote:' lines in spec"
 
-   val requires = 
+   val requires =
       List.mapPartial (fn (Requires v) => SOME v | _ => NONE)
 
-   fun toVersionIndex (spec: spec list) = 
-   let 
+   fun toVersionIndex (spec: spec list) =
+   let
       fun folder (spec, dict) =
-      let 
-         val remote = remote spec 
-         val provides = 
+      let
+         val remote = remote spec
+         val provides =
             List.mapPartial (fn (Provides v) => SOME v | _ => NONE) spec
       in
          List.foldr
-            (fn ((pkg, semver), dict) => 
-                StringDict.insertMerge dict pkg 
+            (fn ((pkg, semver), dict) =>
+                StringDict.insertMerge dict pkg
                    (SemVerDict.singleton semver remote)
                    (fn dict => SemVerDict.insert dict semver remote))
             dict

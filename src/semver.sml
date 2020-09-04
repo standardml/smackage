@@ -27,10 +27,10 @@ sig
     (* intelligentSelect is a way of resolving a partially-specified semantic
      * version which makes sense to Rob at the time.
      *
-     * It will prefer tags with special versions over tags with 
-     * no versions (so `intelligentSelect NONE [ v2.0.0beta, v1.9.3 ]' will 
-     * return `SOME (v1.9.3, "1")') but will prefer nothing to something (so 
-     * `intelligentSelect (SOME v2) [ 2.0.0beta, 1.9.3 ]' will return 
+     * It will prefer tags with special versions over tags with
+     * no versions (so `intelligentSelect NONE [ v2.0.0beta, v1.9.3 ]' will
+     * return `SOME (v1.9.3, "1")') but will prefer nothing to something (so
+     * `intelligentSelect (SOME v2) [ 2.0.0beta, 1.9.3 ]' will return
      * `SOME (2.0.0beta, 2)')
      *
      * The returned constraint is equal to the given constraint if an initial
@@ -48,21 +48,21 @@ struct
 
     exception InvalidVersion
 
-    fun compareConstr ((maj1, min1, pat1, s1), (maj2, min2, pat2, s2)) = 
+    fun compareConstr ((maj1, min1, pat1, s1), (maj2, min2, pat2, s2)) =
        case (Int.compare (maj1, maj2), min1, min2) of
           (LESS, _, _) => LESS
         | (GREATER, _, _) => GREATER
         | (EQUAL, NONE, NONE) => EQUAL
         | (EQUAL, NONE, SOME _) => LESS
         | (EQUAL, SOME _, NONE) => GREATER
-        | (EQUAL, SOME min1, SOME min2) => 
+        | (EQUAL, SOME min1, SOME min2) =>
             (case (Int.compare (min1, min2), pat1, pat2) of
                 (LESS, _, _) => LESS
               | (GREATER, _, _) => GREATER
               | (EQUAL, NONE, NONE) => EQUAL
               | (EQUAL, NONE, SOME _) => LESS
               | (EQUAL, SOME _, NONE) => GREATER
-              | (EQUAL, SOME pat1, SOME pat2) => 
+              | (EQUAL, SOME pat1, SOME pat2) =>
                   (case (Int.compare (pat1, pat2), s1, s2) of
                       (LESS, _, _) => LESS
                     | (GREATER, _, _) => GREATER
@@ -83,31 +83,31 @@ struct
     let
         fun fail () = raise Fail ("`" ^ s ^ "` not a valid semantic version")
 
-        val s' = 
-           case String.tokens Char.isSpace s of 
-              [ s ] => 
-                 if String.sub (s,0) = #"v" 
+        val s' =
+           case String.tokens Char.isSpace s of
+              [ s ] =>
+                 if String.sub (s,0) = #"v"
                  then String.extract (s, 1, NONE)
                  else s
             | _ => fail ()
-            
+
         val f = String.fields (fn #"." => true | _ => false) s'
 
-        fun vtoi i = 
-            case Int.fromString i of 
+        fun vtoi i =
+            case Int.fromString i of
                NONE => fail ()
              | SOME v => v
     in
-        case f of 
+        case f of
            [ major ] => (vtoi major, NONE, NONE, NONE)
          | [ major, minor ] => (vtoi major, SOME (vtoi minor), NONE, NONE)
          | [ major, minor, patch ] =>
-           let 
+           let
               fun until [] = []
                 | until (h::t) = if Char.isDigit h then h :: until t else []
               val patchN = String.implode (until (String.explode patch))
-              val special = 
-                 if patch = patchN then NONE 
+              val special =
+                 if patch = patchN then NONE
                  else SOME (String.extract (patch, size patchN, NONE))
            in
               (vtoi major, SOME (vtoi minor), SOME (vtoi patchN), special)
@@ -117,15 +117,15 @@ struct
 
     fun constrFromString s = fromString' s
 
-    fun fromString s = 
+    fun fromString s =
        case fromString' s of
-          (major, SOME minor, SOME patch, special) => 
+          (major, SOME minor, SOME patch, special) =>
              (major, minor, patch, special)
         | _ => raise Fail ("`" ^ s ^ "` is an incomplete semantic version")
 
     val ts = Int.toString
 
-    fun toString (ma,mi,pa,s) = 
+    fun toString (ma,mi,pa,s) =
         ts ma ^ "." ^ ts mi ^ "." ^ ts pa ^
         (if s = NONE then "" else valOf s)
 
@@ -136,7 +136,7 @@ struct
       | constrToString (major, SOME minor, SOME patch, SOME special) =
            ts major ^ "." ^ ts minor ^ "." ^ ts patch ^ special
 
-    fun compare ((ma,mi,pa,st),(ma',mi',pa',st')) = 
+    fun compare ((ma,mi,pa,st),(ma',mi',pa',st')) =
         if ma < ma' then LESS else
         if ma > ma' then GREATER else
         if mi < mi' then LESS else
@@ -147,7 +147,7 @@ struct
             (NONE,NONE) => EQUAL
           | (SOME _,NONE) => LESS
           | (NONE,SOME _) => GREATER
-          | (SOME a, SOME b) => 
+          | (SOME a, SOME b) =>
                 if a = b then EQUAL else
                 if String.<(a,b) then LESS else GREATER)
 
@@ -164,13 +164,13 @@ struct
             (#1 ver = major)
        | (major, SOME minor, NONE, _) =>
             (#1 ver = major andalso #2 ver = minor)
-       | (major, SOME minor, SOME patch, NONE) => 
+       | (major, SOME minor, SOME patch, NONE) =>
             (#1 ver = major andalso #2 ver = minor andalso #3 ver = patch)
-       | (major, SOME minor, SOME patch, SOME special) => 
+       | (major, SOME minor, SOME patch, SOME special) =>
             (#1 ver = major
              andalso #2 ver = minor
              andalso #3 ver = patch
-             andalso isSome (#4 ver) 
+             andalso isSome (#4 ver)
              andalso String.isPrefix special (valOf (#4 ver)))
 
     (** Enumerate the various paths that this version could give rise to.
@@ -182,17 +182,17 @@ struct
          "v" ^ toString v]
 
 
-    fun intelligentSelect spec vers = 
+    fun intelligentSelect spec vers =
        let
           val satisfies =
-             case spec of 
+             case spec of
                 NONE => (fn _ => true)
               | SOME spec => satisfies spec
 
-          fun best NONE ver = 
+          fun best NONE ver =
               if satisfies ver then SOME ver else NONE
-            | best (SOME oldBest) ver = 
-              if satisfies ver 
+            | best (SOME oldBest) ver =
+              if satisfies ver
               then (case (#4 oldBest, #4 ver) of
                        (NONE, NONE) => SOME (max oldBest ver)
                      | (SOME _, SOME _) => SOME (max oldBest ver)
@@ -203,7 +203,7 @@ struct
           fun process best [] = best
             | process oldBest (ver :: vers) = process (best oldBest ver) vers
        in
-          case (process NONE vers, spec) of 
+          case (process NONE vers, spec) of
              (NONE, _) => NONE
            | (SOME ver, NONE) => SOME (major ver, ver)
            | (SOME ver, SOME spec) => SOME (spec, ver)

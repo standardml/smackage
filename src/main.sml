@@ -7,18 +7,18 @@ struct
 
     type packages = unit SemConstrDict.dict StringDict.dict
 
-    fun addPackage (dict: packages) pkg semconstr = 
+    fun addPackage (dict: packages) pkg semconstr =
        StringDict.insertMerge dict pkg
           (SemConstrDict.singleton semconstr ())
           (fn dict => SemConstrDict.insert dict semconstr ())
 
-    fun readPackagesInstalled (): packages = 
-    let 
-       val packagesInstalled = 
+    fun readPackagesInstalled (): packages =
+    let
+       val packagesInstalled =
           OS.Path.joinDirFile { dir = !Configure.smackHome
                               , file = "packages.installed"}
-       fun folder (line, dict) = 
-          case String.tokens Char.isSpace line of 
+       fun folder (line, dict) =
+          case String.tokens Char.isSpace line of
              [] => dict
            | [ pkg, semconstr ] =>
                 addPackage dict pkg (SemVer.constrFromString semconstr)
@@ -28,13 +28,13 @@ struct
           (FSUtil.getCleanLines (TextIO.openIn packagesInstalled))
     end
 
-    fun writePackagesInstalled (dict: packages) = 
+    fun writePackagesInstalled (dict: packages) =
     let
-       val packagesInstalled = 
+       val packagesInstalled =
           OS.Path.joinDirFile { dir = !Configure.smackHome
                               , file = "packages.installed"}
        fun mapper (pkg, semconstrs) =
-          map (fn (sc, ()) => pkg ^ " " ^ SemVer.constrToString sc) 
+          map (fn (sc, ()) => pkg ^ " " ^ SemVer.constrToString sc)
              (SemConstrDict.toList semconstrs)
     in
        FSUtil.putLines packagesInstalled
@@ -48,13 +48,13 @@ struct
 
 
     (** Resolve the dependencies of a particular, newly-downloaded package. *)
-    fun resolveDependencies pkg ver = 
+    fun resolveDependencies pkg ver =
     let exception NoDeps in let
-       val specFile = 
+       val specFile =
           !Configure.smackHome // "lib" // pkg // ("v" ^ SemVer.toString ver)
           // (pkg ^ ".smackspec")
        val () = if OS.FileSys.access (specFile, []) then () else raise NoDeps
-  
+
        val deps = Spec.requires (Spec.fromFile specFile)
        val ltoi = Int.toString o length
     in
@@ -63,7 +63,7 @@ struct
          else print ("Resolving " ^ ltoi deps ^ " dependencies\n")
        (* XXX here's the place to shortcut-stop if we have an acceptable
         * version installed (issue #4) *)
-       ; app (fn (pkg, spec, _) => 
+       ; app (fn (pkg, spec, _) =>
             ignore (get false false pkg (SOME spec))) deps
        ; print ("Done resolving dependencies for `" ^ pkg ^ "'\n"))
     end handle NoDeps => () end
@@ -73,8 +73,8 @@ struct
         SemVer.intelligentSelect.
 
         Raises SmackExn in the event that no acceptable version of the package
-        is available. 
-        
+        is available.
+
         silentMode tells 'get' to not report what it is doing assuming
         everything is going well. This allows us to have 'refresh'
         not output confusing messages about selecting smackage versions.
@@ -86,45 +86,45 @@ struct
 
         val () =
            if VersionIndex.isKnown pkg then ()
-           else raise SmackExn 
+           else raise SmackExn
                          ( "I don't know about the package `" ^ pkg
                          ^ "', run `smackage refresh'?")
 
-        val (spec, ver) = 
+        val (spec, ver) =
            VersionIndex.getBest pkg specStr
-           handle _ => 
-           raise SmackExn 
+           handle _ =>
+           raise SmackExn
                    ("No acceptable version of `" ^ pkg
                    ^ (case specStr of
-                         NONE => "" 
+                         NONE => ""
                        | SOME s => " " ^ SemVer.constrToString s)
                    ^ "' found, try `smackage refresh'?")
 
-        val () = 
+        val () =
            if not isTopLevel then ()
-           else writePackagesInstalled 
+           else writePackagesInstalled
                    (addPackage (readPackagesInstalled ()) pkg spec)
 
         val name = pkg ^ " " ^ SemVer.toString ver
-        val () = 
+        val () =
            if Option.isSome specStr then ()
-           else print ( "No major version specified, picked v" 
+           else print ( "No major version specified, picked v"
                       ^ SemVer.constrToString spec ^ ".\n")
         val () = maybePrint ( "Selected `" ^ name ^ "'.\n")
-       
-        val proto = 
+
+        val proto =
             case VersionIndex.getProtocol pkg ver of
                 SOME p => p
-              | NONE => raise SmackExn 
+              | NONE => raise SmackExn
                 ("Installation method for `" ^ name ^ "' not found")
     in
      ( if SmackLib.download (!Configure.smackHome) (pkg,ver,proto)
-       then maybePrint ( "Package `" ^ name ^ "' already installed.\n") 
+       then maybePrint ( "Package `" ^ name ^ "' already installed.\n")
        else ( maybePrint ( "Package `" ^ name ^ "' downloaded.\n")
             ; resolveDependencies pkg ver (*
              ; (if runHooks then
-                (SmackLib.build 
-                (!Configure.smackHome) 
+                (SmackLib.build
+                (!Configure.smackHome)
                 (!Configure.platform,!Configure.compilers)
                 (pkg,ver)
               ; SmackLib.install
@@ -133,26 +133,26 @@ struct
                 (pkg,ver)) else ())
              *))
      ; OS.Process.success)
-    end   
+    end
 
     (** List the packages currently installed. *)
-    fun listInstalled () = 
+    fun listInstalled () =
        let
           val libRoot = !Configure.smackHome // "lib"
-          fun printver ver = 
+          fun printver ver =
              print ("   Version: " ^ SemVer.toString ver ^ "\n")
-          fun read dir = 
-             case OS.FileSys.readDir dir of 
+          fun read dir =
+             case OS.FileSys.readDir dir of
                 NONE => OS.FileSys.closeDir dir
-              | SOME pkg => 
+              | SOME pkg =>
                    ( print ("Package " ^ pkg ^ ":")
                    ; case SmackLib.versions (!Configure.smackHome) pkg of
                         [] => print " (no versions installed)\n"
                       | vers => (print "\n"; app printver vers)
                    ; read dir)
-       in 
+       in
           if OS.FileSys.access (libRoot, [])
-          then read (OS.FileSys.openDir libRoot) 
+          then read (OS.FileSys.openDir libRoot)
           else ()
        end
 
@@ -165,11 +165,11 @@ struct
         val _ = VersionIndex.init (!Configure.smackHome)
         val res = VersionIndex.search name
         val _ = if length res = 0 then print "No packages found.\n" else ()
-        val _ = List.app 
+        val _ = List.app
             (fn (n,dict) =>
-                SemVerDict.app 
-                   (fn (v, p) =>  
-                       print (n ^ " " ^ SemVer.toString v ^ " (from " ^ 
+                SemVerDict.app
+                   (fn (v, p) =>
+                       print (n ^ " " ^ SemVer.toString v ^ " (from " ^
                               Protocol.toString p ^ ")\n")) dict) res
     in
         ()
@@ -178,41 +178,41 @@ struct
     (** Display metadata for a given package, plus installed status.
         FIXME: Doesn't really do this, but displaying all versions is a start.
     *)
-    fun info name version = 
+    fun info name version =
     let
         val _ = print "Candidates:\n"
         val candidates = VersionIndex.getAll name NONE
-        val _ = List.app 
-            (fn v => 
+        val _ = List.app
+            (fn v =>
              let
                  val _ = print (name ^ " " ^ SemVer.toString v)
-                 val s = SOME (SmackagePath.packageMetadata 
-                            (!Configure.smackHome) (name,v)) 
-                            handle (Spec.SpecError s) => 
+                 val s = SOME (SmackagePath.packageMetadata
+                            (!Configure.smackHome) (name,v))
+                            handle (Spec.SpecError s) =>
                                 (print ("Spec Error: " ^ s ^ "\n"); NONE)
                                  | (SmackagePath.Metadata s) => NONE
 
-                 val _ = case s of NONE => print "\n\n" 
+                 val _ = case s of NONE => print "\n\n"
                                  | SOME sp =>
                                     print (" (installed)\n\n" ^
                                         Spec.toString sp ^ "\n")
-             in () end) candidates 
+             in () end) candidates
     in
         ()
     end
 
     (** Ouput a path for a given package, for integration with smbt.
         It is important for smbt's purposes that indicative status
-        codes are returned, so we return OS.Process.success 
+        codes are returned, so we return OS.Process.success
         or OS.Process.failure here. **)
     fun pathinfo pkg spec =
     let
         val ver = SemVer.constrFromString spec
-        val (spec, semver) = 
+        val (spec, semver) =
           case SemVer.intelligentSelect (SOME ver)
                   (SmackLib.versions (!Configure.smackHome) pkg) of
-                NONE => 
-                    raise SmackExn 
+                NONE =>
+                    raise SmackExn
                       ("No acceptable version of `" ^ pkg
                       ^ (SemVer.constrToString ver)
                       ^ "' around, try getting one with `smackage get'?")
@@ -223,14 +223,14 @@ struct
         val path = (!Configure.smackHome // "lib" // pkg // specStr)
 
     in
-        if OS.FileSys.access (path, []) then 
+        if OS.FileSys.access (path, []) then
             (print (path ^ "\n"); OS.Process.success)
         else
             (print ("Smackage: No acceptable version of `" ^ pkg ^ "\n"); OS.Process.failure)
     end
 
-    fun update () = 
-    let 
+    fun update () =
+    let
        val pkgs = readPackagesInstalled ()
 
        fun update1 (pkg, vers) =
@@ -239,12 +239,12 @@ struct
              vers
 
        fun reportBest (pkg, _) =
-       let 
+       let
           val (_, semver) = VersionIndex.getBest pkg NONE
        in
           if SmackLib.exists (!Configure.smackHome) (pkg, semver) then ()
           else print ("NOTICE: `" ^ pkg ^ " v" ^ SemVer.toString semver
-                      ^ "' is available, run `smackage get " 
+                      ^ "' is available, run `smackage get "
                       ^ pkg ^ "' to get it.\n")
        end
     in
@@ -256,15 +256,15 @@ struct
      ; OS.Process.success)
     end
 
-    fun readSourcesLocal () = 
-    let 
-       val sourcesLocal = 
+    fun readSourcesLocal () =
+    let
+       val sourcesLocal =
           OS.Path.joinDirFile { dir = !Configure.smackHome
                               , file = "sources.local"}
-       fun folder (line, dict) = 
-          case String.tokens Char.isSpace line of 
+       fun folder (line, dict) =
+          case String.tokens Char.isSpace line of
              [] => dict
-           | [ pkg', prot', uri' ] => 
+           | [ pkg', prot', uri' ] =>
                 StringDict.insert dict pkg'
                    (Protocol.fromString (prot' ^ " " ^ uri'))
            | _ => raise Fail ( "Bad source line: `" ^ line ^ "'")
@@ -273,9 +273,9 @@ struct
           (FSUtil.getCleanLines (TextIO.openIn sourcesLocal))
     end
 
-    fun writeSourcesLocal dict = 
+    fun writeSourcesLocal dict =
     let
-       val sourcesLocal = 
+       val sourcesLocal =
           OS.Path.joinDirFile { dir = !Configure.smackHome
                               , file = "sources.local"}
     in
@@ -290,22 +290,22 @@ struct
     end
 
 
-    fun runCmd pkg spec args = 
+    fun runCmd pkg spec args =
     let
        val oldDir = OS.FileSys.getDir ()
-       val (spec, semver) = 
+       val (spec, semver) =
           case SemVer.intelligentSelect spec
                   (SmackLib.versions (!Configure.smackHome) pkg) of
-             NONE => 
-                raise SmackExn 
+             NONE =>
+                raise SmackExn
                       ("No acceptable version of `" ^ pkg
                       ^ (case spec of
-                            NONE => "" 
+                            NONE => ""
                           | SOME s => " " ^ SemVer.constrToString s)
                       ^ "' around, try getting one with `smackage get'?")
            | SOME (spec, semver) => (spec, semver)
        val specStr = "v" ^ SemVer.toString semver
-       val cmd = String.concatWith " " args 
+       val cmd = String.concatWith " " args
     in
      ( OS.FileSys.chDir (!Configure.smackHome // "lib" // pkg // specStr)
      ; print ("In directory: `" ^ OS.FileSys.getDir () ^ "'\n")
@@ -317,34 +317,34 @@ struct
     end
 
     (* Referesh the versions.smackspec file based one existing sources. *)
-    fun refresh warn = 
+    fun refresh warn =
     let val oldDir = OS.FileSys.getDir () in
-    let 
-       val () = OS.FileSys.chDir (!Configure.smackHome) 
+    let
+       val () = OS.FileSys.chDir (!Configure.smackHome)
 
        val versionSpackspec = "versions.smackspec"
        val output = TextIO.openOut versionSpackspec
-      
+
        fun emit s = TextIO.output (output, s)
 
        fun poll line =
-       let in 
-          case String.tokens Char.isSpace line of 
+       let in
+          case String.tokens Char.isSpace line of
              [] => ()
-           | [ pkg', prot', uri' ] => 
+           | [ pkg', prot', uri' ] =>
                 app (fn spec => emit (Spec.toString spec ^ "\n\n"))
-                   (Conductor.poll pkg' 
+                   (Conductor.poll pkg'
                      (Protocol.fromString (prot' ^ " " ^ uri')))
            | _ => raise Fail ( "Bad source line: `" ^ line ^ "'")
        end
-       handle exn => 
+       handle exn =>
           print ("WARNING: When trying to pull source `" ^ line
                 ^ "', got the following error \n\t\""
-                ^ exnMessage exn 
+                ^ exnMessage exn
                 ^ "\"\nIf this line is in sources.local, you may need to run\n\
                 \`smackage unsource' to remove it.\n")
 
-       fun dofile fileName = 
+       fun dofile fileName =
           app poll (FSUtil.getCleanLines (TextIO.openIn fileName))
        handle _ => if not warn then ()
                    else print ("WARNING: error reading " ^ fileName ^ "\n")
@@ -356,10 +356,10 @@ struct
     end handle exn => (OS.FileSys.chDir oldDir; raise exn) end
 
     (* We should think about whether there's a better way to distributed
-       the "blessed" sources list to separate "selfupdate" from 
+       the "blessed" sources list to separate "selfupdate" from
        "refresh." As it is, I can't really figure out a less-wasteful way
        to do a "total" refresh than to re-download smackage's sources. *)
-    fun selfupdate () = 
+    fun selfupdate () =
        ( refresh false
        ; ignore (get true false "smackage" (SOME (SemVer.constrFromString "v1")))
        ; refresh true
@@ -367,14 +367,14 @@ struct
 
 
     (* Manipulate the sources.local source spec file *)
-    fun source pkg prot =  
-    let 
+    fun source pkg prot =
+    let
        val dict = readSourcesLocal ()
        val dict' = StringDict.insert dict pkg prot
     in
      ( case StringDict.find dict pkg of
           NONE => ()
-        | SOME prot' => 
+        | SOME prot' =>
              if EQUAL = Protocol.compare (prot, prot') then ()
              else print ( "WARNING: overwriting source spec\nOLD: "
                         ^ pkg ^ " " ^ Protocol.toString prot' ^ "\nNEW: "
@@ -384,8 +384,8 @@ struct
     end
 
     (* Manipulate the sources.local source spec file *)
-    fun unsource pkg =  
-    let 
+    fun unsource pkg =
+    let
        val dict = readSourcesLocal ()
        val dict' = StringDict.remove dict pkg
     in
@@ -416,23 +416,23 @@ struct
        \\tunsource <name>\t\t\tRemove a source from sources.local\n"
 
     exception ArgsError of string * string
-    fun main (name, args) = 
+    fun main (name, args) =
        let
           val () = Configure.init ()
           fun runCmdNotMake pkg spec rest =
           let
              fun confirm () =
-             let 
+             let
                 val () = print ("Are you sure you want to proceed? [Y/n]: ")
                 val () = TextIO.flushOut TextIO.stdOut
              in case String.tokens Char.isSpace
                         (valOf (TextIO.inputLine TextIO.stdIn)) of
                    [] => ()
-                 | (str :: _) => 
-                      if String.isPrefix "y" str 
+                 | (str :: _) =>
+                      if String.isPrefix "y" str
                          orelse String.isPrefix "Y" str
                       then ()
-                      else if String.isPrefix "n" str 
+                      else if String.isPrefix "n" str
                            orelse String.isPrefix "N" str
                       then raise SmackExn "User cancelled command"
                       else (print "I don't understand that.\n"; confirm ())
@@ -440,15 +440,15 @@ struct
           in
            ( if "make" = hd rest
              then ( print ("WARNING: It is suggested that you run\n\
-                          \`" ^ CommandLine.name () ^ " make " 
+                          \`" ^ CommandLine.name () ^ " make "
                           ^ String.concatWith " " (pkg :: tl rest)
-                          ^ "'\nrather than invoking make with `" 
+                          ^ "'\nrather than invoking make with `"
                           ^ CommandLine.name () ^ " exec'.\n")
                   ; confirm ())
-             else () 
+             else ()
            ; runCmd pkg spec rest)
           handle Option => raise SmackExn "User cancelled command"
-          end 
+          end
        in
           case args of
              [] => (print usage; OS.Process.success)
@@ -458,7 +458,7 @@ struct
 
            | ["exec", pkg, cmd] => runCmdNotMake pkg NONE [ cmd ]
            | ("exec" :: pkg :: maybe_spec :: rest) =>
-             let 
+             let
                 val (spec, rest) =
                    (SOME (SemVer.constrFromString maybe_spec), rest)
                 handle _ => (NONE, maybe_spec :: rest)
@@ -468,9 +468,9 @@ struct
                 raise ArgsError ("exec", "requires at least two arguments")
 
            | ["get",pkg] => get false true pkg NONE
-           | ["get",pkg,ver] => 
+           | ["get",pkg,ver] =>
                 get false true pkg (SOME (SemVer.constrFromString ver))
-           | ("get" :: _) => 
+           | ("get" :: _) =>
                 raise ArgsError ("get", "requires one or two arguments")
 
            | ["info",pkg] => (info pkg ""; OS.Process.success)
@@ -487,15 +487,15 @@ struct
            | ("list" :: _) =>
                 raise ArgsError ("list", "does not expect arguments")
 
-           | ["pathinfo"] => 
+           | ["pathinfo"] =>
                 raise ArgsError ("pathinfo", "requires two arguments")
            | ["pathinfo",pkg,ver] => pathinfo pkg ver
 
            | ["make"] => raise ArgsError ("make", "requires arguments")
-           | ["make", pkg] => 
+           | ["make", pkg] =>
                 runCmd pkg NONE [ "make", "DESTDIR=" ^ !Configure.smackHome]
            | ("make" :: pkg :: maybe_spec :: rest) =>
-             let 
+             let
                 val (spec, rest) =
                    (SOME (SemVer.constrFromString maybe_spec), rest)
                 handle _ => (NONE, maybe_spec :: rest)
@@ -510,10 +510,10 @@ struct
 
            | ["search",pkg] => (search pkg ""; OS.Process.success)
            | ["search",pkg,ver] => (search pkg ver; OS.Process.success)
-           | ("search" :: _) => 
+           | ("search" :: _) =>
                 raise ArgsError ("search", "expects one or two arguments")
 
-           | ["source",pkg,prot,url] => 
+           | ["source",pkg,prot,url] =>
                 source pkg (Protocol.fromString (prot ^ " " ^ url))
            | ("source" :: _) =>
                 raise ArgsError ("source", "expects exactly three arguments")
@@ -524,29 +524,29 @@ struct
                    \Did you want to run `" ^ CommandLine.name () ^ " get "
                    ^ String.concatWith " " args ^ "'?")
 
-           | ["unsource",pkg] => unsource pkg 
+           | ["unsource",pkg] => unsource pkg
            | ("unsource" :: _) =>
                 raise ArgsError ("unsource", "expectes exactly one argument")
 
            | (str :: _) => raise ArgsError (str, "is an unknown command")
-       end handle 
-              (SmackExn s) => 
+       end handle
+              (SmackExn s) =>
                 ( TextIO.output (TextIO.stdErr, "\nERROR: " ^ s ^ "\n\n")
                 ; OS.Process.failure)
-            | (Fail s) => 
+            | (Fail s) =>
                 ( TextIO.output (TextIO.stdErr, "\nERROR: " ^ s ^ "\n\n")
                 ; OS.Process.failure)
-            | (Spec.SpecError s) => 
+            | (Spec.SpecError s) =>
                 ( TextIO.output (TextIO.stdErr, "\nERROR: " ^ s ^ "\n\n")
                 ; OS.Process.failure)
-            | (ArgsError (cmd, s)) => 
-                ( TextIO.output (TextIO.stdErr, "\nERROR: `" 
-                                          ^ CommandLine.name () 
+            | (ArgsError (cmd, s)) =>
+                ( TextIO.output (TextIO.stdErr, "\nERROR: `"
+                                          ^ CommandLine.name ()
                                           ^ " " ^ cmd ^ "' " ^ s ^ "\n\n")
                 ; print usage
                 ; OS.Process.failure)
             | exn =>
-                ( TextIO.output (TextIO.stdErr, "\nUNEXPECTED ERROR: " 
+                ( TextIO.output (TextIO.stdErr, "\nUNEXPECTED ERROR: "
                                           ^ exnMessage exn ^ "\n\n")
                 ; OS.Process.failure)
 end

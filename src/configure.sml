@@ -20,12 +20,12 @@ struct
        /opt/smackage/
        ~/.smackage/
    *)
-   fun initSmackHome () = 
-   let 
+   fun initSmackHome () =
+   let
       val getEnv = OS.Process.getEnv
       fun tryDir (SOME s) = ((OS.FileSys.openDir s; true) handle _ => false)
         | tryDir NONE = false
-      fun useThisDir dir = 
+      fun useThisDir dir =
          if tryDir (SOME dir) then smackHome := dir
          else ( print ( "NOTICE: dir `"
                       ^ dir ^ "' doesn't exist, trying to create it.\n")
@@ -36,9 +36,9 @@ struct
       if Option.isSome (getEnv "SMACKAGE_HOME")
          then (* $SMACKAGE_HOME is set, definitely go with that. *)
            useThisDir (valOf (getEnv "SMACKAGE_HOME"))
-      else if tryDir (SOME "/usr/local/smackage") 
-         then smackHome := "/usr/local/smackage" 
-      else if tryDir (SOME "/opt/smackage") 
+      else if tryDir (SOME "/usr/local/smackage")
+         then smackHome := "/usr/local/smackage"
+      else if tryDir (SOME "/opt/smackage")
          then smackHome := "/opt/smackage"
       else if Option.isSome (OS.Process.getEnv "HOME")
          then (* $HOME set, we're out of other options. Try ~/.smackage *)
@@ -46,14 +46,14 @@ struct
       else raise Fail "Cannot find smackage home. Try setting SMACKAGE_HOME"
    end
 
-   fun initFile fileName contents = 
+   fun initFile fileName contents =
       let
          val filePath =
             OS.Path.joinDirFile { dir = !smackHome, file = fileName }
 
-         fun create () = 
+         fun create () =
             let
-               val () = 
+               val () =
                   print ("NOTICE: file `" ^ fileName ^ "' doesn't exist,\
                          \ trying to create it.\n")
                val file = TextIO.openOut filePath
@@ -69,17 +69,17 @@ struct
            then raise Fail ("Can't read/write to `" ^ fileName
                             ^ "' (run as sudo?)")
          else ()
-      end handle exn => 
+      end handle exn =>
              ( print ("Error with `" ^ fileName ^ "' file.\n")
              ; raise exn)
 
-   fun initDir dirName = 
-      let 
-         val dirPath = 
+   fun initDir dirName =
+      let
+         val dirPath =
             OS.Path.joinDirFile { dir = !smackHome, file = dirName }
-         fun create () = 
+         fun create () =
             let
-               val () = 
+               val () =
                   print ("NOTICE: dir `" ^ dirName ^ "' doesn't exist,\
                          \ trying to create it.\n")
             in
@@ -94,30 +94,30 @@ struct
          else ()
       end
 
-   fun readConfigFile () = 
+   fun readConfigFile () =
       let
          val config = OS.Path.joinDirFile { dir = !smackHome, file = "config" }
 
-         fun loop file = 
-            case Option.map 
-                    (String.tokens Char.isSpace) 
-                    (TextIO.inputLine file) of 
+         fun loop file =
+            case Option.map
+                    (String.tokens Char.isSpace)
+                    (TextIO.inputLine file) of
                NONE => TextIO.closeIn file
              | SOME [] => loop file
-             | SOME [ "source", f ] => 
+             | SOME [ "source", f ] =>
                   ( smackSources := !smackSources @ [ f ] ; loop file)
              | SOME [ "platform", p ] =>
                   ( platform := p ; loop file)
              | SOME [ "compiler", cmp ] =>
                   ( compilers := !compilers @ [ cmp ] ; loop file)
-             | SOME s => 
-                  raise Fail ( "Bad configuration line: " 
+             | SOME s =>
+                  raise Fail ( "Bad configuration line: "
                              ^ String.concatWith " " s )
-      in 
+      in
          if not (OS.FileSys.access (config, [])) then () else
          if not (OS.FileSys.access (config, [ OS.FileSys.A_READ ]))
            then raise Fail "Config file exists but can't be read"
-         else loop (TextIO.openIn config) 
+         else loop (TextIO.openIn config)
       end
 
 
@@ -127,7 +127,7 @@ struct
    fun guessPlatform () =
       let
          val s = FSUtil.systemCleanLines "uname -s"
-      in 
+      in
          if null s then "win" else
          if String.isPrefix "Darwin" (hd s) then "osx" else
          if String.isPrefix "CYGWIN" (hd s) then "win" else "linux"
@@ -135,10 +135,10 @@ struct
 
    fun init () =
       ( initSmackHome ()
-      ; initFile "sources.local" 
+      ; initFile "sources.local"
            "smackage git git://github.com/standardml/smackage.git\n"
-      ; initFile "config" 
-          ("source " ^ ("lib" // "smackage" // "v1" // "sources") ^ "\n\ 
+      ; initFile "config"
+          ("source " ^ ("lib" // "smackage" // "v1" // "sources") ^ "\n\
            \compiler mlton\n\
            \compiler smlnj\n\
            \platform " ^ guessPlatform () ^ "\n")
@@ -148,15 +148,15 @@ struct
       ; initDir "bin"
       ; readConfigFile ()
       ; VersionIndex.init (!smackHome))
-        
+
 (*
-   fun readConfig () = 
+   fun readConfig () =
       let
-         val config = 
-            OS.FileSys.joinDirPath { dir = smackHome, file = "config" } 
+         val config =
+            OS.FileSys.joinDirPath { dir = smackHome, file = "config" }
       in
          if OS.FileSys.access (config, [ OS.FileSys.A_READ ])
-         then 
+         then
          else ()
       end
 *)
