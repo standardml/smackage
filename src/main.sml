@@ -60,7 +60,7 @@ struct
     in
        ( if null deps then raise NoDeps else ()
        ; if length deps = 1 then print "Resolving 1 dependency\n"
-         else print ("Resolving " ^ ltoi deps ^ "dependencies\n")
+         else print ("Resolving " ^ ltoi deps ^ " dependencies\n")
        (* XXX here's the place to shortcut-stop if we have an acceptable
         * version installed (issue #4) *)
        ; app (fn (pkg, spec, _) => 
