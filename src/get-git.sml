@@ -16,18 +16,20 @@ fun poll (gitAddr: string) =
    let
       fun eq c1 c2 = c1 = c2
       val input = FSUtil.systemLines ("git ls-remote " ^ gitAddr)
+        handle _ => raise Fail "I/O error trying to access temporary file"
+      exception Error of string
       fun process str =
          let exception Skip
             val (hash, remote) =
                 case String.tokens Char.isSpace str of
                    [ hash, remote ] =>
                        if size hash <> 40
-                       then raise Fail "Bad hash returned from git ls-remote"
+                       then raise Error "Bad hash returned from git ls-remote"
                        else if String.isSuffix "^{}" remote
                        then raise Skip (* Proposed bugfix for git tag -m ""
                                           - Oct 24 2011 RJS *)
                        else (hash, String.tokens (eq #"/") remote)
-                 | _ => raise Fail "Unexpected output from `git ls-remote'"
+                 | _ => raise Error "Unexpected output from `git ls-remote'"
 
             val tag =
                case remote of
@@ -38,11 +40,11 @@ fun poll (gitAddr: string) =
                 | _ => raise SemVer.InvalidVersion (* Not a tag at all *)
          in
             SOME (hash, SemVer.fromString tag)
-         end handle Fail s => raise Fail s
+         end handle Error s => raise Fail s
                   | _ => NONE
    in
       List.mapPartial process input
-   end handle _ => raise Fail "I/O error trying to access temporary file"
+   end
 
 fun chdirSuccess s =
    let (* val () = print ("Changing directory: `" ^ s ^ "'\n") *) in
