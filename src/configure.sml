@@ -136,7 +136,7 @@ struct
    fun init () =
       ( initSmackHome ()
       ; initFile "sources.local"
-           "smackage git git://github.com/standardml/smackage.git\n"
+           "smackage git https://github.com/standardml/smackage.git\n"
       ; initFile "config"
           ("source " ^ ("lib" // "smackage" // "v1" // "sources") ^ "\n\
            \compiler mlton\n\

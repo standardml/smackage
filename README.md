@@ -31,7 +31,7 @@ Note: the directory (probably named `smackage`) that you put the initial
 Smackage code into should *not* be the same as the `$SMACKAGE_HOME`
 directory.
 
-    $ git clone git://github.com/standardml/smackage.git # or something
+    $ git clone https://github.com/standardml/smackage.git # or something
     $ cd smackage
     $ make mlton # (or `smlnj', or `win+smlnj' if you're in Cygwin)
     $ bin/smackage
@@ -205,4 +205,3 @@ to try and determine `$SMACKAGE_HOME`:
  4. As a last resort, smackage will try to use `~/.smackage`, where `~` is
     defined by the `HOME` environment variable. If this directory does not
     exist, smackage will try to create it.
-

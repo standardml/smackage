@@ -1,5 +1,5 @@
 (* Manipulating packages with git *)
-(* Try running 'GetGit.poll "git://github.com/robsimmons/toy.git"' *)
+(* Try running 'GetGit.poll "https://github.com/robsimmons/toy.git"' *)
 (* Robert J. Simmons *)
 
 structure GetGit = struct
@@ -96,4 +96,3 @@ fun get basePath projName gitAddr semver =
       chdirSuccess olddir
    end handle exn => (OS.FileSys.chDir olddir; raise exn) end
 end
-
