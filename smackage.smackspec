@@ -1,4 +1,4 @@
-provides: smackage 1.4.3
+provides: smackage 1.4.5
 description: Smackage, a simple Standard ML package manager
 maintainer: Gian Perrone <gian dot perrone at gmail dot com>
 maintainer: Robert J. Simmons <robsimmons at gmail dot com>
@@ -20,4 +20,3 @@ platform: smlsharp
 platform: polyml
    build: make polyml
    install: mv bin/smackage ../../../bin/smackage
-
