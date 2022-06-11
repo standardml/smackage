@@ -21,3 +21,7 @@ tom7-lib git https://github.com/robsimmons/sml-lib.git
 twelf git https://github.com/standardml/twelf.git
 unicode git https://github.com/melsman/unicode.git
 uri git https://github.com/finrod/uri.git
+mltonlib git https://github.com/poldy/mltonlib.git
+sml-db git https://github.com/poldy/sml-db.git
+sml-ev git https://github.com/poldy/sml-ev.git
+sml-net-server-ev git https://github.com/poldy/sml-net-server-ev.git
